@@ -21,6 +21,10 @@ public sealed class PnmcDbContext : DbContext
     public DbSet<TagRow> Tags => Set<TagRow>();
 
     public DbSet<FestivalRow> FestivalRecords => Set<FestivalRow>();
+    public DbSet<PracticaMusicalRow> PracticasMusicales => Set<PracticaMusicalRow>();
+    public DbSet<TerritorioSonoroRow> TerritoriosSonoros => Set<TerritorioSonoroRow>();
+    public DbSet<FestivalPracticaMusicalRow> FestivalesPracticasMusicales => Set<FestivalPracticaMusicalRow>();
+    public DbSet<FestivalTerritorioSonoroRow> FestivalesTerritoriosSonoros => Set<FestivalTerritorioSonoroRow>();
     public DbSet<SchoolRow> SchoolRecords => Set<SchoolRow>();
     public DbSet<MarketRow> MarketRecords => Set<MarketRow>();
     public DbSet<OrganizationRow> Organizations => Set<OrganizationRow>();
@@ -218,6 +222,8 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.CurrentYearEditionStatus).HasColumnName("EstadoVersionAnoActual");
             entity.Property(x => x.CurrentYearStartDate).HasColumnName("FechaInicioVersionActual");
             entity.Property(x => x.CurrentYearEndDate).HasColumnName("FechaFinVersionActual");
+            entity.Property(x => x.OrganizacionPrincipalId).HasColumnName("OrganizacionPrincipalId");
+            entity.Property(x => x.Periodicidad).HasColumnName("Periodicidad");
             entity.Property(x => x.CreatedAt).HasColumnName("FechaCreacion");
             entity.Property(x => x.UpdatedAt).HasColumnName("FechaActualizacion");
             entity.Property(x => x.StatusCode).HasColumnName("EstadoRegistro");
@@ -229,6 +235,44 @@ public sealed class PnmcDbContext : DbContext
             entity.Ignore(x => x.ApprovedByUserId);
             entity.Ignore(x => x.PublishedAt);
             entity.Ignore(x => x.ArchivedAt);
+        });
+
+        modelBuilder.Entity<PracticaMusicalRow>(entity =>
+        {
+            entity.ToTable("PracticasMusicales");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("IdPracticaMusical");
+            entity.Property(x => x.Nombre).HasColumnName("NombrePracticaMusical");
+        });
+
+        modelBuilder.Entity<TerritorioSonoroRow>(entity =>
+        {
+            entity.ToTable("TerritoriosSonoros");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("IdTerritorioSonoro");
+            entity.Property(x => x.Nombre).HasColumnName("NombreTerritorioSonoro");
+        });
+
+        modelBuilder.Entity<FestivalPracticaMusicalRow>(entity =>
+        {
+            entity.ToTable("FestivalesPracticasMusicales");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("IdFestivalPracticaMusical");
+            entity.Property(x => x.FestivalId).HasColumnName("FestivalId");
+            entity.Property(x => x.PracticaMusicalId).HasColumnName("PracticaMusicalId");
+            entity.Property(x => x.FechaCreacion).HasColumnName("FechaCreacion");
+            entity.HasIndex(x => new { x.FestivalId, x.PracticaMusicalId }).IsUnique();
+        });
+
+        modelBuilder.Entity<FestivalTerritorioSonoroRow>(entity =>
+        {
+            entity.ToTable("FestivalesTerritoriosSonoros");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("IdFestivalTerritorioSonoro");
+            entity.Property(x => x.FestivalId).HasColumnName("FestivalId");
+            entity.Property(x => x.TerritorioSonoroId).HasColumnName("TerritorioSonoroId");
+            entity.Property(x => x.FechaCreacion).HasColumnName("FechaCreacion");
+            entity.HasIndex(x => new { x.FestivalId, x.TerritorioSonoroId }).IsUnique();
         });
 
         modelBuilder.Entity<SchoolRow>(entity =>

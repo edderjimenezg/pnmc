@@ -786,6 +786,37 @@ public sealed record ExternalOrganizationDto(
 
 public sealed record ExternalCsrfTokenResponse(string RequestToken);
 
+public sealed class CrearFestivalBorradorSolicitud
+{
+    public string Nombre { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+    public string? Periodicidad { get; set; }
+    public string? CorreoContacto { get; set; }
+    public string NivelCobertura { get; set; } = "municipal";
+    public string? CodigoDepartamento { get; set; }
+    public string? CodigoMunicipio { get; set; }
+    public IReadOnlyList<int> PracticasMusicalesIds { get; set; } = [];
+    public IReadOnlyList<int> TerritoriosSonorosIds { get; set; } = [];
+}
+
+public sealed record CatalogoFestivalDto(int Id, string Nombre);
+
+public sealed record OrganizacionAdministradaDto(string Id, string Nombre);
+
+public sealed record FestivalBorradorDto(
+    string Id,
+    string Nombre,
+    string Estado,
+    string OrganizacionPrincipalId,
+    string OrganizacionPrincipalNombre,
+    string NivelCobertura,
+    string? CodigoDepartamento,
+    string? CodigoMunicipio,
+    string? Periodicidad,
+    string? CorreoContacto,
+    IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
+    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros);
+
 public sealed record ExternalSessionResponse(
     string UserId,
     string FullName,

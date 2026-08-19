@@ -155,6 +155,36 @@ public sealed class FestivalRow
     public string? CurrentYearEditionStatus { get; set; }
     public DateTime? CurrentYearStartDate { get; set; }
     public DateTime? CurrentYearEndDate { get; set; }
+    public int? OrganizacionPrincipalId { get; set; }
+    public string? Periodicidad { get; set; }
+}
+
+public sealed class PracticaMusicalRow
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}
+
+public sealed class TerritorioSonoroRow
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}
+
+public sealed class FestivalPracticaMusicalRow
+{
+    public int Id { get; set; }
+    public int FestivalId { get; set; }
+    public int PracticaMusicalId { get; set; }
+    public DateTime FechaCreacion { get; set; }
+}
+
+public sealed class FestivalTerritorioSonoroRow
+{
+    public int Id { get; set; }
+    public int FestivalId { get; set; }
+    public int TerritorioSonoroId { get; set; }
+    public DateTime FechaCreacion { get; set; }
 }
 
 public sealed class SchoolRow

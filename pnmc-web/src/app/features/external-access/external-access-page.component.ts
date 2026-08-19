@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 
-type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'complete';
+type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'festival' | 'complete';
 
 @Component({
   selector: 'app-external-access-page',
@@ -23,10 +23,14 @@ export class ExternalAccessPageComponent implements OnInit {
   error = signal('');
   registeredEmail = signal('');
   createdOrganization = signal<any | null>(null);
+  organizations = signal<any[]>([]);
+  festivalCatalogs = signal<any>({ practicasMusicales: [], territoriosSonoros: [] });
+  draftFestivals = signal<any[]>([]);
   locations = signal<any[]>([]);
   departments = computed(() => Array.from(new Map(this.locations().map(item => [item.departmentCode, item.departmentName])).entries())
     .map(([code, name]) => ({ code, name })));
   municipalities = computed(() => this.locations().filter(item => item.departmentCode === this.organization.departmentCode));
+  festivalMunicipalities = computed(() => this.locations().filter(item => item.departmentCode === this.festival.departmentCode));
 
   account = {
     fullName: '',
@@ -45,6 +49,18 @@ export class ExternalAccessPageComponent implements OnInit {
     coverageLevel: 'municipal',
     departmentCode: '',
     municipalityCode: '',
+  };
+  festival = {
+    organizacionId: '',
+    nombre: '',
+    descripcion: '',
+    periodicidad: '',
+    correoContacto: '',
+    nivelCobertura: 'municipal',
+    departmentCode: '',
+    municipalityCode: '',
+    practicaMusicalId: '',
+    territorioSonoroId: '',
   };
 
   ngOnInit(): void {
@@ -65,6 +81,16 @@ export class ExternalAccessPageComponent implements OnInit {
     this.clearFeedback();
     if (this.session()) this.loadTerritories();
     this.view.set(this.session() ? 'organization' : 'login');
+  }
+
+  chooseFestival(): void {
+    this.clearFeedback();
+    if (!this.session()) {
+      this.wantsOrganization.set(false);
+      this.view.set('login');
+      return;
+    }
+    this.openFestivalForm();
   }
 
   register(): void {
@@ -138,6 +164,76 @@ export class ExternalAccessPageComponent implements OnInit {
         this.view.set('complete');
         this.message.set('La organización quedó registrada y tú eres su administrador principal inicial. Podrás sumar otras personas autorizadas en un corte posterior.');
       },
+      error: error => this.fail(error),
+    });
+  }
+
+  openFestivalForm(): void {
+    this.clearFeedback();
+    this.loading.set(true);
+    this.loadTerritories();
+    this.adminService.fetchExternalOrganizations().subscribe({
+      next: organizations => {
+        this.organizations.set(organizations);
+        if (!this.festival.organizacionId && organizations.length === 1) {
+          this.festival.organizacionId = String(organizations[0].id);
+          this.loadDraftFestivals();
+        }
+        this.adminService.fetchFestivalCatalogs().subscribe({
+          next: catalogs => {
+            this.festivalCatalogs.set(catalogs);
+            this.loading.set(false);
+            this.view.set('festival');
+          },
+          error: error => this.fail(error),
+        });
+      },
+      error: error => this.fail(error),
+    });
+  }
+
+  createFestival(): void {
+    this.clearFeedback();
+    const organizacionId = Number(this.festival.organizacionId);
+    if (!organizacionId || !this.festival.nombre.trim()) {
+      this.error.set('Selecciona la organización responsable y escribe el nombre del Festival.');
+      return;
+    }
+    this.loading.set(true);
+    this.adminService.createDraftFestival(organizacionId, {
+      nombre: this.festival.nombre,
+      descripcion: this.festival.descripcion || null,
+      periodicidad: this.festival.periodicidad || null,
+      correoContacto: this.festival.correoContacto || null,
+      nivelCobertura: this.festival.nivelCobertura,
+      codigoDepartamento: this.festival.departmentCode || null,
+      codigoMunicipio: this.festival.municipalityCode || null,
+      practicasMusicalesIds: this.festival.practicaMusicalId ? [Number(this.festival.practicaMusicalId)] : [],
+      territoriosSonorosIds: this.festival.territorioSonoroId ? [Number(this.festival.territorioSonoroId)] : [],
+    }).subscribe({
+      next: festival => {
+        this.loading.set(false);
+        this.message.set(`Festival guardado como borrador: ${festival.nombre}.`);
+        this.festival.nombre = '';
+        this.festival.descripcion = '';
+        this.festival.periodicidad = '';
+        this.festival.correoContacto = '';
+        this.festival.practicaMusicalId = '';
+        this.festival.territorioSonoroId = '';
+        this.loadDraftFestivals();
+      },
+      error: error => this.fail(error),
+    });
+  }
+
+  loadDraftFestivals(): void {
+    const organizacionId = Number(this.festival.organizacionId);
+    if (!organizacionId) {
+      this.draftFestivals.set([]);
+      return;
+    }
+    this.adminService.fetchDraftFestivals(organizacionId).subscribe({
+      next: festivals => this.draftFestivals.set(festivals),
       error: error => this.fail(error),
     });
   }

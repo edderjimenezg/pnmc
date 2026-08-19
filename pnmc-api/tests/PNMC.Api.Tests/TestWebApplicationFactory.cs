@@ -189,6 +189,17 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
                 CreatedAt = DateTime.UtcNow
             });
 
+            db.PracticasMusicales.Add(new PracticaMusicalRow
+            {
+                Id = 1,
+                Nombre = "Música andina colombiana"
+            });
+            db.TerritoriosSonoros.Add(new TerritorioSonoroRow
+            {
+                Id = 1,
+                Nombre = "Andino"
+            });
+
             db.SchoolRecords.Add(new SchoolRow
             {
                 Id = 1,

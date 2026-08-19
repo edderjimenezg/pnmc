@@ -28,7 +28,9 @@ public static class CatalogModuleEndpoints
             int? offset,
             CancellationToken cancellationToken) =>
         {
-            var rows = await dbContext.FestivalRecords.AsNoTracking().ToListAsync(cancellationToken);
+            var rows = await dbContext.FestivalRecords.AsNoTracking()
+                .Where(row => row.StatusCode == null || row.StatusCode != "Borrador")
+                .ToListAsync(cancellationToken);
             var departments = await BuildDepartmentDictionaryAsync(dbContext, cancellationToken);
             var municipalities = await BuildMunicipalityDictionaryAsync(dbContext, cancellationToken);
             var relations = await LoadRelationsAsync(dbContext, cancellationToken);

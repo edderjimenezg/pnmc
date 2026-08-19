@@ -96,6 +96,16 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         return client.SendAsync(message);
     }
 
+    private static Task<HttpResponseMessage> CreateDraftFestivalAsync(HttpClient client, int organizacionId, string csrfToken, object request)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/organizaciones/{organizacionId}/festivales")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-CSRF-TOKEN", csrfToken);
+        return client.SendAsync(message);
+    }
+
     [Fact]
     public async Task Health_Endpoints_ReturnOk()
     {
@@ -607,6 +617,104 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
 
         var otherRead = await otherClient.GetAsync($"/api/v1/external/organizations/{organization.Id}");
         Assert.Equal(HttpStatusCode.Forbidden, otherRead.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_Administrator_Can_Create_Private_Festival_Draft_With_Catalogs_And_Audit()
+    {
+        const string email = "festival.borrador@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var csrfToken = await GetExternalCsrfTokenAsync(_client);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, csrfToken, new
+        {
+            name = "Fundación Festival Borrador",
+            contactEmail = "contacto@festival-borrador.test",
+            coverageLevel = "municipal",
+            departmentCode = "05",
+            municipalityCode = "05001"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+
+        var festivalResponse = await CreateDraftFestivalAsync(_client, int.Parse(organization!.Id), csrfToken, new
+        {
+            nombre = "Festival Borrador Protegido",
+            descripcion = "Identidad estable del Festival",
+            periodicidad = "anual",
+            correoContacto = "festival@borrador.test",
+            nivelCobertura = "municipal",
+            codigoDepartamento = "05",
+            codigoMunicipio = "05001",
+            practicasMusicalesIds = new[] { 1 },
+            territoriosSonorosIds = new[] { 1 },
+            personaId = 999,
+            administradorId = 999
+        });
+        Assert.True(festivalResponse.StatusCode == HttpStatusCode.Created, await festivalResponse.Content.ReadAsStringAsync());
+        var festival = await festivalResponse.Content.ReadFromJsonAsync<FestivalBorradorDto>();
+        Assert.NotNull(festival);
+        Assert.Equal("Borrador", festival!.Estado);
+        Assert.Equal(organization.Id, festival.OrganizacionPrincipalId);
+        Assert.Single(festival.PracticasMusicales);
+        Assert.Single(festival.TerritoriosSonoros);
+
+        var ownFestivals = await _client.GetFromJsonAsync<List<FestivalBorradorDto>>($"/api/v1/externo/organizaciones/{organization.Id}/festivales");
+        Assert.Contains(ownFestivals!, item => item.Id == festival.Id && item.Estado == "Borrador");
+
+        var publicFestivals = await _client.GetFromJsonAsync<PagedResponse<FestivalDto>>("/api/v1/festivals?limit=100&offset=0");
+        Assert.DoesNotContain(publicFestivals!.Items, item => item.Name == "Festival Borrador Protegido");
+
+        var mapResponse = await _client.GetFromJsonAsync<MapSummaryResponseDto>("/api/v1/map/summary?layer=Festivales");
+        var antioquia = Assert.Single(mapResponse!.Items, item => item.Department == "Antioquia");
+        Assert.Equal(1, antioquia.Festivals);
+    }
+
+    [Fact]
+    public async Task Festival_Draft_Creation_Rejects_Missing_Sessions_Csrf_And_Organization_Authorization()
+    {
+        var withoutSession = await _client.PostAsJsonAsync("/api/v1/externo/organizaciones/1/festivales", new { nombre = "Sin sesión" });
+        Assert.Equal(HttpStatusCode.Unauthorized, withoutSession.StatusCode);
+
+        const string ownerEmail = "festival.propietaria@example.com";
+        await RegisterAndVerifyExternalPersonAsync(ownerEmail);
+        await LoginExternalAsync(_client, ownerEmail);
+        var csrfToken = await GetExternalCsrfTokenAsync(_client);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, csrfToken, new
+        {
+            name = "Organización Festival Protegida",
+            contactEmail = "contacto@festival-protegido.test",
+            coverageLevel = "nacional"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+
+        var withoutCsrf = await _client.PostAsJsonAsync($"/api/v1/externo/organizaciones/{organization!.Id}/festivales", new
+        {
+            nombre = "Festival sin token", nivelCobertura = "nacional"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, withoutCsrf.StatusCode);
+
+        var institutionalClient = _factory.CreateClient();
+        await institutionalClient.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest { Email = "test@pnmc.local", Password = "pnmc-master" });
+        var institutionalCsrf = await institutionalClient.GetAsync("/api/v1/external/organizations/csrf");
+        Assert.Equal(HttpStatusCode.Unauthorized, institutionalCsrf.StatusCode);
+        var institutionalCreate = await institutionalClient.PostAsJsonAsync($"/api/v1/externo/organizaciones/{organization.Id}/festivales", new { nombre = "Festival institucional", nivelCobertura = "nacional" });
+        Assert.Equal(HttpStatusCode.Unauthorized, institutionalCreate.StatusCode);
+
+        var otherClient = _factory.CreateClient();
+        var registration = await otherClient.PostAsJsonAsync("/api/v1/external/auth/register", new ExternalRegisterRequest
+        {
+            ProfileType = "persona", FullName = "Otra persona", Email = "festival.otra@example.com", Password = "ClaveExterna123", AcceptTerms = true, AcceptDataPolicy = true
+        });
+        var otherAccount = await registration.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
+        await otherClient.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest { Email = "festival.otra@example.com", Code = otherAccount!.DebugVerificationCode });
+        await LoginExternalAsync(otherClient, "festival.otra@example.com");
+        var otherCsrf = await GetExternalCsrfTokenAsync(otherClient);
+        var otherCreate = await CreateDraftFestivalAsync(otherClient, int.Parse(organization.Id), otherCsrf, new { nombre = "Festival ajeno", nivelCobertura = "nacional" });
+        Assert.Equal(HttpStatusCode.Forbidden, otherCreate.StatusCode);
     }
 
     [Fact]

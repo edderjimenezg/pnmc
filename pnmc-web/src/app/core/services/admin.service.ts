@@ -128,6 +128,35 @@ export class AdminService {
     });
   }
 
+  fetchExternalOrganizations(): Observable<any[]> {
+    return this.apiClient.get<any[]>('/api/v1/externo/organizaciones/mis', {
+      errorFallback: 'No fue posible consultar tus organizaciones',
+    });
+  }
+
+  fetchFestivalCatalogs(): Observable<any> {
+    return this.apiClient.get<any>('/api/v1/externo/catalogos/festival', {
+      errorFallback: 'No fue posible cargar los catálogos para el Festival',
+    });
+  }
+
+  fetchDraftFestivals(organizacionId: number): Observable<any[]> {
+    return this.apiClient.get<any[]>(`/api/v1/externo/organizaciones/${organizacionId}/festivales`, {
+      errorFallback: 'No fue posible consultar los Festivales de la organización',
+    });
+  }
+
+  createDraftFestival(organizacionId: number, payload: any): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar el registro del Festival',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>(`/api/v1/externo/organizaciones/${organizacionId}/festivales`, payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible guardar el Festival como borrador',
+      }))
+    );
+  }
+
   // --- Usuarios de Entidades Aliadas ---
 
   fetchAllyUsers(): Observable<any> {

@@ -35,6 +35,7 @@ public static class DatabaseBootstrapper
                 {
                     await EnsureAdministrationSupportTablesAsync(db, configuration, startupToken);
                     await EnsureEntityAdministrationTablesAsync(db, startupToken);
+                    await EnsureFestivalExternalTablesAsync(db, startupToken);
                     await EnsureParticipationSupportTableAsync(db, startupToken);
                     await EnsureEditorialCatalogTableAsync(db, startupToken);
                     await EnsureRecordGovernanceTablesAsync(db, startupToken);
@@ -873,6 +874,63 @@ public static class DatabaseBootstrapper
                     CONSTRAINT [PK_EntidadesHistorialRevision] PRIMARY KEY ([IdHistorialRevision]),
                     CONSTRAINT [FK_EntidadesHistorialRevision_Entidades] FOREIGN KEY ([IdEntidad]) REFERENCES [Entidades] ([IdEntidad]),
                     CONSTRAINT [FK_EntidadesHistorialRevision_Usuarios] FOREIGN KEY ([IdUsuario]) REFERENCES [Usuarios] ([IdUsuario])
+                );
+            END;
+            """;
+
+        await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+    }
+
+    private static async Task EnsureFestivalExternalTablesAsync(PnmcDbContext db, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            IF COL_LENGTH(N'[Festivales]', N'OrganizacionPrincipalId') IS NULL
+            BEGIN
+                ALTER TABLE [Festivales] ADD [OrganizacionPrincipalId] int NULL;
+            END;
+
+            IF COL_LENGTH(N'[Festivales]', N'Periodicidad') IS NULL
+            BEGIN
+                ALTER TABLE [Festivales] ADD [Periodicidad] nvarchar(80) NULL;
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Festivales_OrganizacionPrincipal')
+            BEGIN
+                ALTER TABLE [Festivales] ADD CONSTRAINT [FK_Festivales_OrganizacionPrincipal]
+                    FOREIGN KEY ([OrganizacionPrincipalId]) REFERENCES [Entidades] ([IdEntidad]);
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Festivales_OrganizacionPrincipalId_EstadoRegistro' AND object_id = OBJECT_ID(N'[Festivales]'))
+            BEGIN
+                CREATE INDEX [IX_Festivales_OrganizacionPrincipalId_EstadoRegistro]
+                    ON [Festivales] ([OrganizacionPrincipalId], [EstadoRegistro]);
+            END;
+
+            IF OBJECT_ID(N'[FestivalesPracticasMusicales]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [FestivalesPracticasMusicales] (
+                    [IdFestivalPracticaMusical] int IDENTITY(1,1) NOT NULL,
+                    [FestivalId] int NOT NULL,
+                    [PracticaMusicalId] int NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_FestivalesPracticasMusicales_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_FestivalesPracticasMusicales] PRIMARY KEY ([IdFestivalPracticaMusical]),
+                    CONSTRAINT [FK_FestivalesPracticasMusicales_Festival] FOREIGN KEY ([FestivalId]) REFERENCES [Festivales] ([IdFestival]),
+                    CONSTRAINT [FK_FestivalesPracticasMusicales_Practica] FOREIGN KEY ([PracticaMusicalId]) REFERENCES [PracticasMusicales] ([IdPracticaMusical]),
+                    CONSTRAINT [UQ_FestivalesPracticasMusicales_Festival_Practica] UNIQUE ([FestivalId], [PracticaMusicalId])
+                );
+            END;
+
+            IF OBJECT_ID(N'[FestivalesTerritoriosSonoros]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [FestivalesTerritoriosSonoros] (
+                    [IdFestivalTerritorioSonoro] int IDENTITY(1,1) NOT NULL,
+                    [FestivalId] int NOT NULL,
+                    [TerritorioSonoroId] int NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_FestivalesTerritoriosSonoros_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_FestivalesTerritoriosSonoros] PRIMARY KEY ([IdFestivalTerritorioSonoro]),
+                    CONSTRAINT [FK_FestivalesTerritoriosSonoros_Festival] FOREIGN KEY ([FestivalId]) REFERENCES [Festivales] ([IdFestival]),
+                    CONSTRAINT [FK_FestivalesTerritoriosSonoros_TerritorioSonoro] FOREIGN KEY ([TerritorioSonoroId]) REFERENCES [TerritoriosSonoros] ([IdTerritorioSonoro]),
+                    CONSTRAINT [UQ_FestivalesTerritoriosSonoros_Festival_TerritorioSonoro] UNIQUE ([FestivalId], [TerritorioSonoroId])
                 );
             END;
             """;

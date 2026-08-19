@@ -2,7 +2,7 @@
   <section class="mx-auto max-w-3xl">
     <a routerLink="/simus" class="text-xs font-bold text-[#291242] hover:text-[#00A849]">← Volver a SIMUS</a>
     <p class="mt-10 font-alternate text-xs font-bold uppercase tracking-[0.22em] text-[#00A849]">Participa en SIMUS</p>
-    <h1 class="mt-3 font-gregor text-4xl uppercase leading-tight text-[#291242]">Crea tu cuenta o registra una organización</h1>
+    <h1 class="mt-3 font-gregor text-4xl uppercase leading-tight text-[#291242]">Participa y registra información en SIMUS</h1>
 
     @if (message()) { <p class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{{ message() }}</p> }
     @if (error()) { <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ error() }}</p> }
@@ -19,6 +19,12 @@
           <p class="mt-3 text-sm leading-relaxed text-white/75">Registra los datos básicos institucionales. Necesitaremos identificar a la persona que la administrará.</p>
         </button>
       </div>
+      @if (session()) {
+        <button type="button" (click)="chooseFestival()" class="mt-5 w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
+          <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Registrar Festival</h2>
+          <p class="mt-3 text-sm leading-relaxed">Selecciona una organización que administras y registra su Festival. Se guardará como borrador y no será público.</p>
+        </button>
+      }
     }
 
     @if (view() === 'register') {
@@ -69,11 +75,38 @@
       </form>
     }
 
+    @if (view() === 'festival') {
+      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); createFestival()">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Registrar Festival</h2>
+        <p class="text-sm">El Festival se guarda como <strong>Borrador</strong>. No se publica ni se incorpora al mapa o a la analítica pública.</p>
+        @if (organizations().length === 0) {
+          <p class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Aún no administras una organización. Registra una organización antes de crear un Festival.</p>
+          <button type="button" (click)="chooseOrganization()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Registrar organización</button>
+        } @else {
+          <label class="block text-sm font-bold">Organización responsable<select [(ngModel)]="festival.organizacionId" (change)="loadDraftFestivals()" name="festivalOrganization" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona una organización</option>@for (organization of organizations(); track organization.id) { <option [value]="organization.id">{{ organization.nombre }}</option> }</select></label>
+          <label class="block text-sm font-bold">Nombre del Festival<input [(ngModel)]="festival.nombre" name="festivalName" class="mt-1 w-full rounded-lg border p-3"></label>
+          <label class="block text-sm font-bold">Propósito o descripción <span class="font-normal">(opcional)</span><textarea [(ngModel)]="festival.descripcion" name="festivalDescription" rows="3" class="mt-1 w-full rounded-lg border p-3"></textarea></label>
+          <label class="block text-sm font-bold">Periodicidad <span class="font-normal">(opcional)</span><input [(ngModel)]="festival.periodicidad" name="festivalPeriodicity" placeholder="Ej.: anual" class="mt-1 w-full rounded-lg border p-3"></label>
+          <label class="block text-sm font-bold">Correo de contacto <span class="font-normal">(opcional)</span><input [(ngModel)]="festival.correoContacto" name="festivalContactEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
+          <label class="block text-sm font-bold">Alcance territorial<select [(ngModel)]="festival.nivelCobertura" name="festivalCoverageLevel" class="mt-1 w-full rounded-lg border p-3"><option value="municipal">Municipal</option><option value="departamental">Departamental</option><option value="nacional">Nacional</option></select></label>
+          @if (festival.nivelCobertura !== 'nacional') { <label class="block text-sm font-bold">Departamento<select [(ngModel)]="festival.departmentCode" name="festivalDepartmentCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un departamento</option>@for (department of departments(); track department.code) { <option [value]="department.code">{{ department.name }}</option> }</select></label> }
+          @if (festival.nivelCobertura === 'municipal') { <label class="block text-sm font-bold">Municipio<select [(ngModel)]="festival.municipalityCode" name="festivalMunicipalityCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un municipio</option>@for (municipality of festivalMunicipalities(); track municipality.municipalityCode) { <option [value]="municipality.municipalityCode">{{ municipality.municipalityName }}</option> }</select></label> }
+          <label class="block text-sm font-bold">Práctica musical <span class="font-normal">(opcional)</span><select [(ngModel)]="festival.practicaMusicalId" name="festivalPractice" class="mt-1 w-full rounded-lg border p-3"><option value="">Sin seleccionar</option>@for (practica of festivalCatalogs().practicasMusicales; track practica.id) { <option [value]="practica.id">{{ practica.nombre }}</option> }</select></label>
+          <label class="block text-sm font-bold">Territorio Sonoro <span class="font-normal">(opcional)</span><select [(ngModel)]="festival.territorioSonoroId" name="festivalSoundTerritory" class="mt-1 w-full rounded-lg border p-3"><option value="">Sin seleccionar</option>@for (territorio of festivalCatalogs().territoriosSonoros; track territorio.id) { <option [value]="territorio.id">{{ territorio.nombre }}</option> }</select></label>
+          <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Guardar como borrador</button>
+          @if (draftFestivals().length > 0) {
+            <section class="border-t pt-5"><h3 class="font-alternate text-base font-bold uppercase text-[#291242]">Festivales en borrador</h3><ul class="mt-3 space-y-2">@for (festivalBorrador of draftFestivals(); track festivalBorrador.id) { <li class="rounded-lg bg-slate-50 px-4 py-3 text-sm"><strong>{{ festivalBorrador.nombre }}</strong><span class="ml-2 rounded bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">Estado: Borrador</span></li> }</ul></section>
+          }
+        }
+      </form>
+    }
+
     @if (view() === 'complete') {
       <section class="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Proceso completado</h2>
         @if (createdOrganization()) { <p class="mt-3 text-sm">{{ createdOrganization().name }} quedó activa dentro del entorno autenticado. No se publica automáticamente en un directorio público.</p> }
         @if (!createdOrganization()) { <p class="mt-3 text-sm">Tu cuenta es personal y está lista para futuras autorizaciones.</p> }
+        @if (session()) { <button type="button" (click)="openFestivalForm()" class="mt-5 rounded-lg bg-[#00A849] px-5 py-3 text-sm font-bold text-white">Registrar Festival</button> }
         <button type="button" (click)="view.set('choice')" class="mt-5 rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Volver</button>
       </section>
     }

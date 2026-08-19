@@ -25,7 +25,9 @@ public static class MapEndpoints
         {
             var normalizedLayer = string.IsNullOrWhiteSpace(layer) ? "General" : layer;
 
-            var festivals = await dbContext.FestivalRecords.AsNoTracking().ToListAsync(cancellationToken);
+            var festivals = await dbContext.FestivalRecords.AsNoTracking()
+                .Where(item => item.StatusCode == null || item.StatusCode != "Borrador")
+                .ToListAsync(cancellationToken);
             var schools = await dbContext.SchoolRecords.AsNoTracking().ToListAsync(cancellationToken);
             var markets = await dbContext.MarketRecords.AsNoTracking().ToListAsync(cancellationToken);
             var departments = await dbContext.DivipolaLocations.AsNoTracking()
@@ -71,7 +73,9 @@ public static class MapEndpoints
             var targetCode = NormalizeDepartmentCode(departmentCode);
             if (targetCode.Length == 0) return Results.NotFound();
 
-            var festivals = await dbContext.FestivalRecords.AsNoTracking().ToListAsync(cancellationToken);
+            var festivals = await dbContext.FestivalRecords.AsNoTracking()
+                .Where(item => item.StatusCode == null || item.StatusCode != "Borrador")
+                .ToListAsync(cancellationToken);
             var schools = await dbContext.SchoolRecords.AsNoTracking().ToListAsync(cancellationToken);
             var markets = await dbContext.MarketRecords.AsNoTracking().ToListAsync(cancellationToken);
             var departments = await dbContext.DivipolaLocations.AsNoTracking()
