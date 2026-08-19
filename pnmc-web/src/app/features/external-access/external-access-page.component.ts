@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminService, CoincidenciaFestivalHistorico } from '../../core/services/admin.service';
 
-type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'festival' | 'complete';
+type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'responsible' | 'organization-home' | 'festival' | 'complete';
 
 @Component({
   selector: 'app-external-access-page',
@@ -87,7 +87,7 @@ export class ExternalAccessPageComponent implements OnInit {
     this.wantsOrganization.set(true);
     this.clearFeedback();
     if (this.session()) this.loadTerritories();
-    this.view.set(this.session() ? 'organization' : 'login');
+    this.view.set('organization');
   }
 
   chooseFestival(): void {
@@ -161,6 +161,21 @@ export class ExternalAccessPageComponent implements OnInit {
     });
   }
 
+  continueWithResponsible(): void {
+    this.clearFeedback();
+    if (!this.organization.name.trim() || !this.organization.contactEmail.trim()) {
+      this.error.set('Escribe el nombre y un correo de contacto de la organización para continuar.');
+      return;
+    }
+    this.wantsOrganization.set(true);
+    if (this.session()) {
+      this.loadTerritories();
+      this.view.set('organization');
+      return;
+    }
+    this.view.set('responsible');
+  }
+
   createOrganization(): void {
     this.clearFeedback();
     this.loading.set(true);
@@ -168,8 +183,8 @@ export class ExternalAccessPageComponent implements OnInit {
       next: organization => {
         this.loading.set(false);
         this.createdOrganization.set(organization);
-        this.view.set('complete');
-        this.message.set('La organización quedó registrada y tú eres su administrador principal inicial. Podrás sumar otras personas autorizadas en un corte posterior.');
+        this.message.set('La organización quedó registrada y quedaste como su administrador inicial. Ahora puedes consultar los registros históricos que podrían estar relacionados con ella.');
+        this.openOrganizationHome(organization.id, true);
       },
       error: error => this.fail(error),
     });
@@ -184,9 +199,8 @@ export class ExternalAccessPageComponent implements OnInit {
         this.organizations.set(organizations);
         if (!this.festival.organizacionId && organizations.length === 1) {
           this.festival.organizacionId = String(organizations[0].id);
-          this.loadDraftFestivals();
-          this.loadHistoricalFestivalMatches();
         }
+        if (this.festival.organizacionId) this.loadDraftFestivals();
         this.adminService.fetchFestivalCatalogs().subscribe({
           next: catalogs => {
             this.festivalCatalogs.set(catalogs);
@@ -195,6 +209,31 @@ export class ExternalAccessPageComponent implements OnInit {
           },
           error: error => this.fail(error),
         });
+      },
+      error: error => this.fail(error),
+    });
+  }
+
+  openOrganizationHome(preferredOrganizationId?: string | number, preserveFeedback = false): void {
+    if (!preserveFeedback) this.clearFeedback();
+    if (!this.session()) {
+      this.wantsOrganization.set(false);
+      this.view.set('login');
+      return;
+    }
+
+    this.loading.set(true);
+    this.adminService.fetchExternalOrganizations().subscribe({
+      next: organizations => {
+        this.organizations.set(organizations);
+        const preferredId = preferredOrganizationId ? String(preferredOrganizationId) : this.festival.organizacionId;
+        const selectedExists = organizations.some(organization => String(organization.id) === preferredId);
+        this.festival.organizacionId = selectedExists
+          ? preferredId
+          : organizations.length > 0 ? String(organizations[0].id) : '';
+        this.loading.set(false);
+        this.view.set('organization-home');
+        this.onFestivalOrganizationChange();
       },
       error: error => this.fail(error),
     });

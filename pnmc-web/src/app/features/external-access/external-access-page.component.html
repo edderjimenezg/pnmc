@@ -1,28 +1,32 @@
-<main class="min-h-screen bg-slate-50 px-5 py-12 font-nunito text-slate-700">
-  <section class="mx-auto max-w-3xl">
+<main class="min-h-screen bg-slate-50 px-4 pb-12 pt-32 font-nunito text-slate-700 sm:px-6 sm:pt-36 lg:pt-40">
+  <section class="mx-auto max-w-5xl">
     <a routerLink="/simus" class="text-xs font-bold text-[#291242] hover:text-[#00A849]">← Volver a SIMUS</a>
-    <p class="mt-10 font-alternate text-xs font-bold uppercase tracking-[0.22em] text-[#00A849]">Participa en SIMUS</p>
-    <h1 class="mt-3 font-gregor text-4xl uppercase leading-tight text-[#291242]">Participa y registra información en SIMUS</h1>
+    <div class="mt-8 rounded-3xl bg-[#291242] px-6 py-8 text-white shadow-lg sm:px-10 sm:py-10">
+      <p class="font-alternate text-xs font-bold uppercase tracking-[0.22em] text-[#7ce5a5]">Participa en SIMUS</p>
+      <h1 class="mt-3 max-w-3xl font-gregor text-4xl uppercase leading-tight sm:text-5xl">Haz parte de SIMUS</h1>
+      <p class="mt-4 max-w-3xl text-sm leading-relaxed text-white/80 sm:text-base">Crea tu cuenta para participar en SIMUS, gestionar organizaciones y mantener actualizada la información del ecosistema musical.</p>
+    </div>
 
     @if (message()) { <p class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{{ message() }}</p> }
     @if (error()) { <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ error() }}</p> }
 
     @if (view() === 'choice') {
-      <p class="mt-5 max-w-2xl text-sm leading-relaxed">¿Qué quieres hacer? Tu cuenta siempre es personal. Las organizaciones se registran por separado y las administran personas autorizadas.</p>
       <div class="mt-8 grid gap-5 md:grid-cols-2">
         <button type="button" (click)="chooseAccount()" class="rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
-          <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Registrarme</h2>
-          <p class="mt-3 text-sm leading-relaxed">Crea tu cuenta en SIMUS. Podrás completar posteriormente tu perfil como agente de la música y administrar organizaciones o procesos cuando tengas autorización.</p>
+          <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Registro personal</p>
+          <h2 class="mt-2 font-alternate text-lg font-bold uppercase text-[#291242]">Crear mi cuenta</h2>
+          <p class="mt-3 text-sm leading-relaxed">Crea tu acceso personal a SIMUS. Esta cuenta también podrá ser autorizada posteriormente para administrar organizaciones y sus procesos.</p>
         </button>
         <button type="button" (click)="chooseOrganization()" class="rounded-2xl border border-[#291242] bg-[#291242] p-6 text-left text-white shadow-sm transition hover:bg-[#3d1b61]">
-          <h2 class="font-alternate text-lg font-bold uppercase">Registrar una organización o entidad</h2>
-          <p class="mt-3 text-sm leading-relaxed text-white/75">Registra los datos básicos institucionales. Necesitaremos identificar a la persona que la administrará.</p>
+          <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#7ce5a5]">Organización</p>
+          <h2 class="mt-2 font-alternate text-lg font-bold uppercase">Registrar una organización</h2>
+          <p class="mt-3 text-sm leading-relaxed text-white/75">Registra una fundación, asociación, empresa, entidad pública u otra organización. Durante el proceso identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         </button>
       </div>
       @if (session()) {
-        <button type="button" (click)="chooseFestival()" class="mt-5 w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
-          <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Registrar Festival</h2>
-          <p class="mt-3 text-sm leading-relaxed">Selecciona una organización que administras y registra su Festival. Se guardará como borrador y no será público.</p>
+        <button type="button" (click)="openOrganizationHome()" class="mt-5 w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
+          <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Mis organizaciones</h2>
+          <p class="mt-3 text-sm leading-relaxed">Consulta las organizaciones que administras, sus Festivales y los registros históricos que podrían estar relacionados con ellas.</p>
         </button>
       }
     }
@@ -62,17 +66,65 @@
     }
 
     @if (view() === 'organization') {
-      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); createOrganization()">
+      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Datos básicos de la organización</h2>
-        <p class="text-sm">El correo institucional sirve para contactar a la organización. Tu correo de acceso sigue siendo personal.</p>
+        <p class="text-sm">Estás registrando una organización. Después identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         <label class="block text-sm font-bold">Nombre de la organización<input [(ngModel)]="organization.name" name="organizationName" class="mt-1 w-full rounded-lg border p-3"></label>
         <label class="block text-sm font-bold">NIT u otra identificación <span class="font-normal">(si aplica)</span><input [(ngModel)]="organization.identificationNumber" name="identificationNumber" class="mt-1 w-full rounded-lg border p-3"></label>
         <label class="block text-sm font-bold">Correo institucional o de contacto<input [(ngModel)]="organization.contactEmail" name="contactEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
         <label class="block text-sm font-bold">Alcance territorial<select [(ngModel)]="organization.coverageLevel" name="coverageLevel" class="mt-1 w-full rounded-lg border p-3"><option value="municipal">Municipal</option><option value="departamental">Departamental</option><option value="nacional">Nacional</option></select></label>
-        @if (organization.coverageLevel !== 'nacional') { <label class="block text-sm font-bold">Departamento<select [(ngModel)]="organization.departmentCode" name="departmentCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un departamento</option>@for (department of departments(); track department.code) { <option [value]="department.code">{{ department.name }}</option> }</select></label> }
-        @if (organization.coverageLevel === 'municipal') { <label class="block text-sm font-bold">Municipio<select [(ngModel)]="organization.municipalityCode" name="municipalityCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un municipio</option>@for (municipality of municipalities(); track municipality.municipalityCode) { <option [value]="municipality.municipalityCode">{{ municipality.municipalityName }}</option> }</select></label> }
-        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Registrar organización</button>
+        @if (session()) {
+          @if (organization.coverageLevel !== 'nacional') { <label class="block text-sm font-bold">Departamento<select [(ngModel)]="organization.departmentCode" name="departmentCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un departamento</option>@for (department of departments(); track department.code) { <option [value]="department.code">{{ department.name }}</option> }</select></label> }
+          @if (organization.coverageLevel === 'municipal') { <label class="block text-sm font-bold">Municipio<select [(ngModel)]="organization.municipalityCode" name="municipalityCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un municipio</option>@for (municipality of municipalities(); track municipality.municipalityCode) { <option [value]="municipality.municipalityCode">{{ municipality.municipalityName }}</option> }</select></label> }
+        } @else {
+          <p class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">El departamento y el municipio se seleccionan en DIVIPOLA después de identificar a la persona responsable.</p>
+        }
+        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{{ session() ? 'Registrar organización' : 'Continuar con la persona responsable' }}</button>
       </form>
+    }
+
+    @if (view() === 'responsible') {
+      <section class="mt-8 rounded-2xl bg-white p-6 shadow-sm">
+        <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Persona responsable</p>
+        <h2 class="mt-2 font-alternate text-xl font-bold uppercase text-[#291242]">¿Quién administrará inicialmente esta organización?</h2>
+        <p class="mt-3 max-w-2xl text-sm leading-relaxed">La organización no tiene contraseña compartida. Una persona concreta recibe la autorización inicial para administrarla; esta autorización podrá cambiar más adelante.</p>
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row"><button type="button" (click)="goToLogin()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Ya tengo cuenta</button><button type="button" (click)="goToRegister()" class="rounded-lg border border-[#291242] px-5 py-3 text-sm font-bold text-[#291242]">Crear mi cuenta</button></div>
+      </section>
+    }
+
+    @if (view() === 'organization-home') {
+      <section class="mt-8 space-y-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p class="font-alternate text-xs font-bold uppercase tracking-[0.18em] text-[#00A849]">Mi organización</p>
+          <h2 class="mt-2 font-alternate text-xl font-bold uppercase text-[#291242]">Gestiona información de tu organización</h2>
+          @if (organizations().length === 0) {
+            <p class="mt-3 text-sm">Aún no administras una organización.</p>
+            <button type="button" (click)="chooseOrganization()" class="mt-5 rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Registrar una organización</button>
+          } @else {
+            <label class="mt-5 block text-sm font-bold">Organización<select [(ngModel)]="festival.organizacionId" (change)="onFestivalOrganizationChange()" name="managedOrganization" class="mt-1 w-full rounded-lg border p-3">@for (organization of organizations(); track organization.id) { <option [value]="organization.id">{{ organization.nombre }}</option> }</select></label>
+            <button type="button" (click)="openFestivalForm()" class="mt-5 rounded-lg bg-[#00A849] px-5 py-3 text-sm font-bold text-white">Registrar Festival</button>
+          }
+        </div>
+
+        @if (festival.organizacionId) {
+          <section class="rounded-2xl border border-[#00A849]/30 bg-emerald-50/40 p-5 shadow-xs">
+            <p class="font-alternate text-xs font-bold uppercase tracking-[0.18em] text-[#00A849]">Vinculación histórica</p>
+            <h3 class="mt-2 font-alternate text-base font-bold uppercase text-[#291242]">Registros que podrían estar relacionados con tu organización</h3>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600">SIMUS consulta únicamente Festivales históricos publicados que todavía no tienen una organización responsable registrada. Una posible coincidencia no confirma propiedad ni modifica el registro.</p>
+            @if (cargandoCoincidencias()) {
+              <p class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">Consultando registros históricos…</p>
+            } @else if (coincidenciasConsultadas() && coincidenciasHistoricas().length === 0) {
+              <p class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No encontramos registros históricos que cumplan las condiciones de coincidencia para esta organización.</p>
+            } @else if (coincidenciasHistoricas().length > 0) {
+              <div class="mt-4 grid gap-4 md:grid-cols-2">
+                @for (coincidencia of coincidenciasHistoricas(); track coincidencia.festivalId) {
+                  <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-xs"><p class="text-[0.65rem] font-black uppercase tracking-widest text-[#00A849]">Posible coincidencia</p><h4 class="mt-2 font-bold text-[#291242]">{{ coincidencia.nombreFestival }}</h4><p class="mt-1 text-xs font-medium text-slate-500">{{ coincidencia.nombreMunicipio || 'Municipio no registrado' }}, {{ coincidencia.nombreDepartamento || 'Departamento no registrado' }}</p><p class="mt-3 text-xs font-bold text-slate-700">{{ etiquetaCoincidencia(coincidencia.tipoCoincidencia) }}</p><p class="mt-1 text-xs leading-relaxed text-slate-600">{{ coincidencia.evidencias[0] }}</p><button type="button" (click)="coincidenciaEnDetalle.set(coincidencia)" class="mt-4 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-[#291242] transition hover:border-[#291242]">Ver información</button></article>
+                }
+              </div>
+            }
+          </section>
+        }
+      </section>
     }
 
     @if (view() === 'festival') {
@@ -84,31 +136,6 @@
           <button type="button" (click)="chooseOrganization()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Registrar organización</button>
         } @else {
           <label class="block text-sm font-bold">Organización responsable<select [(ngModel)]="festival.organizacionId" (change)="onFestivalOrganizationChange()" [disabled]="festivalEnEdicion() || propuestaEnEdicion()" name="festivalOrganization" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona una organización</option>@for (organization of organizations(); track organization.id) { <option [value]="organization.id">{{ organization.nombre }}</option> }</select></label>
-          @if (festival.organizacionId && !festivalEnEdicion() && !propuestaEnEdicion()) {
-            <section class="rounded-2xl border border-[#00A849]/30 bg-emerald-50/40 p-5 shadow-xs">
-              <p class="font-alternate text-xs font-bold uppercase tracking-[0.18em] text-[#00A849]">Vinculación histórica</p>
-              <h3 class="mt-2 font-alternate text-base font-bold uppercase text-[#291242]">Registros que podrían estar relacionados con tu organización</h3>
-              <p class="mt-2 text-sm leading-relaxed text-slate-600">SIMUS consulta únicamente Festivales históricos publicados que todavía no tienen una organización responsable registrada. Una posible coincidencia no confirma propiedad ni modifica el registro.</p>
-              @if (cargandoCoincidencias()) {
-                <p class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">Consultando registros históricos…</p>
-              } @else if (coincidenciasConsultadas() && coincidenciasHistoricas().length === 0) {
-                <p class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No encontramos registros históricos que cumplan las condiciones de coincidencia para esta organización.</p>
-              } @else if (coincidenciasHistoricas().length > 0) {
-                <div class="mt-4 grid gap-4 md:grid-cols-2">
-                  @for (coincidencia of coincidenciasHistoricas(); track coincidencia.festivalId) {
-                    <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-                      <p class="text-[0.65rem] font-black uppercase tracking-widest text-[#00A849]">Posible coincidencia</p>
-                      <h4 class="mt-2 font-bold text-[#291242]">{{ coincidencia.nombreFestival }}</h4>
-                      <p class="mt-1 text-xs font-medium text-slate-500">{{ coincidencia.nombreMunicipio || 'Municipio no registrado' }}, {{ coincidencia.nombreDepartamento || 'Departamento no registrado' }}</p>
-                      <p class="mt-3 text-xs font-bold text-slate-700">{{ etiquetaCoincidencia(coincidencia.tipoCoincidencia) }}</p>
-                      <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ coincidencia.evidencias[0] }}</p>
-                      <button type="button" (click)="coincidenciaEnDetalle.set(coincidencia)" class="mt-4 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-[#291242] transition hover:border-[#291242]">Ver información</button>
-                    </article>
-                  }
-                </div>
-              }
-            </section>
-          }
           <label class="block text-sm font-bold">Nombre del Festival<input [(ngModel)]="festival.nombre" name="festivalName" class="mt-1 w-full rounded-lg border p-3"></label>
           <label class="block text-sm font-bold">Propósito o descripción <span class="font-normal">(opcional)</span><textarea [(ngModel)]="festival.descripcion" name="festivalDescription" rows="3" class="mt-1 w-full rounded-lg border p-3"></textarea></label>
           <label class="block text-sm font-bold">Periodicidad <span class="font-normal">(opcional)</span><input [(ngModel)]="festival.periodicidad" name="festivalPeriodicity" placeholder="Ej.: anual" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -135,7 +162,7 @@
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Proceso completado</h2>
         @if (createdOrganization()) { <p class="mt-3 text-sm">{{ createdOrganization().name }} quedó activa dentro del entorno autenticado. No se publica automáticamente en un directorio público.</p> }
         @if (!createdOrganization()) { <p class="mt-3 text-sm">Tu cuenta es personal y está lista para futuras autorizaciones.</p> }
-        @if (session()) { <button type="button" (click)="openFestivalForm()" class="mt-5 rounded-lg bg-[#00A849] px-5 py-3 text-sm font-bold text-white">Registrar Festival</button> }
+        @if (session()) { <button type="button" (click)="openOrganizationHome(createdOrganization()?.id)" class="mt-5 rounded-lg bg-[#00A849] px-5 py-3 text-sm font-bold text-white">Ir a mi organización</button> }
         <button type="button" (click)="view.set('choice')" class="mt-5 rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Volver</button>
       </section>
     }
@@ -153,7 +180,7 @@
           </dl>
           <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"><strong>Información de SIMUS:</strong><ul class="mt-2 list-disc space-y-1 pl-5">@for (evidencia of coincidencia.evidencias; track evidencia) { <li>{{ evidencia }}</li> }</ul></div>
           <p class="mt-5 text-xs leading-relaxed text-slate-500">Esta consulta es informativa. Aún no crea una solicitud de vinculación ni cambia la información pública del Festival.</p>
-          <button type="button" (click)="coincidenciaEnDetalle.set(null)" class="mt-5 rounded-lg bg-[#291242] px-4 py-2 text-xs font-bold text-white">Cerrar</button>
+          <div class="mt-5 flex flex-wrap gap-3"><button type="button" disabled class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-bold text-slate-400" title="Esta acción se habilitará en PV-02">Solicitar administración · Próximamente</button><button type="button" (click)="coincidenciaEnDetalle.set(null)" class="rounded-lg bg-[#291242] px-4 py-2 text-xs font-bold text-white">Cerrar</button></div>
         </section>
       </div>
     }

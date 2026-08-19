@@ -17,6 +17,7 @@ export const PAGE_IDS = {
   mapaParticipa: 'mapa-participa',
   admin: 'admin',
   colaboradores: 'colaboradores',
+  registro: 'registro',
   estrategiaCirculacion: 'estrategia-circulacion',
   estrategiaInvestigacion: 'estrategia-investigacion',
 };
@@ -36,6 +37,7 @@ export const PAGE_PATHS: Record<string, string> = {
   [PAGE_IDS.mapaParticipa]: '/mapa/participa',
   [PAGE_IDS.admin]: '/admin',
   [PAGE_IDS.colaboradores]: '/colaboradores',
+  [PAGE_IDS.registro]: '/registro',
   [PAGE_IDS.estrategiaCirculacion]: '/estrategia/circulacion',
   [PAGE_IDS.estrategiaInvestigacion]: '/estrategia/investigacion',
 };
@@ -61,6 +63,7 @@ export class NavigationService {
     [PAGE_IDS.simus]: 'SIMUS',
     [PAGE_IDS.admin]: 'Administración',
     [PAGE_IDS.colaboradores]: 'Colaboradores',
+    [PAGE_IDS.registro]: 'Haz parte de SIMUS',
     [PAGE_IDS.estrategiaCirculacion]: 'Estrategia de circulación',
     [PAGE_IDS.estrategiaInvestigacion]: 'Estrategia de investigación',
   };
