@@ -28,6 +28,7 @@ export class ExternalAccessPageComponent implements OnInit {
   draftFestivals = signal<any[]>([]);
   festivalEnRevision = signal<any | null>(null);
   festivalEnEdicion = signal<any | null>(null);
+  propuestaEnEdicion = signal<any | null>(null);
   locations = signal<any[]>([]);
   departments = computed(() => Array.from(new Map(this.locations().map(item => [item.departmentCode, item.departmentName])).entries())
     .map(([code, name]) => ({ code, name })));
@@ -61,8 +62,8 @@ export class ExternalAccessPageComponent implements OnInit {
     nivelCobertura: 'municipal',
     departmentCode: '',
     municipalityCode: '',
-    practicaMusicalId: '',
-    territorioSonoroId: '',
+    practicasMusicalesIds: [] as number[],
+    territoriosSonorosIds: [] as number[],
   };
 
   ngOnInit(): void {
@@ -210,26 +211,32 @@ export class ExternalAccessPageComponent implements OnInit {
       nivelCobertura: this.festival.nivelCobertura,
       codigoDepartamento: this.festival.departmentCode || null,
       codigoMunicipio: this.festival.municipalityCode || null,
-      practicasMusicalesIds: this.festival.practicaMusicalId ? [Number(this.festival.practicaMusicalId)] : [],
-      territoriosSonorosIds: this.festival.territorioSonoroId ? [Number(this.festival.territorioSonoroId)] : [],
+      practicasMusicalesIds: this.festival.practicasMusicalesIds,
+      territoriosSonorosIds: this.festival.territoriosSonorosIds,
     };
     const festivalEnEdicion = this.festivalEnEdicion();
-    const guardar = festivalEnEdicion
+    const propuestaEnEdicion = this.propuestaEnEdicion();
+    const guardar = propuestaEnEdicion
+      ? this.adminService.actualizarPropuestaCambioFestival(Number(propuestaEnEdicion.festivalOrigenId), solicitud)
+      : festivalEnEdicion
       ? this.adminService.updateExternalFestival(Number(festivalEnEdicion.id), solicitud)
       : this.adminService.createDraftFestival(organizacionId, solicitud);
     guardar.subscribe({
       next: festival => {
         this.loading.set(false);
-        this.message.set(festivalEnEdicion
+        this.message.set(propuestaEnEdicion
+          ? `Propuesta de cambios guardada para ${festival.nombre}. La información pública vigente no se modificó.`
+          : festivalEnEdicion
           ? `Ajustes guardados para el Festival: ${festival.nombre}. Ya puedes enviarlo nuevamente a revisión.`
           : `Festival guardado como borrador: ${festival.nombre}.`);
         this.festivalEnEdicion.set(null);
+        this.propuestaEnEdicion.set(null);
         this.festival.nombre = '';
         this.festival.descripcion = '';
         this.festival.periodicidad = '';
         this.festival.correoContacto = '';
-        this.festival.practicaMusicalId = '';
-        this.festival.territorioSonoroId = '';
+        this.festival.practicasMusicalesIds = [];
+        this.festival.territoriosSonorosIds = [];
         this.loadDraftFestivals();
       },
       error: error => this.fail(error),
@@ -271,17 +278,38 @@ export class ExternalAccessPageComponent implements OnInit {
     if (!['Borrador', 'AjustesSolicitados'].includes(festival.estado)) return;
     this.clearFeedback();
     this.festivalEnEdicion.set(festival);
-    this.festival.organizacionId = festival.organizacionPrincipalId;
-    this.festival.nombre = festival.nombre || '';
-    this.festival.descripcion = festival.descripcion || '';
-    this.festival.periodicidad = festival.periodicidad || '';
-    this.festival.correoContacto = festival.correoContacto || '';
-    this.festival.nivelCobertura = festival.nivelCobertura || 'municipal';
-    this.festival.departmentCode = festival.codigoDepartamento || '';
-    this.festival.municipalityCode = festival.codigoMunicipio || '';
-    this.festival.practicaMusicalId = festival.practicasMusicales?.[0]?.id ? String(festival.practicasMusicales[0].id) : '';
-    this.festival.territorioSonoroId = festival.territoriosSonoros?.[0]?.id ? String(festival.territoriosSonoros[0].id) : '';
+    this.propuestaEnEdicion.set(null);
+    this.cargarFormularioFestival(festival);
     this.message.set(`Editando ${festival.nombre}. Atiende la observación y guarda los ajustes antes de reenviarlo.`);
+  }
+
+  proponerCambiosFestival(festival: any): void {
+    if (festival.estado !== 'Publicado') return;
+    this.clearFeedback();
+    this.loading.set(true);
+    this.adminService.iniciarPropuestaCambioFestival(Number(festival.id)).subscribe({
+      next: propuesta => {
+        this.loading.set(false);
+        this.festivalEnEdicion.set(null);
+        this.propuestaEnEdicion.set(propuesta);
+        this.cargarFormularioFestival(propuesta, festival.organizacionPrincipalId);
+        this.message.set(`Estás preparando una propuesta de cambios para ${festival.nombre}. Los cambios no reemplazarán la información pública hasta que SIMUS los apruebe.`);
+      },
+      error: error => this.fail(error),
+    });
+  }
+
+  private cargarFormularioFestival(fuente: any, organizacionId?: string): void {
+    this.festival.organizacionId = organizacionId || fuente.organizacionPrincipalId || this.festival.organizacionId;
+    this.festival.nombre = fuente.nombre || '';
+    this.festival.descripcion = fuente.descripcion || '';
+    this.festival.periodicidad = fuente.periodicidad || '';
+    this.festival.correoContacto = fuente.correoContacto || '';
+    this.festival.nivelCobertura = fuente.nivelCobertura || 'municipal';
+    this.festival.departmentCode = fuente.codigoDepartamento || '';
+    this.festival.municipalityCode = fuente.codigoMunicipio || '';
+    this.festival.practicasMusicalesIds = (fuente.practicasMusicales || []).map((item: any) => Number(item.id));
+    this.festival.territoriosSonorosIds = (fuente.territoriosSonoros || []).map((item: any) => Number(item.id));
   }
 
   goToLogin(): void { this.clearFeedback(); this.view.set('login'); }

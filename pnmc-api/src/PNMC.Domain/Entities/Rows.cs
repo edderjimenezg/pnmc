@@ -187,6 +187,75 @@ public sealed class FestivalTerritorioSonoroRow
     public DateTime FechaCreacion { get; set; }
 }
 
+public sealed class VersionFestivalRow
+{
+    public int Id { get; set; }
+    public int FestivalOrigenId { get; set; }
+    public int NumeroVersion { get; set; }
+    public bool EsVigente { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+    public string NivelCobertura { get; set; } = string.Empty;
+    public string? CodigoDepartamento { get; set; }
+    public string? CodigoMunicipio { get; set; }
+    public string? Periodicidad { get; set; }
+    public string? CorreoContacto { get; set; }
+    public DateTime FechaPublicacion { get; set; }
+    public DateTime FechaCreacion { get; set; }
+}
+
+public sealed class VersionFestivalPracticaMusicalRow
+{
+    public int Id { get; set; }
+    public int VersionFestivalId { get; set; }
+    public int PracticaMusicalId { get; set; }
+    public DateTime FechaCreacion { get; set; }
+}
+
+public sealed class VersionFestivalTerritorioSonoroRow
+{
+    public int Id { get; set; }
+    public int VersionFestivalId { get; set; }
+    public int TerritorioSonoroId { get; set; }
+    public DateTime FechaCreacion { get; set; }
+}
+
+public sealed class PropuestaCambioFestivalRow
+{
+    public int Id { get; set; }
+    public int FestivalOrigenId { get; set; }
+    public int VersionOrigenId { get; set; }
+    public int OrganizacionId { get; set; }
+    public int PersonaProponenteId { get; set; }
+    public string Estado { get; set; } = "Borrador";
+    public bool Activa { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+    public string NivelCobertura { get; set; } = string.Empty;
+    public string? CodigoDepartamento { get; set; }
+    public string? CodigoMunicipio { get; set; }
+    public string? Periodicidad { get; set; }
+    public string? CorreoContacto { get; set; }
+    public DateTime FechaPropuesta { get; set; }
+    public DateTime FechaActualizacion { get; set; }
+}
+
+public sealed class PropuestaCambioFestivalPracticaMusicalRow
+{
+    public int Id { get; set; }
+    public int PropuestaCambioFestivalId { get; set; }
+    public int PracticaMusicalId { get; set; }
+    public DateTime FechaCreacion { get; set; }
+}
+
+public sealed class PropuestaCambioFestivalTerritorioSonoroRow
+{
+    public int Id { get; set; }
+    public int PropuestaCambioFestivalId { get; set; }
+    public int TerritorioSonoroId { get; set; }
+    public DateTime FechaCreacion { get; set; }
+}
+
 public sealed class SchoolRow
 {
     public int Id { get; set; }

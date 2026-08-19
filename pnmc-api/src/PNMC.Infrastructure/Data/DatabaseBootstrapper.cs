@@ -933,6 +933,123 @@ public static class DatabaseBootstrapper
                     CONSTRAINT [UQ_FestivalesTerritoriosSonoros_Festival_TerritorioSonoro] UNIQUE ([FestivalId], [TerritorioSonoroId])
                 );
             END;
+
+            IF OBJECT_ID(N'[VersionesFestival]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [VersionesFestival] (
+                    [IdVersionFestival] int IDENTITY(1,1) NOT NULL,
+                    [FestivalOrigenId] int NOT NULL,
+                    [NumeroVersion] int NOT NULL,
+                    [EsVigente] bit NOT NULL,
+                    [Nombre] nvarchar(240) NOT NULL,
+                    [Descripcion] nvarchar(1200) NULL,
+                    [NivelCobertura] nvarchar(40) NOT NULL,
+                    [CodigoDepartamento] nvarchar(20) NULL,
+                    [CodigoMunicipio] nvarchar(20) NULL,
+                    [Periodicidad] nvarchar(80) NULL,
+                    [CorreoContacto] nvarchar(180) NULL,
+                    [FechaPublicacion] datetime2(0) NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_VersionesFestival_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_VersionesFestival] PRIMARY KEY ([IdVersionFestival]),
+                    CONSTRAINT [FK_VersionesFestival_Festival] FOREIGN KEY ([FestivalOrigenId]) REFERENCES [Festivales] ([IdFestival]),
+                    CONSTRAINT [UQ_VersionesFestival_Festival_Numero] UNIQUE ([FestivalOrigenId], [NumeroVersion])
+                );
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_VersionesFestival_Festival_Vigente' AND object_id = OBJECT_ID(N'[VersionesFestival]'))
+            BEGIN
+                CREATE UNIQUE INDEX [UX_VersionesFestival_Festival_Vigente]
+                    ON [VersionesFestival] ([FestivalOrigenId]) WHERE [EsVigente] = 1;
+            END;
+
+            IF OBJECT_ID(N'[VersionesFestivalPracticasMusicales]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [VersionesFestivalPracticasMusicales] (
+                    [IdVersionFestivalPracticaMusical] int IDENTITY(1,1) NOT NULL,
+                    [VersionFestivalId] int NOT NULL,
+                    [PracticaMusicalId] int NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_VersionesFestivalPracticas_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_VersionesFestivalPracticasMusicales] PRIMARY KEY ([IdVersionFestivalPracticaMusical]),
+                    CONSTRAINT [FK_VersionesFestivalPracticas_Version] FOREIGN KEY ([VersionFestivalId]) REFERENCES [VersionesFestival] ([IdVersionFestival]),
+                    CONSTRAINT [FK_VersionesFestivalPracticas_Practica] FOREIGN KEY ([PracticaMusicalId]) REFERENCES [PracticasMusicales] ([IdPracticaMusical]),
+                    CONSTRAINT [UQ_VersionesFestivalPracticas] UNIQUE ([VersionFestivalId], [PracticaMusicalId])
+                );
+            END;
+
+            IF OBJECT_ID(N'[VersionesFestivalTerritoriosSonoros]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [VersionesFestivalTerritoriosSonoros] (
+                    [IdVersionFestivalTerritorioSonoro] int IDENTITY(1,1) NOT NULL,
+                    [VersionFestivalId] int NOT NULL,
+                    [TerritorioSonoroId] int NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_VersionesFestivalTerritorios_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_VersionesFestivalTerritoriosSonoros] PRIMARY KEY ([IdVersionFestivalTerritorioSonoro]),
+                    CONSTRAINT [FK_VersionesFestivalTerritorios_Version] FOREIGN KEY ([VersionFestivalId]) REFERENCES [VersionesFestival] ([IdVersionFestival]),
+                    CONSTRAINT [FK_VersionesFestivalTerritorios_Territorio] FOREIGN KEY ([TerritorioSonoroId]) REFERENCES [TerritoriosSonoros] ([IdTerritorioSonoro]),
+                    CONSTRAINT [UQ_VersionesFestivalTerritorios] UNIQUE ([VersionFestivalId], [TerritorioSonoroId])
+                );
+            END;
+
+            IF OBJECT_ID(N'[PropuestasCambioFestival]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [PropuestasCambioFestival] (
+                    [IdPropuestaCambioFestival] int IDENTITY(1,1) NOT NULL,
+                    [FestivalOrigenId] int NOT NULL,
+                    [VersionOrigenId] int NOT NULL,
+                    [OrganizacionId] int NOT NULL,
+                    [PersonaProponenteId] int NOT NULL,
+                    [Estado] nvarchar(80) NOT NULL,
+                    [Activa] bit NOT NULL,
+                    [Nombre] nvarchar(240) NOT NULL,
+                    [Descripcion] nvarchar(1200) NULL,
+                    [NivelCobertura] nvarchar(40) NOT NULL,
+                    [CodigoDepartamento] nvarchar(20) NULL,
+                    [CodigoMunicipio] nvarchar(20) NULL,
+                    [Periodicidad] nvarchar(80) NULL,
+                    [CorreoContacto] nvarchar(180) NULL,
+                    [FechaPropuesta] datetime2(0) NOT NULL CONSTRAINT [DF_PropuestasCambioFestival_FechaPropuesta] DEFAULT (SYSUTCDATETIME()),
+                    [FechaActualizacion] datetime2(0) NOT NULL CONSTRAINT [DF_PropuestasCambioFestival_FechaActualizacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_PropuestasCambioFestival] PRIMARY KEY ([IdPropuestaCambioFestival]),
+                    CONSTRAINT [FK_PropuestasCambioFestival_Festival] FOREIGN KEY ([FestivalOrigenId]) REFERENCES [Festivales] ([IdFestival]),
+                    CONSTRAINT [FK_PropuestasCambioFestival_Version] FOREIGN KEY ([VersionOrigenId]) REFERENCES [VersionesFestival] ([IdVersionFestival]),
+                    CONSTRAINT [FK_PropuestasCambioFestival_Organizacion] FOREIGN KEY ([OrganizacionId]) REFERENCES [Entidades] ([IdEntidad]),
+                    CONSTRAINT [FK_PropuestasCambioFestival_Persona] FOREIGN KEY ([PersonaProponenteId]) REFERENCES [Usuarios] ([IdUsuario])
+                );
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_PropuestasCambioFestival_Activa' AND object_id = OBJECT_ID(N'[PropuestasCambioFestival]'))
+            BEGIN
+                CREATE UNIQUE INDEX [UX_PropuestasCambioFestival_Activa]
+                    ON [PropuestasCambioFestival] ([FestivalOrigenId]) WHERE [Activa] = 1;
+            END;
+
+            IF OBJECT_ID(N'[PropuestasCambioFestivalPracticasMusicales]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [PropuestasCambioFestivalPracticasMusicales] (
+                    [IdPropuestaCambioFestivalPracticaMusical] int IDENTITY(1,1) NOT NULL,
+                    [PropuestaCambioFestivalId] int NOT NULL,
+                    [PracticaMusicalId] int NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_PropuestasCambioFestivalPracticas_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_PropuestasCambioFestivalPracticasMusicales] PRIMARY KEY ([IdPropuestaCambioFestivalPracticaMusical]),
+                    CONSTRAINT [FK_PropuestasCambioFestivalPracticas_Propuesta] FOREIGN KEY ([PropuestaCambioFestivalId]) REFERENCES [PropuestasCambioFestival] ([IdPropuestaCambioFestival]),
+                    CONSTRAINT [FK_PropuestasCambioFestivalPracticas_Practica] FOREIGN KEY ([PracticaMusicalId]) REFERENCES [PracticasMusicales] ([IdPracticaMusical]),
+                    CONSTRAINT [UQ_PropuestasCambioFestivalPracticas] UNIQUE ([PropuestaCambioFestivalId], [PracticaMusicalId])
+                );
+            END;
+
+            IF OBJECT_ID(N'[PropuestasCambioFestivalTerritoriosSonoros]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [PropuestasCambioFestivalTerritoriosSonoros] (
+                    [IdPropuestaCambioFestivalTerritorioSonoro] int IDENTITY(1,1) NOT NULL,
+                    [PropuestaCambioFestivalId] int NOT NULL,
+                    [TerritorioSonoroId] int NOT NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_PropuestasCambioFestivalTerritorios_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_PropuestasCambioFestivalTerritoriosSonoros] PRIMARY KEY ([IdPropuestaCambioFestivalTerritorioSonoro]),
+                    CONSTRAINT [FK_PropuestasCambioFestivalTerritorios_Propuesta] FOREIGN KEY ([PropuestaCambioFestivalId]) REFERENCES [PropuestasCambioFestival] ([IdPropuestaCambioFestival]),
+                    CONSTRAINT [FK_PropuestasCambioFestivalTerritorios_Territorio] FOREIGN KEY ([TerritorioSonoroId]) REFERENCES [TerritoriosSonoros] ([IdTerritorioSonoro]),
+                    CONSTRAINT [UQ_PropuestasCambioFestivalTerritorios] UNIQUE ([PropuestaCambioFestivalId], [TerritorioSonoroId])
+                );
+            END;
             """;
 
         await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);

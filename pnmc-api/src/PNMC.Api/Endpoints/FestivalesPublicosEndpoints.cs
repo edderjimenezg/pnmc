@@ -57,33 +57,55 @@ public static class FestivalesPublicosEndpoints
             .ToDictionaryAsync(item => item.Codigo, item => item.Nombre, cancellationToken);
         var municipios = await dbContext.DivipolaLocations.AsNoTracking()
             .ToDictionaryAsync(item => item.MunicipalityCode, item => item.MunicipalityName, cancellationToken);
-        var practicas = await dbContext.FestivalesPracticasMusicales.AsNoTracking()
+        var versiones = await dbContext.VersionesFestival.AsNoTracking()
+            .Where(item => ids.Contains(item.FestivalOrigenId) && item.EsVigente)
+            .ToDictionaryAsync(item => item.FestivalOrigenId, cancellationToken);
+        var idsVersiones = versiones.Values.Select(item => item.Id).ToArray();
+        var practicasVigentes = await dbContext.FestivalesPracticasMusicales.AsNoTracking()
             .Where(item => ids.Contains(item.FestivalId))
             .Join(dbContext.PracticasMusicales.AsNoTracking(), relacion => relacion.PracticaMusicalId, practica => practica.Id,
                 (relacion, practica) => new { relacion.FestivalId, practica.Id, practica.Nombre })
             .ToListAsync(cancellationToken);
-        var territorios = await dbContext.FestivalesTerritoriosSonoros.AsNoTracking()
+        var territoriosVigentes = await dbContext.FestivalesTerritoriosSonoros.AsNoTracking()
             .Where(item => ids.Contains(item.FestivalId))
             .Join(dbContext.TerritoriosSonoros.AsNoTracking(), relacion => relacion.TerritorioSonoroId, territorio => territorio.Id,
                 (relacion, territorio) => new { relacion.FestivalId, territorio.Id, territorio.Nombre })
             .ToListAsync(cancellationToken);
+        var practicasVersionadas = idsVersiones.Length == 0 ? [] : await dbContext.VersionesFestivalPracticasMusicales.AsNoTracking()
+            .Where(item => idsVersiones.Contains(item.VersionFestivalId))
+            .Join(dbContext.PracticasMusicales.AsNoTracking(), relacion => relacion.PracticaMusicalId, practica => practica.Id,
+                (relacion, practica) => new { relacion.VersionFestivalId, practica.Id, practica.Nombre })
+            .ToListAsync(cancellationToken);
+        var territoriosVersionados = idsVersiones.Length == 0 ? [] : await dbContext.VersionesFestivalTerritoriosSonoros.AsNoTracking()
+            .Where(item => idsVersiones.Contains(item.VersionFestivalId))
+            .Join(dbContext.TerritoriosSonoros.AsNoTracking(), relacion => relacion.TerritorioSonoroId, territorio => territorio.Id,
+                (relacion, territorio) => new { relacion.VersionFestivalId, territorio.Id, territorio.Nombre })
+            .ToListAsync(cancellationToken);
 
-        return festivales.Select(festival => new FestivalPublicoDto(
+        return festivales.Select(festival =>
+        {
+            versiones.TryGetValue(festival.Id, out var version);
+            IEnumerable<CatalogoFestivalDto> practicas = version is null
+                ? practicasVigentes.Where(item => item.FestivalId == festival.Id).Select(item => new CatalogoFestivalDto(item.Id, item.Nombre))
+                : practicasVersionadas.Where(item => item.VersionFestivalId == version.Id).Select(item => new CatalogoFestivalDto(item.Id, item.Nombre));
+            IEnumerable<CatalogoFestivalDto> territorios = version is null
+                ? territoriosVigentes.Where(item => item.FestivalId == festival.Id).Select(item => new CatalogoFestivalDto(item.Id, item.Nombre))
+                : territoriosVersionados.Where(item => item.VersionFestivalId == version.Id).Select(item => new CatalogoFestivalDto(item.Id, item.Nombre));
+            return new FestivalPublicoDto(
             festival.Id.ToString(CultureInfo.InvariantCulture),
-            festival.Name,
-            Limpiar(festival.Description),
+            version?.Nombre ?? festival.Name,
+            Limpiar(version?.Descripcion ?? festival.Description),
             festival.OrganizacionPrincipalId is int organizacionId && organizaciones.TryGetValue(organizacionId, out var organizacion)
                 ? organizacion : Limpiar(festival.OrganizerDisplayName),
             new TerritorioPrincipalPublicoDto(
-                ResolverNombre(festival.DepartmentCode, departamentos),
-                ResolverNombre(festival.MunicipalityCode, municipios),
-                festival.CoverageLevel),
-            Limpiar(festival.Periodicidad),
-            practicas.Where(item => item.FestivalId == festival.Id).OrderBy(item => item.Nombre)
-                .Select(item => new CatalogoFestivalDto(item.Id, item.Nombre)).ToList(),
-            territorios.Where(item => item.FestivalId == festival.Id).OrderBy(item => item.Nombre)
-                .Select(item => new CatalogoFestivalDto(item.Id, item.Nombre)).ToList(),
-            Limpiar(festival.ContactEmail))).ToList();
+                ResolverNombre(version?.CodigoDepartamento ?? festival.DepartmentCode, departamentos),
+                ResolverNombre(version?.CodigoMunicipio ?? festival.MunicipalityCode, municipios),
+                version?.NivelCobertura ?? festival.CoverageLevel),
+            Limpiar(version?.Periodicidad ?? festival.Periodicidad),
+            practicas.OrderBy(item => item.Nombre).ToList(),
+            territorios.OrderBy(item => item.Nombre).ToList(),
+            Limpiar(version?.CorreoContacto ?? festival.ContactEmail));
+        }).ToList();
     }
 
     private static string? ResolverNombre(string? codigo, IReadOnlyDictionary<string, string> valores) =>

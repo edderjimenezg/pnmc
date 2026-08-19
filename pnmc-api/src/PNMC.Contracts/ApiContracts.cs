@@ -820,6 +820,21 @@ public sealed record FestivalBorradorDto(
     IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
     string? ObservacionRevision = null);
 
+public sealed record PropuestaCambioFestivalDto(
+    string Id,
+    string FestivalOrigenId,
+    string VersionOrigenId,
+    string Estado,
+    string Nombre,
+    string? Descripcion,
+    string NivelCobertura,
+    string? CodigoDepartamento,
+    string? CodigoMunicipio,
+    string? Periodicidad,
+    string? CorreoContacto,
+    IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
+    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros);
+
 public sealed class DecisionRevisionFestivalSolicitud
 {
     public string Accion { get; set; } = string.Empty;

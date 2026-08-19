@@ -179,6 +179,28 @@ export class AdminService {
     );
   }
 
+  iniciarPropuestaCambioFestival(festivalId: number): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar la propuesta de cambios del Festival',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>(`/api/v1/externo/festivales/${festivalId}/propuestas-cambio`, {}, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible crear la propuesta de cambios del Festival',
+      }))
+    );
+  }
+
+  actualizarPropuestaCambioFestival(festivalId: number, payload: any): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar la actualización de la propuesta',
+    }).pipe(
+      switchMap(token => this.apiClient.put<any>(`/api/v1/externo/festivales/${festivalId}/propuesta-cambio`, payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible guardar la propuesta de cambios del Festival',
+      }))
+    );
+  }
+
   fetchInstitutionalFestivalReviewQueue(): Observable<any[]> {
     return this.apiClient.get<any[]>('/api/v1/institucional/festivales/en-revision', {
       errorFallback: 'No fue posible consultar los Festivales en revisión',
