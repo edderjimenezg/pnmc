@@ -168,6 +168,34 @@ export class AdminService {
     );
   }
 
+  updateExternalFestival(festivalId: number, payload: any): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar la actualización del Festival',
+    }).pipe(
+      switchMap(token => this.apiClient.put<any>(`/api/v1/externo/festivales/${festivalId}`, payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible guardar los ajustes del Festival',
+      }))
+    );
+  }
+
+  fetchInstitutionalFestivalReviewQueue(): Observable<any[]> {
+    return this.apiClient.get<any[]>('/api/v1/institucional/festivales/en-revision', {
+      errorFallback: 'No fue posible consultar los Festivales en revisión',
+    });
+  }
+
+  decideInstitutionalFestivalReview(festivalId: number, payload: any): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/institucional/festivales/csrf', {
+      errorFallback: 'No fue posible preparar la decisión institucional',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>(`/api/v1/institucional/festivales/${festivalId}/decisiones`, payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible registrar la decisión institucional',
+      }))
+    );
+  }
+
   // --- Usuarios de Entidades Aliadas ---
 
   fetchAllyUsers(): Observable<any> {

@@ -26,21 +26,6 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
             db.Database.EnsureCreated();
-            db.Database.ExecuteSqlRaw("""
-                CREATE TABLE IF NOT EXISTS RegistrosRevisionHistorial (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ModuloId TEXT NOT NULL,
-                    RegistroId TEXT NOT NULL,
-                    EstadoAnterior TEXT NOT NULL,
-                    EstadoNuevo TEXT NOT NULL,
-                    Accion TEXT NOT NULL,
-                    Comentario TEXT NULL,
-                    MotivoRechazo TEXT NULL,
-                    CamposObservados TEXT NULL,
-                    IdUsuario INTEGER NOT NULL,
-                    Fecha TEXT NOT NULL
-                );
-                """);
 
             db.Roles.Add(new RoleRow
             {

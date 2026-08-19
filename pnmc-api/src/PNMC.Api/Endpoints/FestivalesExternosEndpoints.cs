@@ -114,7 +114,7 @@ public static class FestivalesExternosEndpoints
             if (!await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, organizacionId, cancellationToken)) return Results.Forbid();
 
             var festivales = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(item => item.OrganizacionPrincipalId == organizacionId && item.StatusCode == "Borrador")
+                .Where(item => item.OrganizacionPrincipalId == organizacionId)
                 .OrderByDescending(item => item.UpdatedAt ?? item.CreatedAt)
                 .ToListAsync(cancellationToken);
             var resultado = new List<FestivalBorradorDto>();
@@ -131,11 +131,66 @@ public static class FestivalesExternosEndpoints
             var personaId = ObtenerPersonaId(principal);
             if (personaId is null) return Results.Unauthorized();
             var festival = await dbContext.FestivalRecords.AsNoTracking()
-                .FirstOrDefaultAsync(item => item.Id == festivalId && item.StatusCode == "Borrador", cancellationToken);
+                .FirstOrDefaultAsync(item => item.Id == festivalId, cancellationToken);
             if (festival is null) return Results.NotFound();
             if (festival.OrganizacionPrincipalId is null
                 || !await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, festival.OrganizacionPrincipalId.Value, cancellationToken)) return Results.Forbid();
 
+            return Results.Ok(await ADtoAsync(festival, dbContext, cancellationToken));
+        });
+
+        externo.MapPut("/festivales/{festivalId:int}", async (
+            int festivalId,
+            CrearFestivalBorradorSolicitud solicitud,
+            ClaimsPrincipal principal,
+            PnmcDbContext dbContext,
+            IAntiforgery antiforgery,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            if (!await ValidarAntiforgeryAsync(antiforgery, httpContext))
+            {
+                return Results.BadRequest(new { message = "La actualización del Festival no pudo validarse. Actualiza la página e inténtalo nuevamente." });
+            }
+
+            var personaId = ObtenerPersonaId(principal);
+            if (personaId is null) return Results.Unauthorized();
+            var festival = await dbContext.FestivalRecords.FirstOrDefaultAsync(item => item.Id == festivalId, cancellationToken);
+            if (festival is null) return Results.NotFound();
+            if (festival.OrganizacionPrincipalId is null
+                || !await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, festival.OrganizacionPrincipalId.Value, cancellationToken)) return Results.Forbid();
+            if (festival.StatusCode is not ("Borrador" or "AjustesSolicitados"))
+            {
+                return Results.Conflict(new { message = "Este Festival no puede modificarse directamente en su estado actual.", estado = festival.StatusCode });
+            }
+
+            var errores = await ValidarSolicitudAsync(solicitud, dbContext, cancellationToken);
+            if (errores.Count > 0) return Results.ValidationProblem(errores);
+
+            var ahora = DateTime.UtcNow;
+            festival.Name = ValidationHelpers.SanitizeText(solicitud.Nombre, 240);
+            festival.Description = LimpiarTexto(solicitud.Descripcion);
+            festival.Periodicidad = LimpiarTexto(solicitud.Periodicidad);
+            festival.ContactEmail = NormalizarCorreo(solicitud.CorreoContacto);
+            festival.CoverageLevel = NormalizarNivel(solicitud.NivelCobertura);
+            festival.DepartmentCode = LimpiarTexto(solicitud.CodigoDepartamento) ?? string.Empty;
+            festival.MunicipalityCode = LimpiarTexto(solicitud.CodigoMunicipio);
+            festival.UpdatedAt = ahora;
+
+            var practicasActuales = await dbContext.FestivalesPracticasMusicales.Where(item => item.FestivalId == festival.Id).ToListAsync(cancellationToken);
+            var territoriosActuales = await dbContext.FestivalesTerritoriosSonoros.Where(item => item.FestivalId == festival.Id).ToListAsync(cancellationToken);
+            dbContext.FestivalesPracticasMusicales.RemoveRange(practicasActuales);
+            dbContext.FestivalesTerritoriosSonoros.RemoveRange(territoriosActuales);
+            dbContext.FestivalesPracticasMusicales.AddRange(solicitud.PracticasMusicalesIds.Distinct().Select(id => new FestivalPracticaMusicalRow
+            {
+                FestivalId = festival.Id, PracticaMusicalId = id, FechaCreacion = ahora
+            }));
+            dbContext.FestivalesTerritoriosSonoros.AddRange(solicitud.TerritoriosSonorosIds.Distinct().Select(id => new FestivalTerritorioSonoroRow
+            {
+                FestivalId = festival.Id, TerritorioSonoroId = id, FechaCreacion = ahora
+            }));
+            RegistrarAuditoria(dbContext, personaId.Value, festival.Id, festival.OrganizacionPrincipalId.Value, "FestivalBorradorActualizado", fecha: ahora);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return Results.Ok(await ADtoAsync(festival, dbContext, cancellationToken));
         });
 
@@ -158,19 +213,21 @@ public static class FestivalesExternosEndpoints
             if (festival is null) return Results.NotFound();
             if (festival.OrganizacionPrincipalId is null
                 || !await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, festival.OrganizacionPrincipalId.Value, cancellationToken)) return Results.Forbid();
-            if (festival.StatusCode != "Borrador")
+            if (festival.StatusCode is not ("Borrador" or "AjustesSolicitados"))
             {
-                return Results.Conflict(new { message = "Solo un Festival en Borrador puede enviarse a revisión.", estado = festival.StatusCode });
+                return Results.Conflict(new { message = "Solo un Festival en Borrador o con ajustes solicitados puede enviarse a revisión.", estado = festival.StatusCode });
             }
 
             var errores = await ValidarFestivalParaRevisionAsync(festival, dbContext, cancellationToken);
             if (errores.Count > 0) return Results.ValidationProblem(errores);
 
             var ahora = DateTime.UtcNow;
+            var estadoAnterior = festival.StatusCode;
             festival.StatusCode = "EnRevision";
             festival.UpdatedAt = ahora;
             RegistrarAuditoria(dbContext, personaId.Value, festival.Id, festival.OrganizacionPrincipalId.Value,
-                "FestivalEnviadoARevision", "Borrador", "EnRevision", ahora);
+                "FestivalEnviadoARevision", estadoAnterior, "EnRevision", ahora);
+            RegistrarHistorialEnvioRevision(dbContext, personaId.Value, festival.Id, estadoAnterior, ahora);
             await CrearNotificacionEnvioRevisionAsync(dbContext, personaId.Value, festival, ahora, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -254,12 +311,17 @@ public static class FestivalesExternosEndpoints
             .OrderBy(item => item.Nombre)
             .Select(item => new CatalogoFestivalDto(item.Id, item.Nombre))
             .ToListAsync(cancellationToken);
+        var observacionRevision = await dbContext.HistorialesRevisionRegistros.AsNoTracking()
+            .Where(item => item.ModuloId == "festivales" && item.RegistroId == festival.Id.ToString())
+            .OrderByDescending(item => item.Fecha)
+            .Select(item => item.Comentario ?? item.MotivoRechazo)
+            .FirstOrDefaultAsync(cancellationToken);
 
         return new FestivalBorradorDto(
             festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, festival.StatusCode,
             festival.OrganizacionPrincipalId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, organizacionNombre,
             festival.CoverageLevel, string.IsNullOrWhiteSpace(festival.DepartmentCode) ? null : festival.DepartmentCode,
-            festival.MunicipalityCode, festival.Periodicidad, festival.ContactEmail, practicas, territorios);
+            festival.MunicipalityCode, festival.Periodicidad, festival.ContactEmail, practicas, territorios, observacionRevision);
     }
 
     private static async Task<bool> PuedeAdministrarOrganizacionAsync(PnmcDbContext dbContext, int personaId, int organizacionId, CancellationToken cancellationToken) =>
@@ -345,6 +407,25 @@ public static class FestivalesExternosEndpoints
             CreatedAt = ahora,
             SentAt = ahora,
             Attempts = 0
+        });
+    }
+
+    private static void RegistrarHistorialEnvioRevision(
+        PnmcDbContext dbContext,
+        int personaId,
+        int festivalId,
+        string? estadoAnterior,
+        DateTime fecha)
+    {
+        dbContext.HistorialesRevisionRegistros.Add(new HistorialRevisionRegistroRow
+        {
+            ModuloId = "festivales",
+            RegistroId = festivalId.ToString(CultureInfo.InvariantCulture),
+            EstadoAnterior = estadoAnterior,
+            EstadoNuevo = "EnRevision",
+            Accion = "FestivalEnviadoARevision",
+            UsuarioId = personaId,
+            Fecha = fecha
         });
     }
 

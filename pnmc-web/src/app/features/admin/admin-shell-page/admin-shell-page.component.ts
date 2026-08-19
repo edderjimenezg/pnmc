@@ -43,7 +43,7 @@ import {
 import { AdminLoginComponent } from '../admin-login/admin-login.component';
 import { AdminMonitorComponent } from '../admin-monitor/admin-monitor.component';
 import { AdminRecordsPanelComponent } from '../admin-records-panel/admin-records-panel.component';
-import { AdminReviewQueueComponent } from '../admin-review-queue/admin-review-queue.component';
+import { AdminFestivalReviewPanelComponent } from '../admin-festival-review-panel/admin-festival-review-panel.component';
 import { AdminUsersPanelComponent } from '../admin-users-panel/admin-users-panel.component';
 import { AdminSystemPanelComponent } from '../admin-system-panel/admin-system-panel.component';
 import { AdminGovernancePanelComponent } from '../admin-governance-panel/admin-governance-panel.component';
@@ -80,7 +80,7 @@ interface EntityForm {
     AdminLoginComponent,
     AdminMonitorComponent,
     AdminRecordsPanelComponent,
-    AdminReviewQueueComponent,
+    AdminFestivalReviewPanelComponent,
     AdminUsersPanelComponent,
     AdminSystemPanelComponent,
     AdminGovernancePanelComponent,

@@ -785,6 +785,7 @@ public sealed record ExternalOrganizationDto(
     string Status);
 
 public sealed record ExternalCsrfTokenResponse(string RequestToken);
+public sealed record TokenAntiforgeryRespuesta(string RequestToken);
 
 public sealed class CrearFestivalBorradorSolicitud
 {
@@ -815,7 +816,24 @@ public sealed record FestivalBorradorDto(
     string? Periodicidad,
     string? CorreoContacto,
     IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
-    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros);
+    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
+    string? ObservacionRevision = null);
+
+public sealed class DecisionRevisionFestivalSolicitud
+{
+    public string Accion { get; set; } = string.Empty;
+    public string? Observacion { get; set; }
+    public string? MotivoRechazo { get; set; }
+}
+
+public sealed record FestivalRevisionInstitucionalDto(
+    string Id,
+    string Nombre,
+    string OrganizacionPrincipalNombre,
+    string NivelCobertura,
+    string? CodigoDepartamento,
+    string? CodigoMunicipio,
+    DateTime? FechaEnvioRevision);
 
 public sealed record ExternalSessionResponse(
     string UserId,

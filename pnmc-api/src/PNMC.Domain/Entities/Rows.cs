@@ -484,6 +484,23 @@ public sealed class AuditLogRow
     public DateTime CreatedAt { get; set; }
 }
 
+public sealed class HistorialRevisionRegistroRow
+{
+    public long Id { get; set; }
+    public string ModuloId { get; set; } = string.Empty;
+    public string RegistroId { get; set; } = string.Empty;
+    public string? EstadoAnterior { get; set; }
+    public string EstadoNuevo { get; set; } = string.Empty;
+    public string Accion { get; set; } = string.Empty;
+    public string? Comentario { get; set; }
+    public string? MotivoRechazo { get; set; }
+    public string? CamposObservados { get; set; }
+    public int? UsuarioId { get; set; }
+    public int? EntidadAliadaId { get; set; }
+    public DateTime Fecha { get; set; }
+    public string? MetadataJson { get; set; }
+}
+
 public sealed class UserVerificationCodeRow
 {
     public int Id { get; set; }

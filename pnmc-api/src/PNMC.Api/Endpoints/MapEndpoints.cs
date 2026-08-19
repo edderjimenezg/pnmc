@@ -26,7 +26,7 @@ public static class MapEndpoints
             var normalizedLayer = string.IsNullOrWhiteSpace(layer) ? "General" : layer;
 
             var festivals = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(item => item.StatusCode == null || (item.StatusCode != "Borrador" && item.StatusCode != "EnRevision"))
+                .Where(item => item.StatusCode == null || (item.StatusCode != "Borrador" && item.StatusCode != "EnRevision" && item.StatusCode != "AjustesSolicitados" && item.StatusCode != "Rechazado"))
                 .ToListAsync(cancellationToken);
             var schools = await dbContext.SchoolRecords.AsNoTracking().ToListAsync(cancellationToken);
             var markets = await dbContext.MarketRecords.AsNoTracking().ToListAsync(cancellationToken);
@@ -74,7 +74,7 @@ public static class MapEndpoints
             if (targetCode.Length == 0) return Results.NotFound();
 
             var festivals = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(item => item.StatusCode == null || (item.StatusCode != "Borrador" && item.StatusCode != "EnRevision"))
+                .Where(item => item.StatusCode == null || (item.StatusCode != "Borrador" && item.StatusCode != "EnRevision" && item.StatusCode != "AjustesSolicitados" && item.StatusCode != "Rechazado"))
                 .ToListAsync(cancellationToken);
             var schools = await dbContext.SchoolRecords.AsNoTracking().ToListAsync(cancellationToken);
             var markets = await dbContext.MarketRecords.AsNoTracking().ToListAsync(cancellationToken);

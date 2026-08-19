@@ -40,6 +40,7 @@ public sealed class PnmcDbContext : DbContext
     public DbSet<UserRow> Users => Set<UserRow>();
     public DbSet<RoleRow> Roles => Set<RoleRow>();
     public DbSet<AuditLogRow> AuditLogs => Set<AuditLogRow>();
+    public DbSet<HistorialRevisionRegistroRow> HistorialesRevisionRegistros => Set<HistorialRevisionRegistroRow>();
     public DbSet<UserVerificationCodeRow> UserVerificationCodes => Set<UserVerificationCodeRow>();
     public DbSet<AllyEntityRow> AllyEntities => Set<AllyEntityRow>();
     public DbSet<AllyUserLinkRow> AllyUserLinks => Set<AllyUserLinkRow>();
@@ -601,6 +602,25 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.PreviousValuesJson).HasColumnName("ValoresAnteriores");
             entity.Property(x => x.NewValuesJson).HasColumnName("ValoresNuevos");
             entity.Property(x => x.CreatedAt).HasColumnName("FechaAccion");
+        });
+
+        modelBuilder.Entity<HistorialRevisionRegistroRow>(entity =>
+        {
+            entity.ToTable("RegistrosRevisionHistorial");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("IdRevisionHistorial");
+            entity.Property(x => x.ModuloId).HasColumnName("ModuloId");
+            entity.Property(x => x.RegistroId).HasColumnName("RegistroId");
+            entity.Property(x => x.EstadoAnterior).HasColumnName("EstadoAnterior");
+            entity.Property(x => x.EstadoNuevo).HasColumnName("EstadoNuevo");
+            entity.Property(x => x.Accion).HasColumnName("Accion");
+            entity.Property(x => x.Comentario).HasColumnName("Comentario");
+            entity.Property(x => x.MotivoRechazo).HasColumnName("MotivoRechazo");
+            entity.Property(x => x.CamposObservados).HasColumnName("CamposObservados");
+            entity.Property(x => x.UsuarioId).HasColumnName("IdUsuario");
+            entity.Property(x => x.EntidadAliadaId).HasColumnName("IdEntidadAliada");
+            entity.Property(x => x.Fecha).HasColumnName("Fecha");
+            entity.Property(x => x.MetadataJson).HasColumnName("MetadataJson");
         });
 
         modelBuilder.Entity<UserVerificationCodeRow>(entity =>

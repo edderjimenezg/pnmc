@@ -149,6 +149,7 @@ api.MapParticipationEndpoints();
 api.MapExternalAuthEndpoints();
 api.MapExternalOrganizationEndpoints();
 api.MapFestivalesExternosEndpoints();
+api.MapRevisionInstitucionalFestivalesEndpoints();
 api.MapNotificationEndpoints();
 api.MapRecordGovernanceEndpoints();
 api.MapAdminAuthEndpoints();

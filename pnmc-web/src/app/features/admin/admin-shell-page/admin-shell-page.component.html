@@ -435,13 +435,7 @@
 
         <!-- Tab: review -->
         @if (activeSection() === 'review') {
-          <app-admin-review-queue
-            [records]="reviewRecords()"
-            [modules]="ADMIN_MODULES"
-            [canApprove]="canApprove"
-            (onStatusChange)="handleReviewStatus($event)"
-            (onReviewClick)="reviewingRecord.set($event)"
-          ></app-admin-review-queue>
+          <app-admin-festival-review-panel></app-admin-festival-review-panel>
         }
 
         <!-- Tab: users -->
