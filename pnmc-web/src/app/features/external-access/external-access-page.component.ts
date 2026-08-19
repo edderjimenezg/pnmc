@@ -26,6 +26,7 @@ export class ExternalAccessPageComponent implements OnInit {
   organizations = signal<any[]>([]);
   festivalCatalogs = signal<any>({ practicasMusicales: [], territoriosSonoros: [] });
   draftFestivals = signal<any[]>([]);
+  festivalEnRevision = signal<any | null>(null);
   locations = signal<any[]>([]);
   departments = computed(() => Array.from(new Map(this.locations().map(item => [item.departmentCode, item.departmentName])).entries())
     .map(([code, name]) => ({ code, name })));
@@ -234,6 +235,25 @@ export class ExternalAccessPageComponent implements OnInit {
     }
     this.adminService.fetchDraftFestivals(organizacionId).subscribe({
       next: festivals => this.draftFestivals.set(festivals),
+      error: error => this.fail(error),
+    });
+  }
+
+  sendFestivalToReview(festivalBorrador: any): void {
+    this.clearFeedback();
+    const confirmation = window.confirm(
+      'Al enviar este Festival a revisión, la información será remitida a SIMUS para revisión institucional. Mientras esté en revisión, no podrás modificar directamente el registro. ¿Deseas continuar?'
+    );
+    if (!confirmation) return;
+
+    this.loading.set(true);
+    this.adminService.sendFestivalToReview(Number(festivalBorrador.id)).subscribe({
+      next: festival => {
+        this.loading.set(false);
+        this.festivalEnRevision.set(festival);
+        this.message.set(`Festival enviado a revisión: ${festival.nombre}.`);
+        this.loadDraftFestivals();
+      },
       error: error => this.fail(error),
     });
   }

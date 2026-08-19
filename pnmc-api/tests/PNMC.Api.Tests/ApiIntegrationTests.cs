@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using PNMC.Contracts;
+using PNMC.Infrastructure.Data;
 using Xunit;
 
 namespace PNMC.Api.Tests;
@@ -101,6 +103,16 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         var message = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/organizaciones/{organizacionId}/festivales")
         {
             Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-CSRF-TOKEN", csrfToken);
+        return client.SendAsync(message);
+    }
+
+    private static Task<HttpResponseMessage> SendFestivalToReviewAsync(HttpClient client, int festivalId, string csrfToken)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/festivales/{festivalId}/enviar-a-revision")
+        {
+            Content = JsonContent.Create(new { })
         };
         message.Headers.Add("X-CSRF-TOKEN", csrfToken);
         return client.SendAsync(message);
@@ -715,6 +727,122 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         var otherCsrf = await GetExternalCsrfTokenAsync(otherClient);
         var otherCreate = await CreateDraftFestivalAsync(otherClient, int.Parse(organization.Id), otherCsrf, new { nombre = "Festival ajeno", nivelCobertura = "nacional" });
         Assert.Equal(HttpStatusCode.Forbidden, otherCreate.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_Administrator_Can_Send_Valid_Festival_Draft_To_Review_Without_Publication()
+    {
+        const string email = "festival.revision@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var csrfToken = await GetExternalCsrfTokenAsync(_client);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, csrfToken, new
+        {
+            name = "Organización Festival Revisión",
+            contactEmail = "contacto@festival-revision.test",
+            coverageLevel = "municipal",
+            departmentCode = "05",
+            municipalityCode = "05001"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+        var creationToken = await GetExternalCsrfTokenAsync(_client);
+        var festivalResponse = await CreateDraftFestivalAsync(_client, int.Parse(organization!.Id), creationToken, new
+        {
+            nombre = "Festival Enviado a Revisión",
+            nivelCobertura = "municipal",
+            codigoDepartamento = "05",
+            codigoMunicipio = "05001"
+        });
+        festivalResponse.EnsureSuccessStatusCode();
+        var festival = await festivalResponse.Content.ReadFromJsonAsync<FestivalBorradorDto>();
+        Assert.NotNull(festival);
+
+        var reviewToken = await GetExternalCsrfTokenAsync(_client);
+        var reviewResponse = await SendFestivalToReviewAsync(_client, int.Parse(festival!.Id), reviewToken);
+        Assert.Equal(HttpStatusCode.OK, reviewResponse.StatusCode);
+        var reviewed = await reviewResponse.Content.ReadFromJsonAsync<FestivalBorradorDto>();
+        Assert.Equal("EnRevision", reviewed!.Estado);
+        Assert.Equal(festival.Id, reviewed.Id);
+
+        var duplicateToken = await GetExternalCsrfTokenAsync(_client);
+        var duplicateResponse = await SendFestivalToReviewAsync(_client, int.Parse(festival.Id), duplicateToken);
+        Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
+
+        var publicFestivals = await _client.GetFromJsonAsync<PagedResponse<FestivalDto>>("/api/v1/festivals?limit=100&offset=0");
+        Assert.DoesNotContain(publicFestivals!.Items, item => item.Name == "Festival Enviado a Revisión");
+        var mapResponse = await _client.GetFromJsonAsync<MapSummaryResponseDto>("/api/v1/map/summary?layer=Festivales");
+        Assert.Equal(1, Assert.Single(mapResponse!.Items, item => item.Department == "Antioquia").Festivals);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+        var audit = db.AuditLogs.Single(item => item.RecordId == festival.Id && item.Action == "FestivalEnviadoARevision");
+        Assert.Contains("Borrador", audit.PreviousValuesJson);
+        Assert.Contains("EnRevision", audit.NewValuesJson);
+        var notification = db.Notifications.Single(item => item.RecordId == festival.Id && item.EventType == "FestivalEnviadoARevision");
+        Assert.Equal("enviada", notification.Status);
+        Assert.Equal(email, notification.RecipientEmail);
+    }
+
+    [Fact]
+    public async Task Festival_Review_Requires_External_Authorization_Csrf_And_Complete_Draft()
+    {
+        var withoutSession = await _client.PostAsJsonAsync("/api/v1/externo/festivales/1/enviar-a-revision", new { });
+        Assert.Equal(HttpStatusCode.Unauthorized, withoutSession.StatusCode);
+
+        const string ownerEmail = "festival.autorizacion.revision@example.com";
+        await RegisterAndVerifyExternalPersonAsync(ownerEmail);
+        await LoginExternalAsync(_client, ownerEmail);
+        var csrfToken = await GetExternalCsrfTokenAsync(_client);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, csrfToken, new
+        {
+            name = "Organización Revisión Protegida",
+            contactEmail = "contacto@revision-protegida.test",
+            coverageLevel = "municipal",
+            departmentCode = "05",
+            municipalityCode = "05001"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        var creationToken = await GetExternalCsrfTokenAsync(_client);
+        var festivalResponse = await CreateDraftFestivalAsync(_client, int.Parse(organization!.Id), creationToken, new
+        {
+            nombre = "Festival Protegido para Revisión", nivelCobertura = "municipal", codigoDepartamento = "05", codigoMunicipio = "05001"
+        });
+        var festival = await festivalResponse.Content.ReadFromJsonAsync<FestivalBorradorDto>();
+        Assert.NotNull(festival);
+
+        var withoutCsrf = await _client.PostAsJsonAsync($"/api/v1/externo/festivales/{festival!.Id}/enviar-a-revision", new { });
+        Assert.Equal(HttpStatusCode.BadRequest, withoutCsrf.StatusCode);
+
+        var institutionalClient = _factory.CreateClient();
+        await institutionalClient.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest { Email = "test@pnmc.local", Password = "pnmc-master" });
+        var institutionalResponse = await institutionalClient.PostAsJsonAsync($"/api/v1/externo/festivales/{festival.Id}/enviar-a-revision", new { });
+        Assert.Equal(HttpStatusCode.Unauthorized, institutionalResponse.StatusCode);
+
+        var otherClient = _factory.CreateClient();
+        var registration = await otherClient.PostAsJsonAsync("/api/v1/external/auth/register", new ExternalRegisterRequest
+        {
+            ProfileType = "persona", FullName = "Otra persona de revisión", Email = "festival.ajeno.revision@example.com", Password = "ClaveExterna123", AcceptTerms = true, AcceptDataPolicy = true
+        });
+        var otherAccount = await registration.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
+        await otherClient.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest { Email = "festival.ajeno.revision@example.com", Code = otherAccount!.DebugVerificationCode });
+        await LoginExternalAsync(otherClient, "festival.ajeno.revision@example.com");
+        var otherToken = await GetExternalCsrfTokenAsync(otherClient);
+        var otherResponse = await SendFestivalToReviewAsync(otherClient, int.Parse(festival.Id), otherToken);
+        Assert.Equal(HttpStatusCode.Forbidden, otherResponse.StatusCode);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            var incomplete = db.FestivalRecords.Single(item => item.Id == int.Parse(festival.Id));
+            incomplete.Name = string.Empty;
+            db.SaveChanges();
+        }
+        var incompleteToken = await GetExternalCsrfTokenAsync(_client);
+        var incompleteResponse = await SendFestivalToReviewAsync(_client, int.Parse(festival.Id), incompleteToken);
+        Assert.Equal(HttpStatusCode.BadRequest, incompleteResponse.StatusCode);
     }
 
     [Fact]

@@ -29,7 +29,7 @@ public static class CatalogModuleEndpoints
             CancellationToken cancellationToken) =>
         {
             var rows = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(row => row.StatusCode == null || row.StatusCode != "Borrador")
+                .Where(row => row.StatusCode == null || (row.StatusCode != "Borrador" && row.StatusCode != "EnRevision"))
                 .ToListAsync(cancellationToken);
             var departments = await BuildDepartmentDictionaryAsync(dbContext, cancellationToken);
             var municipalities = await BuildMunicipalityDictionaryAsync(dbContext, cancellationToken);

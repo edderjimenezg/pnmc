@@ -157,6 +157,17 @@ export class AdminService {
     );
   }
 
+  sendFestivalToReview(festivalId: number): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar el envío a revisión',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>(`/api/v1/externo/festivales/${festivalId}/enviar-a-revision`, {}, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible enviar el Festival a revisión',
+      }))
+    );
+  }
+
   // --- Usuarios de Entidades Aliadas ---
 
   fetchAllyUsers(): Observable<any> {

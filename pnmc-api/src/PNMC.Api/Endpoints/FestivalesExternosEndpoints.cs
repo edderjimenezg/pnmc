@@ -139,6 +139,44 @@ public static class FestivalesExternosEndpoints
             return Results.Ok(await ADtoAsync(festival, dbContext, cancellationToken));
         });
 
+        externo.MapPost("/festivales/{festivalId:int}/enviar-a-revision", async (
+            int festivalId,
+            ClaimsPrincipal principal,
+            PnmcDbContext dbContext,
+            IAntiforgery antiforgery,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            if (!await ValidarAntiforgeryAsync(antiforgery, httpContext))
+            {
+                return Results.BadRequest(new { message = "El envío a revisión no pudo validarse. Actualiza la página e inténtalo nuevamente." });
+            }
+
+            var personaId = ObtenerPersonaId(principal);
+            if (personaId is null) return Results.Unauthorized();
+            var festival = await dbContext.FestivalRecords.FirstOrDefaultAsync(item => item.Id == festivalId, cancellationToken);
+            if (festival is null) return Results.NotFound();
+            if (festival.OrganizacionPrincipalId is null
+                || !await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, festival.OrganizacionPrincipalId.Value, cancellationToken)) return Results.Forbid();
+            if (festival.StatusCode != "Borrador")
+            {
+                return Results.Conflict(new { message = "Solo un Festival en Borrador puede enviarse a revisión.", estado = festival.StatusCode });
+            }
+
+            var errores = await ValidarFestivalParaRevisionAsync(festival, dbContext, cancellationToken);
+            if (errores.Count > 0) return Results.ValidationProblem(errores);
+
+            var ahora = DateTime.UtcNow;
+            festival.StatusCode = "EnRevision";
+            festival.UpdatedAt = ahora;
+            RegistrarAuditoria(dbContext, personaId.Value, festival.Id, festival.OrganizacionPrincipalId.Value,
+                "FestivalEnviadoARevision", "Borrador", "EnRevision", ahora);
+            await CrearNotificacionEnvioRevisionAsync(dbContext, personaId.Value, festival, ahora, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(await ADtoAsync(festival, dbContext, cancellationToken));
+        });
+
         return group;
     }
 
@@ -218,16 +256,20 @@ public static class FestivalesExternosEndpoints
             .ToListAsync(cancellationToken);
 
         return new FestivalBorradorDto(
-            festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, "Borrador",
+            festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, festival.StatusCode,
             festival.OrganizacionPrincipalId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, organizacionNombre,
             festival.CoverageLevel, string.IsNullOrWhiteSpace(festival.DepartmentCode) ? null : festival.DepartmentCode,
             festival.MunicipalityCode, festival.Periodicidad, festival.ContactEmail, practicas, territorios);
     }
 
     private static async Task<bool> PuedeAdministrarOrganizacionAsync(PnmcDbContext dbContext, int personaId, int organizacionId, CancellationToken cancellationToken) =>
-        await dbContext.UserEntities.AsNoTracking().AnyAsync(item =>
-            item.UserId == personaId && item.EntityId == organizacionId && item.EntityRole == "administrador" && item.IsActive,
-            cancellationToken);
+        await dbContext.UserEntities.AsNoTracking()
+            .Where(item => item.UserId == personaId && item.EntityId == organizacionId && item.EntityRole == "administrador" && item.IsActive)
+            .Join(dbContext.EntityProfiles.AsNoTracking().Where(item => item.IsActive),
+                relacion => relacion.EntityId,
+                organizacion => organizacion.Id,
+                (_, _) => true)
+            .AnyAsync(cancellationToken);
 
     private static int? ObtenerPersonaId(ClaimsPrincipal principal) =>
         int.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.Integer, CultureInfo.InvariantCulture, out var personaId)
@@ -239,7 +281,82 @@ public static class FestivalesExternosEndpoints
         catch (AntiforgeryValidationException) { return false; }
     }
 
-    private static void RegistrarAuditoria(PnmcDbContext dbContext, int personaId, int festivalId, int organizacionId, string accion)
+    private static async Task<Dictionary<string, string[]>> ValidarFestivalParaRevisionAsync(
+        FestivalRow festival,
+        PnmcDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var errores = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        if (ValidationHelpers.IsMissing(festival.Name)) errores["nombre"] = ["El nombre del Festival es obligatorio."];
+        if (festival.OrganizacionPrincipalId is null
+            || !await dbContext.EntityProfiles.AsNoTracking().AnyAsync(item => item.Id == festival.OrganizacionPrincipalId && item.IsActive, cancellationToken))
+            errores["organizacionPrincipal"] = ["La organización principal del Festival debe estar activa."];
+
+        var nivel = NormalizarNivel(festival.CoverageLevel);
+        if (nivel is not ("municipal" or "departamental" or "nacional"))
+        {
+            errores["nivelCobertura"] = ["El nivel territorial no es válido."];
+            return errores;
+        }
+
+        if (nivel != "nacional")
+        {
+            var departamentoValido = !string.IsNullOrWhiteSpace(festival.DepartmentCode) && await dbContext.DivipolaLocations.AsNoTracking()
+                .AnyAsync(item => item.DepartmentCode == festival.DepartmentCode, cancellationToken);
+            if (!departamentoValido)
+            {
+                errores["codigoDepartamento"] = ["El departamento principal debe existir en DIVIPOLA."];
+                return errores;
+            }
+
+            if (nivel == "municipal")
+            {
+                var municipioValido = !string.IsNullOrWhiteSpace(festival.MunicipalityCode) && await dbContext.DivipolaLocations.AsNoTracking()
+                    .AnyAsync(item => item.DepartmentCode == festival.DepartmentCode && item.MunicipalityCode == festival.MunicipalityCode, cancellationToken);
+                if (!municipioValido) errores["codigoMunicipio"] = ["El municipio principal debe existir en DIVIPOLA."];
+            }
+        }
+
+        return errores;
+    }
+
+    private static async Task CrearNotificacionEnvioRevisionAsync(
+        PnmcDbContext dbContext,
+        int personaId,
+        FestivalRow festival,
+        DateTime ahora,
+        CancellationToken cancellationToken)
+    {
+        var persona = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(item => item.Id == personaId && item.IsActive, cancellationToken);
+        if (persona is null) return;
+
+        dbContext.Notifications.Add(new NotificationRow
+        {
+            RecipientUserId = personaId,
+            RecipientEmail = persona.Email,
+            EventType = "FestivalEnviadoARevision",
+            Channel = "internal",
+            Title = "Festival enviado a revisión",
+            Body = $"Tu Festival “{festival.Name}” fue enviado a revisión.",
+            Status = "enviada",
+            ModuleId = "festivales",
+            RecordId = festival.Id.ToString(CultureInfo.InvariantCulture),
+            MetadataJson = $"{{\"OrganizacionPrincipalId\":{festival.OrganizacionPrincipalId},\"Estado\":\"EnRevision\"}}",
+            CreatedAt = ahora,
+            SentAt = ahora,
+            Attempts = 0
+        });
+    }
+
+    private static void RegistrarAuditoria(
+        PnmcDbContext dbContext,
+        int personaId,
+        int festivalId,
+        int organizacionId,
+        string accion,
+        string? estadoAnterior = null,
+        string? estadoNuevo = null,
+        DateTime? fecha = null)
     {
         dbContext.AuditLogs.Add(new AuditLogRow
         {
@@ -247,8 +364,9 @@ public static class FestivalesExternosEndpoints
             TableName = "Festivales",
             RecordId = festivalId.ToString(CultureInfo.InvariantCulture),
             Action = accion,
-            NewValuesJson = $"{{\"OrganizacionPrincipalId\":{organizacionId},\"Estado\":\"Borrador\"}}",
-            CreatedAt = DateTime.UtcNow
+            PreviousValuesJson = estadoAnterior is null ? null : $"{{\"Estado\":\"{estadoAnterior}\"}}",
+            NewValuesJson = $"{{\"OrganizacionPrincipalId\":{organizacionId},\"Estado\":\"{estadoNuevo ?? "Borrador"}\"}}",
+            CreatedAt = fecha ?? DateTime.UtcNow
         });
     }
 
