@@ -33,7 +33,7 @@ export class AppComponent {
 
   showNavigation = computed(() => {
     const page = this.navigationService.activePage();
-    return page !== PAGE_IDS.admin && page !== PAGE_IDS.colaboradores;
+    return page !== PAGE_IDS.admin && page !== PAGE_IDS.colaboradores && page !== PAGE_IDS.registro;
   });
 
   isSolidNavigation = computed(() => {
@@ -55,6 +55,9 @@ export class AppComponent {
     return page !== PAGE_IDS.home &&
            page !== PAGE_IDS.admin &&
            page !== PAGE_IDS.colaboradores &&
+           page !== PAGE_IDS.registro &&
            page !== PAGE_IDS.mapa;
   });
+
+  showFloatingButton = computed(() => this.navigationService.activePage() !== PAGE_IDS.registro);
 }

@@ -9,7 +9,9 @@
   <router-outlet></router-outlet>
 </main>
 
-<app-floating-button></app-floating-button>
+@if (showFloatingButton()) {
+  <app-floating-button></app-floating-button>
+}
 
 @if (showGlobalFooter()) {
   <app-footer></app-footer>

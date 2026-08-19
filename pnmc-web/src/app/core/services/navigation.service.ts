@@ -128,6 +128,9 @@ export class NavigationService {
     const normalizedPath = this.normalizePathname(path);
 
     const pathSegments = normalizedPath.split('/').filter(Boolean);
+    if (normalizedPath === '/registro' || normalizedPath === '/simus/ingresar') {
+      return PAGE_IDS.registro;
+    }
     if (normalizedPath === '/simus' || normalizedPath.startsWith('/simus/')) {
       return PAGE_IDS.simus;
     }
