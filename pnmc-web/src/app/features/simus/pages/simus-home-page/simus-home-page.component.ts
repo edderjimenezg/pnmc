@@ -25,7 +25,7 @@ export class SimusHomePageComponent implements OnInit {
     { title: 'Acerca de SIMUS', description: 'Conoce el propósito, alcance y principios de este sistema de información.', icon: 'about', path: 'simus/acerca-de' },
     { title: 'Ayuda y tutoriales', description: 'Encuentra orientación para navegar, consultar y participar en SIMUS.', icon: 'help', path: 'simus/ayuda' },
     { title: 'Ingresar', description: 'Accede a los espacios de gestión y actualización de información.', icon: 'login', path: 'simus/ingresar' },
-    { title: 'Ser parte del SIMUS', description: 'Registra o actualiza los datos de tu proceso, organización o infraestructura.', icon: 'participate', path: 'simus/participa' },
+    { title: 'Ser parte del SIMUS', description: 'Crea tu cuenta o registra una organización para participar en SIMUS.', icon: 'participate', path: 'registro' },
   ];
 
   // Ecosistema musical: antes una sección aparte, ahora vive dentro de SIMUS.
@@ -56,7 +56,7 @@ export class SimusHomePageComponent implements OnInit {
   count(category: EcosystemCategory): number { return category.countKey ? this.recordsByType()[category.countKey] || 0 : 0; }
   openCategory(category: EcosystemCategory): void { this.navigation.routerNavigate(category.route); }
   openMapLayer(layer = 'General'): void { this.navigation.navigateToMapLayer(layer, { targetView: 'map' }); }
-  openParticipation(): void { this.navigation.routerNavigate('simus/participa'); }
+  openParticipation(): void { this.navigation.routerNavigate('registro'); }
 
   go(path: string): void { this.navigation.routerNavigate(path); }
 }

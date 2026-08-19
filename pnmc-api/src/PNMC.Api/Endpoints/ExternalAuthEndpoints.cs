@@ -1,8 +1,12 @@
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using PNMC.Api.Security;
 using PNMC.Contracts;
 using PNMC.Infrastructure.Common;
 using PNMC.Infrastructure.Data;
@@ -39,7 +43,7 @@ public static class ExternalAuthEndpoints
             var role = await dbContext.Roles.FirstOrDefaultAsync(item => item.Name == "externo", cancellationToken)
                 ?? throw new InvalidOperationException("No existe el rol externo.");
             var now = DateTime.UtcNow;
-            var displayName = ResolveDisplayName(request);
+            var displayName = ValidationHelpers.SanitizeText(request.FullName, 240);
             var user = new UserRow
             {
                 FullName = displayName,
@@ -125,6 +129,79 @@ public static class ExternalAuthEndpoints
                 "activo"));
         }).RequireRateLimiting("external-register");
 
+        external.MapPost("/login", async (
+            ExternalLoginRequest request,
+            PnmcDbContext dbContext,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            var email = NormalizeEmail(request.Email);
+            if (ValidationHelpers.IsMissing(email) || ValidationHelpers.IsMissing(request.Password))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["credentials"] = ["Correo y contrasena son obligatorios."]
+                });
+            }
+
+            var user = await dbContext.Users.FirstOrDefaultAsync(item => item.Email == email, cancellationToken);
+            var role = user is null
+                ? null
+                : await dbContext.Roles.AsNoTracking().FirstOrDefaultAsync(item => item.Id == user.RoleId, cancellationToken);
+            if (user is null
+                || !user.IsActive
+                || !string.Equals(Clean(role?.Name ?? string.Empty), "externo", StringComparison.Ordinal)
+                || !IsPasswordValid(user, request.Password))
+            {
+                return Results.Unauthorized();
+            }
+
+            var now = DateTime.UtcNow;
+            user.LastLoginAt = now;
+            user.UpdatedAt = now;
+            await WriteAuditAsync(dbContext, user.Id, "Usuarios", user.Id.ToString(), "iniciar_sesion_externa", cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            await httpContext.SignInAsync(
+                SimusAuthentication.ExternalScheme,
+                BuildExternalPrincipal(user),
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    IssuedUtc = DateTimeOffset.UtcNow,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8),
+                    AllowRefresh = true
+                });
+
+            return Results.Ok(ToSessionResponse(user));
+        }).RequireRateLimiting("external-login");
+
+        external.MapGet("/me", async (
+            ClaimsPrincipal principal,
+            PnmcDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var user = await ResolveExternalUserAsync(principal, dbContext, cancellationToken);
+            return user is null ? Results.Unauthorized() : Results.Ok(ToSessionResponse(user));
+        }).RequireAuthorization(SimusAuthentication.ExternalPolicy);
+
+        external.MapPost("/logout", async (
+            ClaimsPrincipal principal,
+            PnmcDbContext dbContext,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            var user = await ResolveExternalUserAsync(principal, dbContext, cancellationToken);
+            if (user is not null)
+            {
+                await WriteAuditAsync(dbContext, user.Id, "Usuarios", user.Id.ToString(), "cerrar_sesion_externa", cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+
+            await httpContext.SignOutAsync(SimusAuthentication.ExternalScheme);
+            return Results.NoContent();
+        }).RequireAuthorization(SimusAuthentication.ExternalPolicy);
+
         return group;
     }
 
@@ -135,50 +212,22 @@ public static class ExternalAuthEndpoints
     {
         var errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         var profileType = Clean(request.ProfileType);
-        if (profileType is not "persona" and not "organizacion")
+        if (profileType != "persona")
         {
-            errors["profileType"] = ["Tipo de perfil debe ser persona u organizacion."];
+            errors["profileType"] = ["La cuenta externa corresponde a una persona. Las organizaciones se registran y administran en un flujo separado."];
         }
 
-        if (profileType == "persona" && ValidationHelpers.IsMissing(request.FullName))
+        if (ValidationHelpers.IsMissing(request.FullName))
         {
             errors["fullName"] = ["Nombre completo es obligatorio para persona."];
         }
 
-        if (profileType == "organizacion" && ValidationHelpers.IsMissing(request.OrganizationName))
-        {
-            errors["organizationName"] = ["Nombre de organizacion es obligatorio."];
-        }
-
         if (!ValidationHelpers.IsValidEmail(request.Email)) errors["email"] = ["Correo electronico no es valido."];
-        if (ValidationHelpers.IsMissing(request.ActorType)) errors["actorType"] = ["Tipo de actor es obligatorio."];
-        if (ValidationHelpers.IsMissing(request.DepartmentCode)) errors["departmentCode"] = ["Codigo de departamento es obligatorio."];
-        if (ValidationHelpers.IsMissing(request.MunicipalityCode)) errors["municipalityCode"] = ["Codigo de municipio es obligatorio."];
         if (ValidationHelpers.IsMissing(request.Password) || request.Password.Length < 10) errors["password"] = ["La contrasena debe tener minimo 10 caracteres."];
         if (!request.AcceptTerms) errors["acceptTerms"] = ["Debes aceptar los terminos de uso."];
         if (!request.AcceptDataPolicy) errors["acceptDataPolicy"] = ["Debes aceptar la politica de tratamiento de datos."];
-        if (!request.AuthorizePublicData) errors["authorizePublicData"] = ["Debes autorizar la publicacion de datos publicos del registro."];
-
-        if (!errors.ContainsKey("departmentCode") && !errors.ContainsKey("municipalityCode"))
-        {
-            var territoryExists = await dbContext.DivipolaLocations.AsNoTracking().AnyAsync(item =>
-                item.DepartmentCode == request.DepartmentCode.Trim()
-                && item.MunicipalityCode == request.MunicipalityCode.Trim(),
-                cancellationToken);
-            if (!territoryExists)
-            {
-                errors["territory"] = ["Departamento y municipio no existen en DIVIPOLA."];
-            }
-        }
 
         return errors;
-    }
-
-    private static string ResolveDisplayName(ExternalRegisterRequest request)
-    {
-        return Clean(request.ProfileType) == "organizacion"
-            ? ValidationHelpers.SanitizeText(request.OrganizationName, 240)
-            : ValidationHelpers.SanitizeText(request.FullName, 240);
     }
 
     private static string GenerateCode()
@@ -194,5 +243,81 @@ public static class ExternalAuthEndpoints
     private static string Clean(string value)
     {
         return (value ?? string.Empty).Trim().ToLowerInvariant();
+    }
+
+    private static bool IsPasswordValid(UserRow user, string password)
+    {
+        try
+        {
+            return PasswordHasher.VerifyHashedPassword(user, user.PasswordHash, password) != PasswordVerificationResult.Failed;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static ClaimsPrincipal BuildExternalPrincipal(UserRow user)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, "externo"),
+            new(SimusAuthentication.AccessScopeClaim, SimusAuthentication.ExternalScope)
+        };
+
+        return new ClaimsPrincipal(new ClaimsIdentity(claims, SimusAuthentication.ExternalScheme));
+    }
+
+    private static async Task<UserRow?> ResolveExternalUserAsync(
+        ClaimsPrincipal principal,
+        PnmcDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var value = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var userId))
+        {
+            return null;
+        }
+
+        return await dbContext.Users
+            .Join(
+                dbContext.Roles,
+                user => user.RoleId,
+                role => role.Id,
+                (user, role) => new { User = user, Role = role })
+            .Where(item => item.User.Id == userId && item.User.IsActive && item.Role.Name.ToLower() == "externo")
+            .Select(item => item.User)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private static ExternalSessionResponse ToSessionResponse(UserRow user)
+    {
+        return new ExternalSessionResponse(
+            user.Id.ToString(CultureInfo.InvariantCulture),
+            user.FullName,
+            user.Email,
+            user.IsActive ? "activo" : "inactivo");
+    }
+
+    private static Task WriteAuditAsync(
+        PnmcDbContext dbContext,
+        int userId,
+        string tableName,
+        string recordId,
+        string action,
+        CancellationToken cancellationToken)
+    {
+        dbContext.AuditLogs.Add(new AuditLogRow
+        {
+            UserId = userId,
+            TableName = tableName,
+            RecordId = recordId,
+            Action = action,
+            CreatedAt = DateTime.UtcNow
+        });
+        return Task.CompletedTask;
     }
 }

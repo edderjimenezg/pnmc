@@ -6,6 +6,7 @@ using PNMC.Api.Endpoints;
 using PNMC.Infrastructure;
 using PNMC.Infrastructure.Common;
 using PNMC.Infrastructure.Data;
+using PNMC.Api.Security;
 
 PNMC.Api.DotEnvLoader.Load();
 var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +15,16 @@ builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = "pnmc.external.csrf";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+builder.Services.AddAuthentication(SimusAuthentication.InstitutionalScheme)
+    .AddCookie(SimusAuthentication.InstitutionalScheme, options =>
     {
         options.Cookie.Name = "pnmc.admin";
         options.Cookie.HttpOnly = true;
@@ -33,8 +42,37 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return Task.CompletedTask;
         };
+    })
+    .AddCookie(SimusAuthentication.ExternalScheme, options =>
+    {
+        options.Cookie.Name = "pnmc.external";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(SimusAuthentication.InstitutionalPolicy, policy =>
+        policy.AddAuthenticationSchemes(SimusAuthentication.InstitutionalScheme)
+            .RequireAuthenticatedUser()
+            .RequireClaim(SimusAuthentication.AccessScopeClaim, SimusAuthentication.InstitutionalScope));
+    options.AddPolicy(SimusAuthentication.ExternalPolicy, policy =>
+        policy.AddAuthenticationSchemes(SimusAuthentication.ExternalScheme)
+            .RequireAuthenticatedUser()
+            .RequireClaim(SimusAuthentication.AccessScopeClaim, SimusAuthentication.ExternalScope));
+});
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -46,14 +84,8 @@ builder.Services.AddRateLimiter(options =>
         limiter.QueueLimit = 0;
         limiter.AutoReplenishment = true;
     });
-    options.AddFixedWindowLimiter("external-register", limiter =>
-    {
-        limiter.PermitLimit = 10;
-        limiter.Window = TimeSpan.FromMinutes(1);
-        limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        limiter.QueueLimit = 0;
-        limiter.AutoReplenishment = true;
-    });
+    options.AddPolicy("external-register", context => CreateExternalAuthRateLimitPartition(context, builder.Environment));
+    options.AddPolicy("external-login", context => CreateExternalAuthRateLimitPartition(context, builder.Environment));
 });
 builder.Services.AddCors(options =>
 {
@@ -115,6 +147,7 @@ api.MapGalleryEndpoints();
 api.MapCatalogModuleEndpoints();
 api.MapParticipationEndpoints();
 api.MapExternalAuthEndpoints();
+api.MapExternalOrganizationEndpoints();
 api.MapNotificationEndpoints();
 api.MapRecordGovernanceEndpoints();
 api.MapAdminAuthEndpoints();
@@ -125,5 +158,23 @@ api.MapAdminDataEndpoints();
 app.MapLegacyParticipationCompatibilityEndpoint();
 
 app.Run();
+
+static RateLimitPartition<string> CreateExternalAuthRateLimitPartition(HttpContext context, IHostEnvironment environment)
+{
+    if (environment.IsEnvironment("Test"))
+    {
+        return RateLimitPartition.GetNoLimiter("test");
+    }
+
+    var partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = 10,
+        Window = TimeSpan.FromMinutes(1),
+        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+        QueueLimit = 0,
+        AutoReplenishment = true
+    });
+}
 
 public partial class Program;

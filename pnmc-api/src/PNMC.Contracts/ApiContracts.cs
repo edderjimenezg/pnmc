@@ -757,6 +757,42 @@ public sealed class ExternalVerifyEmailRequest
     public string Code { get; set; } = string.Empty;
 }
 
+public sealed class ExternalLoginRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}
+
+public sealed class ExternalOrganizationCreateRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string? IdentificationNumber { get; set; }
+    public string ContactEmail { get; set; } = string.Empty;
+    public string CoverageLevel { get; set; } = "municipal";
+    public string? DepartmentCode { get; set; }
+    public string? MunicipalityCode { get; set; }
+}
+
+public sealed record ExternalOrganizationDto(
+    string Id,
+    string Name,
+    string? IdentificationNumber,
+    string ContactEmail,
+    string CoverageLevel,
+    string? DepartmentCode,
+    string? MunicipalityCode,
+    string AdministratorRole,
+    string Status);
+
+public sealed record ExternalCsrfTokenResponse(string RequestToken);
+
+public sealed record ExternalSessionResponse(
+    string UserId,
+    string FullName,
+    string Email,
+    string AccountStatus
+);
+
 public sealed record ExternalVerifyEmailResponse(
     string UserId,
     string Email,

@@ -773,6 +773,7 @@ public static class DatabaseBootstrapper
                     [IdEntidad] int IDENTITY(1,1) NOT NULL,
                     [TipoEntidad] nvarchar(80) NOT NULL,
                     [Nombre] nvarchar(240) NOT NULL,
+                    [NumeroIdentificacion] nvarchar(60) NULL,
                     [NombreLegal] nvarchar(240) NULL,
                     [Descripcion] nvarchar(max) NULL,
                     [CorreoContacto] nvarchar(180) NULL,
@@ -800,6 +801,18 @@ public static class DatabaseBootstrapper
                     CONSTRAINT [FK_Entidades_UsuarioCreador] FOREIGN KEY ([IdUsuarioCreador]) REFERENCES [Usuarios] ([IdUsuario]),
                     CONSTRAINT [FK_Entidades_UsuarioResponsable] FOREIGN KEY ([IdUsuarioResponsable]) REFERENCES [Usuarios] ([IdUsuario])
                 );
+            END;
+
+            IF COL_LENGTH(N'[Entidades]', N'NumeroIdentificacion') IS NULL
+            BEGIN
+                ALTER TABLE [Entidades] ADD [NumeroIdentificacion] nvarchar(60) NULL;
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UQ_Entidades_NumeroIdentificacion' AND object_id = OBJECT_ID(N'[Entidades]'))
+            BEGIN
+                CREATE UNIQUE INDEX [UQ_Entidades_NumeroIdentificacion]
+                    ON [Entidades] ([NumeroIdentificacion])
+                    WHERE [NumeroIdentificacion] IS NOT NULL;
             END;
 
             IF OBJECT_ID(N'[UsuariosEntidades]', N'U') IS NULL

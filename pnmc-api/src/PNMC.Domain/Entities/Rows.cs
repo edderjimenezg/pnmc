@@ -589,6 +589,7 @@ public sealed class EntityProfileRow
     public int Id { get; set; }
     public string EntityType { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string? IdentificationNumber { get; set; }
     public string? LegalName { get; set; }
     public string? Description { get; set; }
     public string? ContactEmail { get; set; }

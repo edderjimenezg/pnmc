@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { ApiClientService } from '../http/api-client.service';
 
 @Injectable({
@@ -89,6 +90,41 @@ export class AdminService {
   verifyExternalEmail(payload: any): Observable<any> {
     return this.apiClient.post<any>('/api/v1/external/auth/verify-email', payload, {
       errorFallback: 'No fue posible verificar el correo',
+    });
+  }
+
+  loginExternal(payload: { email: string; password: string }): Observable<any> {
+    return this.apiClient.post<any>('/api/v1/external/auth/login', payload, {
+      errorFallback: 'No fue posible iniciar sesión en SIMUS',
+    });
+  }
+
+  fetchExternalSession(): Observable<any> {
+    return this.apiClient.get<any>('/api/v1/external/auth/me', {
+      errorFallback: 'No hay una sesión externa activa',
+    });
+  }
+
+  logoutExternal(): Observable<any> {
+    return this.apiClient.post<any>('/api/v1/external/auth/logout', {}, {
+      errorFallback: 'No fue posible cerrar la sesión externa',
+    });
+  }
+
+  createExternalOrganization(payload: any): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar el registro de organización',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>('/api/v1/external/organizations/', payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible registrar la organización',
+      }))
+    );
+  }
+
+  fetchExternalDivipola(): Observable<any[]> {
+    return this.apiClient.get<any[]>('/api/v1/external/organizations/divipola', {
+      errorFallback: 'No fue posible cargar los territorios disponibles',
     });
   }
 

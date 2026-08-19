@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using PNMC.Contracts;
 using PNMC.Infrastructure.Common;
 using PNMC.Infrastructure.Data;
+using PNMC.Api.Security;
 
 namespace PNMC.Api.Endpoints;
 
@@ -45,6 +46,11 @@ public static class AdminAuthEndpoints
             if (role is null)
             {
                 return Results.Problem("El usuario no tiene un rol administrativo valido.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            if (CleanRoleName(role.Name) == "externo")
+            {
+                return Results.Unauthorized();
             }
 
             user.LastLoginAt = DateTime.UtcNow;
@@ -405,7 +411,8 @@ public static class AdminAuthEndpoints
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, normalizedRole),
-            new("pnmc_role_label", role.Name)
+            new("pnmc_role_label", role.Name),
+            new(SimusAuthentication.AccessScopeClaim, SimusAuthentication.InstitutionalScope)
         };
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));

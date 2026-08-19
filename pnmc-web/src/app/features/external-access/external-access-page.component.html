@@ -1,0 +1,81 @@
+<main class="min-h-screen bg-slate-50 px-5 py-12 font-nunito text-slate-700">
+  <section class="mx-auto max-w-3xl">
+    <a routerLink="/simus" class="text-xs font-bold text-[#291242] hover:text-[#00A849]">← Volver a SIMUS</a>
+    <p class="mt-10 font-alternate text-xs font-bold uppercase tracking-[0.22em] text-[#00A849]">Participa en SIMUS</p>
+    <h1 class="mt-3 font-gregor text-4xl uppercase leading-tight text-[#291242]">Crea tu cuenta o registra una organización</h1>
+
+    @if (message()) { <p class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{{ message() }}</p> }
+    @if (error()) { <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ error() }}</p> }
+
+    @if (view() === 'choice') {
+      <p class="mt-5 max-w-2xl text-sm leading-relaxed">¿Qué quieres hacer? Tu cuenta siempre es personal. Las organizaciones se registran por separado y las administran personas autorizadas.</p>
+      <div class="mt-8 grid gap-5 md:grid-cols-2">
+        <button type="button" (click)="chooseAccount()" class="rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
+          <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Registrarme</h2>
+          <p class="mt-3 text-sm leading-relaxed">Crea tu cuenta en SIMUS. Podrás completar posteriormente tu perfil como agente de la música y administrar organizaciones o procesos cuando tengas autorización.</p>
+        </button>
+        <button type="button" (click)="chooseOrganization()" class="rounded-2xl border border-[#291242] bg-[#291242] p-6 text-left text-white shadow-sm transition hover:bg-[#3d1b61]">
+          <h2 class="font-alternate text-lg font-bold uppercase">Registrar una organización o entidad</h2>
+          <p class="mt-3 text-sm leading-relaxed text-white/75">Registra los datos básicos institucionales. Necesitaremos identificar a la persona que la administrará.</p>
+        </button>
+      </div>
+    }
+
+    @if (view() === 'register') {
+      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); register()">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Crea tu cuenta personal</h2>
+        <label class="block text-sm font-bold">Nombre completo<input [(ngModel)]="account.fullName" name="fullName" class="mt-1 w-full rounded-lg border p-3" autocomplete="name"></label>
+        <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="account.email" name="email" type="email" class="mt-1 w-full rounded-lg border p-3" autocomplete="email"></label>
+        <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="account.password" name="password" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
+        <label class="block text-sm font-bold">Confirma tu contraseña<input [(ngModel)]="account.confirmPassword" name="confirmPassword" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
+        <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptTerms" name="terms" type="checkbox"> Acepto los términos de uso.</label>
+        <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptDataPolicy" name="dataPolicy" type="checkbox"> Acepto la política de tratamiento de datos.</label>
+        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Continuar</button>
+        @if (wantsOrganization()) { <button type="button" (click)="goToLogin()" class="ml-3 text-sm font-bold text-[#291242]">Ya tengo cuenta</button> }
+      </form>
+    }
+
+    @if (view() === 'verify') {
+      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); verify()">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Verifica tu correo</h2>
+        <p class="text-sm">Escribe el código recibido en <strong>{{ registeredEmail() }}</strong>.</p>
+        <label class="block text-sm font-bold">Código<input [(ngModel)]="verificationCode" name="verificationCode" inputmode="numeric" class="mt-1 w-full rounded-lg border p-3"></label>
+        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Activar cuenta</button>
+      </form>
+    }
+
+    @if (view() === 'login') {
+      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); startLogin()">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Identifica a quien administrará la organización</h2>
+        <p class="text-sm">Una organización no tiene contraseña compartida. Inicia sesión con tu cuenta personal o crea una.</p>
+        <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="login.email" name="loginEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
+        <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="login.password" name="loginPassword" type="password" class="mt-1 w-full rounded-lg border p-3"></label>
+        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Iniciar sesión</button>
+        <button type="button" (click)="goToRegister()" class="ml-3 text-sm font-bold text-[#291242]">Crear una cuenta personal</button>
+      </form>
+    }
+
+    @if (view() === 'organization') {
+      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); createOrganization()">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Datos básicos de la organización</h2>
+        <p class="text-sm">El correo institucional sirve para contactar a la organización. Tu correo de acceso sigue siendo personal.</p>
+        <label class="block text-sm font-bold">Nombre de la organización<input [(ngModel)]="organization.name" name="organizationName" class="mt-1 w-full rounded-lg border p-3"></label>
+        <label class="block text-sm font-bold">NIT u otra identificación <span class="font-normal">(si aplica)</span><input [(ngModel)]="organization.identificationNumber" name="identificationNumber" class="mt-1 w-full rounded-lg border p-3"></label>
+        <label class="block text-sm font-bold">Correo institucional o de contacto<input [(ngModel)]="organization.contactEmail" name="contactEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
+        <label class="block text-sm font-bold">Alcance territorial<select [(ngModel)]="organization.coverageLevel" name="coverageLevel" class="mt-1 w-full rounded-lg border p-3"><option value="municipal">Municipal</option><option value="departamental">Departamental</option><option value="nacional">Nacional</option></select></label>
+        @if (organization.coverageLevel !== 'nacional') { <label class="block text-sm font-bold">Departamento<select [(ngModel)]="organization.departmentCode" name="departmentCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un departamento</option>@for (department of departments(); track department.code) { <option [value]="department.code">{{ department.name }}</option> }</select></label> }
+        @if (organization.coverageLevel === 'municipal') { <label class="block text-sm font-bold">Municipio<select [(ngModel)]="organization.municipalityCode" name="municipalityCode" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona un municipio</option>@for (municipality of municipalities(); track municipality.municipalityCode) { <option [value]="municipality.municipalityCode">{{ municipality.municipalityName }}</option> }</select></label> }
+        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Registrar organización</button>
+      </form>
+    }
+
+    @if (view() === 'complete') {
+      <section class="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Proceso completado</h2>
+        @if (createdOrganization()) { <p class="mt-3 text-sm">{{ createdOrganization().name }} quedó activa dentro del entorno autenticado. No se publica automáticamente en un directorio público.</p> }
+        @if (!createdOrganization()) { <p class="mt-3 text-sm">Tu cuenta es personal y está lista para futuras autorizaciones.</p> }
+        <button type="button" (click)="view.set('choice')" class="mt-5 rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Volver</button>
+      </section>
+    }
+  </section>
+</main>

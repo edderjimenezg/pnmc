@@ -8,10 +8,12 @@ namespace PNMC.Api.Tests;
 
 public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
     public ApiIntegrationTests(TestWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
     }
 
@@ -33,6 +35,65 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
             Password = "pnmc-aliado-admin"
         });
         response.EnsureSuccessStatusCode();
+    }
+
+    private async Task<ExternalRegisterResponse> RegisterAndVerifyExternalPersonAsync(string email)
+    {
+        var registerResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/register", new ExternalRegisterRequest
+        {
+            ProfileType = "persona",
+            ActorType = "gestor cultural",
+            FullName = "Persona Sesion Externa",
+            Email = email,
+            Phone = "3000000000",
+            DepartmentCode = "05",
+            MunicipalityCode = "05001",
+            Password = "ClaveExterna123",
+            AcceptTerms = true,
+            AcceptDataPolicy = true,
+            AuthorizePublicData = true
+        });
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+
+        var registered = await registerResponse.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
+        Assert.NotNull(registered);
+        var verifyResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest
+        {
+            Email = email,
+            Code = registered!.DebugVerificationCode
+        });
+        verifyResponse.EnsureSuccessStatusCode();
+        return registered;
+    }
+
+    private static async Task LoginExternalAsync(HttpClient client, string email, string password = "ClaveExterna123")
+    {
+        var response = await client.PostAsJsonAsync("/api/v1/external/auth/login", new ExternalLoginRequest
+        {
+            Email = email,
+            Password = password
+        });
+        response.EnsureSuccessStatusCode();
+    }
+
+    private static async Task<string> GetExternalCsrfTokenAsync(HttpClient client)
+    {
+        var response = await client.GetAsync("/api/v1/external/organizations/csrf");
+        response.EnsureSuccessStatusCode();
+        var token = await response.Content.ReadFromJsonAsync<ExternalCsrfTokenResponse>();
+        Assert.NotNull(token);
+        Assert.False(string.IsNullOrWhiteSpace(token!.RequestToken));
+        return token.RequestToken;
+    }
+
+    private static Task<HttpResponseMessage> CreateExternalOrganizationAsync(HttpClient client, string csrfToken, object request)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/external/organizations/")
+        {
+            Content = JsonContent.Create(request)
+        };
+        message.Headers.Add("X-CSRF-TOKEN", csrfToken);
+        return client.SendAsync(message);
     }
 
     [Fact]
@@ -296,10 +357,21 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         Assert.NotNull(payload);
         Assert.Equal("correo_pendiente", payload!.AccountStatus);
         Assert.Equal("codigo_generado", payload.VerificationStatus);
+
+        var verifyResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest
+        {
+            Email = request.Email,
+            Code = payload.DebugVerificationCode
+        });
+        Assert.Equal(HttpStatusCode.OK, verifyResponse.StatusCode);
+
+        var verified = await verifyResponse.Content.ReadFromJsonAsync<ExternalVerifyEmailResponse>();
+        Assert.NotNull(verified);
+        Assert.Equal("activo", verified!.AccountStatus);
     }
 
     [Fact]
-    public async Task External_User_Can_Register_As_Organization_With_Email_Pending()
+    public async Task External_Register_Rejects_Organization_As_Account_Type()
     {
         var request = new ExternalRegisterRequest
         {
@@ -318,12 +390,223 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         };
 
         var response = await _client.PostAsJsonAsync("/api/v1/external/auth/register", request);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("cuenta externa corresponde a una persona", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task External_Verified_User_Can_Login_Read_Session_And_Logout()
+    {
+        const string email = "sesion.externa@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/login", new ExternalLoginRequest
+        {
+            Email = email,
+            Password = "ClaveExterna123"
+        });
+        loginResponse.EnsureSuccessStatusCode();
+        var session = await loginResponse.Content.ReadFromJsonAsync<ExternalSessionResponse>();
+        Assert.NotNull(session);
+        Assert.Equal(email, session!.Email);
+        Assert.Equal("activo", session.AccountStatus);
+
+        var meResponse = await _client.GetAsync("/api/v1/external/auth/me");
+        meResponse.EnsureSuccessStatusCode();
+        var me = await meResponse.Content.ReadFromJsonAsync<ExternalSessionResponse>();
+        Assert.NotNull(me);
+        Assert.Equal(session.UserId, me!.UserId);
+
+        var logoutResponse = await _client.PostAsync("/api/v1/external/auth/logout", null);
+        Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
+        var afterLogout = await _client.GetAsync("/api/v1/external/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, afterLogout.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_Login_Rejects_Unverified_And_Invalid_Credentials()
+    {
+        const string email = "no.verificada@example.com";
+        var request = new ExternalRegisterRequest
+        {
+            ProfileType = "persona",
+            ActorType = "gestor cultural",
+            FullName = "Persona Sin Verificar",
+            Email = email,
+            Phone = "3000000000",
+            DepartmentCode = "05",
+            MunicipalityCode = "05001",
+            Password = "ClaveExterna123",
+            AcceptTerms = true,
+            AcceptDataPolicy = true,
+            AuthorizePublicData = true
+        };
+        var registerResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/register", request);
+        registerResponse.EnsureSuccessStatusCode();
+        var registered = await registerResponse.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
+
+        var unverifiedLogin = await _client.PostAsJsonAsync("/api/v1/external/auth/login", new ExternalLoginRequest
+        {
+            Email = email,
+            Password = request.Password
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, unverifiedLogin.StatusCode);
+
+        var verifyResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest
+        {
+            Email = email,
+            Code = registered!.DebugVerificationCode
+        });
+        verifyResponse.EnsureSuccessStatusCode();
+
+        var invalidLogin = await _client.PostAsJsonAsync("/api/v1/external/auth/login", new ExternalLoginRequest
+        {
+            Email = email,
+            Password = "ClaveIncorrecta123"
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, invalidLogin.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_Session_Cannot_Access_Institutional_Endpoints_Or_Login()
+    {
+        const string email = "aislamiento.externo@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        var loginResponse = await _client.PostAsJsonAsync("/api/v1/external/auth/login", new ExternalLoginRequest
+        {
+            Email = email,
+            Password = "ClaveExterna123"
+        });
+        loginResponse.EnsureSuccessStatusCode();
+
+        var institutionalUsers = await _client.GetAsync("/api/v1/admin/auth/users");
+        Assert.Equal(HttpStatusCode.Unauthorized, institutionalUsers.StatusCode);
+
+        var institutionalLogin = await _client.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest
+        {
+            Email = email,
+            Password = "ClaveExterna123"
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, institutionalLogin.StatusCode);
+    }
+
+    [Fact]
+    public async Task Institutional_Session_Is_Not_An_External_Session()
+    {
+        await LoginAsWebmasterAsync();
+
+        var externalMe = await _client.GetAsync("/api/v1/external/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, externalMe.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_User_Can_Create_Organization_With_Initial_Administrator_And_Csrf()
+    {
+        const string email = "admin.organizacion@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var csrfToken = await GetExternalCsrfTokenAsync(_client);
+
+        var response = await CreateExternalOrganizationAsync(_client, csrfToken, new
+        {
+            name = "Fundacion Organizacion Test",
+            identificationNumber = "900123456-7",
+            contactEmail = "contacto@organizacion.test",
+            coverageLevel = "municipal",
+            departmentCode = "05",
+            municipalityCode = "05001",
+            administratorUserId = 999
+        });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        var payload = await response.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
-        Assert.NotNull(payload);
-        Assert.Equal("organizacion.externa@example.com", payload!.Email);
-        Assert.Equal("correo_pendiente", payload.AccountStatus);
+        var organization = await response.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+        Assert.Equal("administrador", organization!.AdministratorRole);
+        Assert.Equal("registrada", organization.Status);
+        Assert.Equal("900123456-7", organization.IdentificationNumber);
+
+        var readResponse = await _client.GetAsync($"/api/v1/external/organizations/{organization.Id}");
+        readResponse.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task External_Organization_Creation_Rejects_Missing_Session_And_Csrf()
+    {
+        var withoutSession = await _client.PostAsJsonAsync("/api/v1/external/organizations/", new
+        {
+            name = "Organizacion Sin Sesion",
+            contactEmail = "contacto@sin-sesion.test",
+            coverageLevel = "nacional"
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, withoutSession.StatusCode);
+
+        const string email = "csrf.organizacion@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var withoutCsrf = await _client.PostAsJsonAsync("/api/v1/external/organizations/", new
+        {
+            name = "Organizacion Sin Token",
+            contactEmail = "contacto@sin-token.test",
+            coverageLevel = "nacional"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, withoutCsrf.StatusCode);
+    }
+
+    [Fact]
+    public async Task Institutional_Or_Another_External_User_Cannot_Administer_External_Organization()
+    {
+        const string ownerEmail = "propietaria.organizacion@example.com";
+        await RegisterAndVerifyExternalPersonAsync(ownerEmail);
+        await LoginExternalAsync(_client, ownerEmail);
+        var csrfToken = await GetExternalCsrfTokenAsync(_client);
+        var createResponse = await CreateExternalOrganizationAsync(_client, csrfToken, new
+        {
+            name = "Organizacion Protegida",
+            contactEmail = "contacto@protegida.test",
+            coverageLevel = "nacional"
+        });
+        createResponse.EnsureSuccessStatusCode();
+        var organization = await createResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+
+        var institutionalClient = _factory.CreateClient();
+        var institutionalLogin = await institutionalClient.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest
+        {
+            Email = "test@pnmc.local",
+            Password = "pnmc-master"
+        });
+        institutionalLogin.EnsureSuccessStatusCode();
+        var institutionalRead = await institutionalClient.GetAsync($"/api/v1/external/organizations/{organization!.Id}");
+        Assert.Equal(HttpStatusCode.Unauthorized, institutionalRead.StatusCode);
+
+        var otherClient = _factory.CreateClient();
+        var otherRegister = await otherClient.PostAsJsonAsync("/api/v1/external/auth/register", new ExternalRegisterRequest
+        {
+            ProfileType = "persona",
+            ActorType = "gestor cultural",
+            FullName = "Otra Persona Externa",
+            Email = "tercera.organizacion@example.com",
+            Phone = "3000000000",
+            DepartmentCode = "05",
+            MunicipalityCode = "05001",
+            Password = "ClaveExterna123",
+            AcceptTerms = true,
+            AcceptDataPolicy = true,
+            AuthorizePublicData = true
+        });
+        otherRegister.EnsureSuccessStatusCode();
+        var otherAccount = await otherRegister.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
+        var verifyOther = await otherClient.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest
+        {
+            Email = "tercera.organizacion@example.com",
+            Code = otherAccount!.DebugVerificationCode
+        });
+        verifyOther.EnsureSuccessStatusCode();
+        await LoginExternalAsync(otherClient, "tercera.organizacion@example.com");
+
+        var otherRead = await otherClient.GetAsync($"/api/v1/external/organizations/{organization.Id}");
+        Assert.Equal(HttpStatusCode.Forbidden, otherRead.StatusCode);
     }
 
     [Fact]

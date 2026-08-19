@@ -50,6 +50,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/ecosystem/pages/schools-page/schools-page.component').then(m => m.SchoolsPageComponent),
   },
   {
+    path: 'registro',
+    loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
+  },
+  {
+    path: 'simus/participa',
+    redirectTo: 'registro',
+    pathMatch: 'full',
+  },
+  {
     path: 'simus/:section',
     loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
   },

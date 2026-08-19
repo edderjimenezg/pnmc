@@ -712,6 +712,7 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.Id).HasColumnName("IdEntidad");
             entity.Property(x => x.EntityType).HasColumnName("TipoEntidad");
             entity.Property(x => x.Name).HasColumnName("Nombre");
+            entity.Property(x => x.IdentificationNumber).HasColumnName("NumeroIdentificacion");
             entity.Property(x => x.LegalName).HasColumnName("NombreLegal");
             entity.Property(x => x.Description).HasColumnName("Descripcion");
             entity.Property(x => x.ContactEmail).HasColumnName("CorreoContacto");
@@ -735,6 +736,7 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.ReviewedAt).HasColumnName("FechaRevision");
             entity.Property(x => x.ApprovedAt).HasColumnName("FechaAprobacion");
             entity.Property(x => x.PublishedAt).HasColumnName("FechaPublicacion");
+            entity.HasIndex(x => x.IdentificationNumber).IsUnique().HasDatabaseName("UQ_Entidades_NumeroIdentificacion");
         });
 
         modelBuilder.Entity<UserEntityRow>(entity =>
