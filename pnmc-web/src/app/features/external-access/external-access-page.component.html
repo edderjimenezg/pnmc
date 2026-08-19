@@ -1,39 +1,41 @@
-<main class="relative min-h-[100dvh] overflow-hidden bg-[#291242] px-4 py-6 font-nunito text-slate-700 sm:px-6 sm:py-8">
-  <div aria-hidden="true" class="pointer-events-none absolute -right-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-[#00A849]/15 blur-3xl"></div>
-  <div aria-hidden="true" class="pointer-events-none absolute -bottom-56 -left-48 h-[34rem] w-[34rem] rounded-full bg-[#6d3a94]/30 blur-3xl"></div>
+<main class="portal-acceso relative min-h-[100dvh] overflow-hidden bg-[#0d0915] px-4 py-6 font-nunito text-slate-700 sm:px-6 sm:py-8">
+  <div aria-hidden="true" class="pointer-events-none absolute -right-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-[#00A849]/10 blur-[130px]"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute -bottom-56 -left-48 h-[34rem] w-[34rem] rounded-full bg-[#6100D7]/15 blur-[150px]"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute left-1/4 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-emerald-500/5 blur-[120px]"></div>
   <section class="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] max-w-5xl flex-col">
-    <a routerLink="/simus" class="self-start text-xs font-bold text-white/75 transition hover:text-white">← Volver a SIMUS</a>
+    <a routerLink="/simus" class="self-start text-xs font-bold text-white/60 transition hover:text-white">← Volver a SIMUS</a>
     <div class="flex flex-1 flex-col justify-center py-8">
 
     @if (message()) { <p class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{{ message() }}</p> }
     @if (error()) { <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ error() }}</p> }
 
     @if (isAccessScreen()) {
-      <section class="mx-auto w-full max-w-md overflow-hidden rounded-[1.75rem] border border-white/20 bg-white shadow-[0_28px_80px_rgba(8,3,18,0.35)]">
-        <div class="flex flex-col items-center justify-center bg-[#291242] px-6 pb-6 pt-8 text-center">
-          <img src="/assets/branding/pnmc-blanco.png" alt="Plan Nacional de Música para la Convivencia" class="h-14 w-auto object-contain">
-          <p class="mt-5 font-alternate text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[#7ce5a5]">Acceso externo</p>
-          <h1 class="mt-2 font-gregor text-3xl uppercase leading-none text-white">Haz parte de SIMUS</h1>
-          <p class="mt-3 max-w-sm text-xs leading-relaxed text-white/75">Crea tu cuenta, gestiona organizaciones y mantiene actualizada la información del ecosistema musical.</p>
+      <section class="portal-tarjeta mx-auto w-full max-w-md overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-900/40 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+        <div class="relative flex flex-col items-center justify-center px-6 pb-6 pt-8 text-center">
+          <div aria-hidden="true" class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#00A849]/40 to-transparent"></div>
+          <img src="/assets/branding/pnmc-blanco.png" alt="Plan Nacional de Música para la Convivencia" class="h-16 w-auto object-contain drop-shadow-[0_4px_24px_rgba(0,168,73,0.20)]">
+          <p class="mt-5 font-alternate text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[#00A849]">Acceso externo</p>
+          <h1 class="mt-2 font-alternate text-2xl font-bold uppercase tracking-wide text-white">Haz parte de SIMUS</h1>
+          <p class="mt-3 max-w-sm text-xs leading-relaxed text-white/60">Crea tu cuenta, gestiona organizaciones y mantiene actualizada la información del ecosistema musical.</p>
         </div>
-        <div role="tablist" aria-label="Acceso externo a SIMUS" class="grid grid-cols-2 border-b border-slate-200 bg-slate-50">
-          <button type="button" role="tab" [attr.aria-selected]="view() === 'login'" (click)="openExternalLogin()" [class]="view() === 'login' ? 'border-b-2 border-[#00A849] bg-white text-[#291242]' : 'border-b-2 border-transparent text-slate-500 hover:bg-white hover:text-[#291242]'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Ingresar</button>
-          <button type="button" role="tab" [attr.aria-selected]="view() !== 'login'" (click)="openRegistrationChoice()" [class]="view() !== 'login' ? 'border-b-2 border-[#00A849] bg-white text-[#291242]' : 'border-b-2 border-transparent text-slate-500 hover:bg-white hover:text-[#291242]'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Crear cuenta</button>
+        <div role="tablist" aria-label="Acceso externo a SIMUS" class="grid grid-cols-2 border-b border-white/10">
+          <button type="button" role="tab" [attr.aria-selected]="view() === 'login'" (click)="openExternalLogin()" [class]="view() === 'login' ? 'border-b-2 border-[#00A849] bg-white/5 text-white' : 'border-b-2 border-transparent text-white/45 hover:bg-white/5 hover:text-white/80'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Ingresar</button>
+          <button type="button" role="tab" [attr.aria-selected]="view() !== 'login'" (click)="openRegistrationChoice()" [class]="view() !== 'login' ? 'border-b-2 border-[#00A849] bg-white/5 text-white' : 'border-b-2 border-transparent text-white/45 hover:bg-white/5 hover:text-white/80'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Registrarse</button>
         </div>
       </section>
     }
 
     @if (view() === 'choice') {
-      <div role="tabpanel" class="mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-5 shadow-[0_28px_80px_rgba(8,3,18,0.35)] sm:p-6">
-      <p class="text-sm leading-relaxed text-slate-600">Tu cuenta es personal. Desde ella podrás administrar organizaciones cuando tengas autorización.</p>
+      <div role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-5 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-6">
+      <p class="text-sm leading-relaxed text-white/60">Tu cuenta es personal. Desde ella podrás administrar organizaciones cuando tengas autorización.</p>
       <div class="mt-5 grid gap-4 md:grid-cols-2">
-        <button type="button" (click)="chooseAccount()" class="rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
+        <button type="button" (click)="chooseAccount()" class="rounded-2xl border border-white/10 bg-white/5 p-6 text-left shadow-sm transition hover:border-[#00A849]/70 hover:bg-white/10">
           <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Registro personal</p>
-          <h2 class="mt-2 font-alternate text-lg font-bold uppercase text-[#291242]">Crear mi cuenta</h2>
-          <p class="mt-3 text-sm leading-relaxed">Crea tu acceso personal a SIMUS. Esta cuenta también podrá ser autorizada posteriormente para administrar organizaciones y sus procesos.</p>
+          <h2 class="mt-2 font-alternate text-lg font-bold uppercase text-white">Crear mi cuenta</h2>
+          <p class="mt-3 text-sm leading-relaxed text-white/60">Crea tu acceso personal a SIMUS. Esta cuenta también podrá ser autorizada posteriormente para administrar organizaciones y sus procesos.</p>
         </button>
-        <button type="button" (click)="chooseOrganization()" class="rounded-2xl border border-[#291242] bg-[#291242] p-6 text-left text-white shadow-sm transition hover:bg-[#3d1b61]">
-          <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#7ce5a5]">Organización</p>
+        <button type="button" (click)="chooseOrganization()" class="rounded-2xl border border-[#00A849]/35 bg-[#00A849]/10 p-6 text-left text-white shadow-sm transition hover:bg-[#00A849]/15">
+          <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Organización</p>
           <h2 class="mt-2 font-alternate text-lg font-bold uppercase">Registrar una organización</h2>
           <p class="mt-3 text-sm leading-relaxed text-white/75">Registra una fundación, asociación, empresa, entidad pública u otra organización. Durante el proceso identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         </button>
@@ -48,7 +50,7 @@
     }
 
     @if (view() === 'register') {
-      <form role="tabpanel" class="mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-[0_28px_80px_rgba(8,3,18,0.35)]" (submit)="$event.preventDefault(); register()">
+      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); register()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Crea tu cuenta personal</h2>
         <label class="block text-sm font-bold">Nombre completo<input [(ngModel)]="account.fullName" name="fullName" class="mt-1 w-full rounded-lg border p-3" autocomplete="name"></label>
         <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="account.email" name="email" type="email" class="mt-1 w-full rounded-lg border p-3" autocomplete="email"></label>
@@ -56,33 +58,33 @@
         <label class="block text-sm font-bold">Confirma tu contraseña<input [(ngModel)]="account.confirmPassword" name="confirmPassword" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
         <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptTerms" name="terms" type="checkbox"> Acepto los términos de uso.</label>
         <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptDataPolicy" name="dataPolicy" type="checkbox"> Acepto la política de tratamiento de datos.</label>
-        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Continuar</button>
+        <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Continuar</button>
         @if (wantsOrganization()) { <button type="button" (click)="goToLogin()" class="ml-3 text-sm font-bold text-[#291242]">Ya tengo cuenta</button> }
       </form>
     }
 
     @if (view() === 'verify') {
-      <form role="tabpanel" class="mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-[0_28px_80px_rgba(8,3,18,0.35)]" (submit)="$event.preventDefault(); verify()">
+      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); verify()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Verifica tu correo</h2>
         <p class="text-sm">Escribe el código recibido en <strong>{{ registeredEmail() }}</strong>.</p>
         <label class="block text-sm font-bold">Código<input [(ngModel)]="verificationCode" name="verificationCode" inputmode="numeric" class="mt-1 w-full rounded-lg border p-3"></label>
-        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Activar cuenta</button>
+        <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Activar cuenta</button>
       </form>
     }
 
     @if (view() === 'login') {
-      <form role="tabpanel" class="mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-[0_28px_80px_rgba(8,3,18,0.35)]" (submit)="$event.preventDefault(); startLogin()">
+      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); startLogin()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">{{ wantsOrganization() ? 'Identifica a quien administrará la organización' : 'Ingresa a SIMUS' }}</h2>
         <p class="text-sm">{{ wantsOrganization() ? 'Una organización no tiene contraseña compartida. Inicia sesión con tu cuenta personal o crea una.' : 'Usa tu cuenta personal para gestionar las organizaciones y procesos para los cuales tienes autorización.' }}</p>
         <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="login.email" name="loginEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
         <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="login.password" name="loginPassword" type="password" class="mt-1 w-full rounded-lg border p-3"></label>
-        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Ingresar</button>
+        <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Ingresar</button>
         <button type="button" (click)="openRegistrationChoice()" class="ml-3 text-sm font-bold text-[#291242]">Crear una cuenta</button>
       </form>
     }
 
     @if (view() === 'organization') {
-      <form role="tabpanel" class="mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-[0_28px_80px_rgba(8,3,18,0.35)]" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
+      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Datos básicos de la organización</h2>
         <p class="text-sm">Estás registrando una organización. Después identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         <label class="block text-sm font-bold">Nombre de la organización<input [(ngModel)]="organization.name" name="organizationName" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -95,12 +97,12 @@
         } @else {
           <p class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">El departamento y el municipio se seleccionan en DIVIPOLA después de identificar a la persona responsable.</p>
         }
-        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{{ session() ? 'Registrar organización' : 'Continuar con la persona responsable' }}</button>
+        <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{{ session() ? 'Registrar organización' : 'Continuar con la persona responsable' }}</button>
       </form>
     }
 
     @if (view() === 'responsible') {
-      <section role="tabpanel" class="mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-[0_28px_80px_rgba(8,3,18,0.35)]">
+      <section role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl">
         <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Persona responsable</p>
         <h2 class="mt-2 font-alternate text-xl font-bold uppercase text-[#291242]">¿Quién administrará inicialmente esta organización?</h2>
         <p class="mt-3 max-w-2xl text-sm leading-relaxed">La organización no tiene contraseña compartida. Una persona concreta recibe la autorización inicial para administrarla; esta autorización podrá cambiar más adelante.</p>

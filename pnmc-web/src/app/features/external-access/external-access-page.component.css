@@ -1,0 +1,50 @@
+.portal-acceso .portal-panel h2,
+.portal-acceso .portal-panel p,
+.portal-acceso .portal-panel label {
+  color: inherit;
+}
+
+.portal-acceso .portal-panel input,
+.portal-acceso .portal-panel select,
+.portal-acceso .portal-panel textarea {
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+  outline: none;
+}
+
+.portal-acceso .portal-panel input:focus,
+.portal-acceso .portal-panel select:focus,
+.portal-acceso .portal-panel textarea:focus {
+  border-color: #00a849 !important;
+  box-shadow: 0 0 0 1px rgba(0, 168, 73, 0.3);
+}
+
+.portal-acceso .portal-panel input::placeholder,
+.portal-acceso .portal-panel textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.portal-acceso .portal-panel option {
+  background: #191521;
+  color: #fff;
+}
+
+.portal-acceso .portal-panel button[type='submit'] {
+  width: 100%;
+  border-radius: 0.75rem;
+  background: #00a849 !important;
+  color: #0d0915 !important;
+  font-family: var(--font-alternate, inherit);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.portal-acceso .portal-panel button[type='button'] {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.portal-acceso .portal-panel [class*='text-[#291242]'] {
+  color: #fff !important;
+}

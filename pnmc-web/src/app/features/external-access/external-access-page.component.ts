@@ -11,6 +11,7 @@ type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'respo
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './external-access-page.component.html',
+  styleUrl: './external-access-page.component.css',
 })
 export class ExternalAccessPageComponent implements OnInit {
   private readonly adminService = inject(AdminService);
