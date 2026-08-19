@@ -83,7 +83,32 @@
           <p class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Aún no administras una organización. Registra una organización antes de crear un Festival.</p>
           <button type="button" (click)="chooseOrganization()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Registrar organización</button>
         } @else {
-          <label class="block text-sm font-bold">Organización responsable<select [(ngModel)]="festival.organizacionId" (change)="loadDraftFestivals()" [disabled]="festivalEnEdicion() || propuestaEnEdicion()" name="festivalOrganization" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona una organización</option>@for (organization of organizations(); track organization.id) { <option [value]="organization.id">{{ organization.nombre }}</option> }</select></label>
+          <label class="block text-sm font-bold">Organización responsable<select [(ngModel)]="festival.organizacionId" (change)="onFestivalOrganizationChange()" [disabled]="festivalEnEdicion() || propuestaEnEdicion()" name="festivalOrganization" class="mt-1 w-full rounded-lg border p-3"><option value="">Selecciona una organización</option>@for (organization of organizations(); track organization.id) { <option [value]="organization.id">{{ organization.nombre }}</option> }</select></label>
+          @if (festival.organizacionId && !festivalEnEdicion() && !propuestaEnEdicion()) {
+            <section class="rounded-2xl border border-[#00A849]/30 bg-emerald-50/40 p-5 shadow-xs">
+              <p class="font-alternate text-xs font-bold uppercase tracking-[0.18em] text-[#00A849]">Vinculación histórica</p>
+              <h3 class="mt-2 font-alternate text-base font-bold uppercase text-[#291242]">Registros que podrían estar relacionados con tu organización</h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">SIMUS consulta únicamente Festivales históricos publicados que todavía no tienen una organización responsable registrada. Una posible coincidencia no confirma propiedad ni modifica el registro.</p>
+              @if (cargandoCoincidencias()) {
+                <p class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">Consultando registros históricos…</p>
+              } @else if (coincidenciasConsultadas() && coincidenciasHistoricas().length === 0) {
+                <p class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No encontramos registros históricos que cumplan las condiciones de coincidencia para esta organización.</p>
+              } @else if (coincidenciasHistoricas().length > 0) {
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                  @for (coincidencia of coincidenciasHistoricas(); track coincidencia.festivalId) {
+                    <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+                      <p class="text-[0.65rem] font-black uppercase tracking-widest text-[#00A849]">Posible coincidencia</p>
+                      <h4 class="mt-2 font-bold text-[#291242]">{{ coincidencia.nombreFestival }}</h4>
+                      <p class="mt-1 text-xs font-medium text-slate-500">{{ coincidencia.nombreMunicipio || 'Municipio no registrado' }}, {{ coincidencia.nombreDepartamento || 'Departamento no registrado' }}</p>
+                      <p class="mt-3 text-xs font-bold text-slate-700">{{ etiquetaCoincidencia(coincidencia.tipoCoincidencia) }}</p>
+                      <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ coincidencia.evidencias[0] }}</p>
+                      <button type="button" (click)="coincidenciaEnDetalle.set(coincidencia)" class="mt-4 rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-[#291242] transition hover:border-[#291242]">Ver información</button>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          }
           <label class="block text-sm font-bold">Nombre del Festival<input [(ngModel)]="festival.nombre" name="festivalName" class="mt-1 w-full rounded-lg border p-3"></label>
           <label class="block text-sm font-bold">Propósito o descripción <span class="font-normal">(opcional)</span><textarea [(ngModel)]="festival.descripcion" name="festivalDescription" rows="3" class="mt-1 w-full rounded-lg border p-3"></textarea></label>
           <label class="block text-sm font-bold">Periodicidad <span class="font-normal">(opcional)</span><input [(ngModel)]="festival.periodicidad" name="festivalPeriodicity" placeholder="Ej.: anual" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -113,6 +138,24 @@
         @if (session()) { <button type="button" (click)="openFestivalForm()" class="mt-5 rounded-lg bg-[#00A849] px-5 py-3 text-sm font-bold text-white">Registrar Festival</button> }
         <button type="button" (click)="view.set('choice')" class="mt-5 rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Volver</button>
       </section>
+    }
+
+    @if (coincidenciaEnDetalle(); as coincidencia) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" (click)="coincidenciaEnDetalle.set(null)">
+        <section class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" (click)="$event.stopPropagation()">
+          <p class="font-alternate text-xs font-bold uppercase tracking-[0.18em] text-[#00A849]">Posible coincidencia</p>
+          <h2 class="mt-2 font-gregor text-2xl uppercase text-[#291242]">{{ coincidencia.nombreFestival }}</h2>
+          <p class="mt-2 text-sm text-slate-600">{{ coincidencia.nombreMunicipio || 'Municipio no registrado' }}, {{ coincidencia.nombreDepartamento || 'Departamento no registrado' }}</p>
+          @if (coincidencia.descripcion) { <p class="mt-5 rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">{{ coincidencia.descripcion }}</p> }
+          <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+            <div><dt class="text-xs font-bold uppercase tracking-wide text-slate-400">Organizador histórico</dt><dd class="mt-1 font-medium text-slate-700">{{ coincidencia.organizadorHistorico || 'No registrado' }}</dd></div>
+            <div><dt class="text-xs font-bold uppercase tracking-wide text-slate-400">Razón de coincidencia</dt><dd class="mt-1 font-medium text-slate-700">{{ etiquetaCoincidencia(coincidencia.tipoCoincidencia) }}</dd></div>
+          </dl>
+          <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"><strong>Información de SIMUS:</strong><ul class="mt-2 list-disc space-y-1 pl-5">@for (evidencia of coincidencia.evidencias; track evidencia) { <li>{{ evidencia }}</li> }</ul></div>
+          <p class="mt-5 text-xs leading-relaxed text-slate-500">Esta consulta es informativa. Aún no crea una solicitud de vinculación ni cambia la información pública del Festival.</p>
+          <button type="button" (click)="coincidenciaEnDetalle.set(null)" class="mt-5 rounded-lg bg-[#291242] px-4 py-2 text-xs font-bold text-white">Cerrar</button>
+        </section>
+      </div>
     }
   </section>
 </main>

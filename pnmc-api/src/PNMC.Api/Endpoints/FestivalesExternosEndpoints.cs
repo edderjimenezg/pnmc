@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.EntityFrameworkCore;
 using PNMC.Api.Security;
@@ -120,6 +121,105 @@ public static class FestivalesExternosEndpoints
             var resultado = new List<FestivalBorradorDto>();
             foreach (var festival in festivales) resultado.Add(await ADtoAsync(festival, dbContext, cancellationToken));
             return Results.Ok(resultado);
+        });
+
+        externo.MapGet("/organizaciones/{organizacionId:int}/festivales/coincidencias", async (
+            int organizacionId,
+            ClaimsPrincipal principal,
+            PnmcDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var personaId = ObtenerPersonaId(principal);
+            if (personaId is null) return Results.Unauthorized();
+            if (!await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, organizacionId, cancellationToken)) return Results.Forbid();
+
+            var organizacion = await dbContext.EntityProfiles.AsNoTracking()
+                .Where(item => item.Id == organizacionId && item.IsActive)
+                .Select(item => new { item.Name, item.DepartmentCode, item.MunicipalityCode })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (organizacion is null) return Results.NotFound();
+
+            var festivalesElegibles = await dbContext.FestivalRecords.AsNoTracking()
+                .Where(item => item.StatusCode == "Publicado" && item.OrganizacionPrincipalId == null && item.Name != "")
+                .Select(item => new
+                {
+                    item.Id,
+                    item.Name,
+                    item.Description,
+                    item.OrganizerDisplayName,
+                    item.DepartmentCode,
+                    item.MunicipalityCode
+                })
+                .ToListAsync(cancellationToken);
+
+            var fuentesHistoricas = await dbContext.EntitySourceRecords.AsNoTracking()
+                .Where(item => item.EntityId == organizacionId)
+                .Select(item => new { item.SourceTable, item.SourceRecordId })
+                .ToListAsync(cancellationToken);
+            var festivalesConFuenteHistorica = fuentesHistoricas
+                .Where(item => string.Equals(item.SourceTable, "Festivales", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.SourceRecordId)
+                .ToHashSet();
+
+            var ubicaciones = await dbContext.DivipolaLocations.AsNoTracking()
+                .Select(item => new { item.DepartmentCode, item.DepartmentName, item.MunicipalityCode, item.MunicipalityName })
+                .ToListAsync(cancellationToken);
+            var departamentos = ubicaciones
+                .GroupBy(item => item.DepartmentCode)
+                .ToDictionary(item => item.Key, item => item.First().DepartmentName, StringComparer.OrdinalIgnoreCase);
+            var municipios = ubicaciones
+                .ToDictionary(item => (item.DepartmentCode, item.MunicipalityCode), item => item.MunicipalityName);
+
+            var nombreOrganizacion = NormalizarNombreCoincidencia(organizacion.Name);
+            var coincidencias = new List<CoincidenciaFestivalHistoricoDto>();
+            foreach (var festival in festivalesElegibles)
+            {
+                var coincidenciaNominal = nombreOrganizacion.Length > 0
+                    && nombreOrganizacion == NormalizarNombreCoincidencia(festival.OrganizerDisplayName);
+                var coincideMunicipio = !string.IsNullOrWhiteSpace(organizacion.DepartmentCode)
+                    && !string.IsNullOrWhiteSpace(organizacion.MunicipalityCode)
+                    && string.Equals(organizacion.DepartmentCode, festival.DepartmentCode, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(organizacion.MunicipalityCode, festival.MunicipalityCode, StringComparison.OrdinalIgnoreCase);
+                var coincideDepartamento = !string.IsNullOrWhiteSpace(organizacion.DepartmentCode)
+                    && string.Equals(organizacion.DepartmentCode, festival.DepartmentCode, StringComparison.OrdinalIgnoreCase);
+                var coincideTerritorio = coincideMunicipio || coincideDepartamento;
+                var tieneFuenteHistorica = festivalesConFuenteHistorica.Contains(festival.Id);
+
+                if (!coincidenciaNominal && !(coincideTerritorio && tieneFuenteHistorica)) continue;
+
+                var evidencias = new List<string>();
+                string tipoCoincidencia;
+                if (coincidenciaNominal && coincideTerritorio)
+                {
+                    tipoCoincidencia = "NominalYTerritorial";
+                    evidencias.Add("El organizador histórico coincide con el nombre de tu organización.");
+                }
+                else if (coincidenciaNominal)
+                {
+                    tipoCoincidencia = "NominalExacta";
+                    evidencias.Add("El organizador histórico coincide con el nombre de tu organización.");
+                }
+                else
+                {
+                    tipoCoincidencia = "EvidenciaHistoricaTerritorial";
+                    evidencias.Add("Existe una referencia histórica de esta organización para el Festival.");
+                }
+
+                if (coincideMunicipio) evidencias.Add("La organización y el Festival están registrados en el mismo municipio.");
+                else if (coincideDepartamento) evidencias.Add("La organización y el Festival están registrados en el mismo departamento.");
+
+                departamentos.TryGetValue(festival.DepartmentCode, out var nombreDepartamento);
+                municipios.TryGetValue((festival.DepartmentCode, festival.MunicipalityCode ?? string.Empty), out var nombreMunicipio);
+                coincidencias.Add(new CoincidenciaFestivalHistoricoDto(
+                    festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, festival.Description,
+                    string.IsNullOrWhiteSpace(festival.DepartmentCode) ? null : festival.DepartmentCode, nombreDepartamento,
+                    festival.MunicipalityCode, nombreMunicipio, festival.OrganizerDisplayName, tipoCoincidencia, evidencias));
+            }
+
+            return Results.Ok(coincidencias
+                .OrderBy(item => item.TipoCoincidencia == "NominalYTerritorial" ? 0 : item.TipoCoincidencia == "NominalExacta" ? 1 : 2)
+                .ThenBy(item => item.NombreFestival)
+                .ToList());
         });
 
         externo.MapGet("/festivales/{festivalId:int}", async (
@@ -344,6 +444,20 @@ public static class FestivalesExternosEndpoints
     private static int? ObtenerPersonaId(ClaimsPrincipal principal) =>
         int.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.Integer, CultureInfo.InvariantCulture, out var personaId)
             ? personaId : null;
+
+    private static string NormalizarNombreCoincidencia(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor)) return string.Empty;
+
+        var resultado = new StringBuilder();
+        foreach (var caracter in valor.Normalize(NormalizationForm.FormD))
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(caracter) == UnicodeCategory.NonSpacingMark) continue;
+            resultado.Append(char.IsLetterOrDigit(caracter) ? char.ToLowerInvariant(caracter) : ' ');
+        }
+
+        return string.Join(' ', resultado.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    }
 
     private static async Task<bool> ValidarAntiforgeryAsync(IAntiforgery antiforgery, HttpContext httpContext)
     {

@@ -804,6 +804,18 @@ public sealed record CatalogoFestivalDto(int Id, string Nombre);
 
 public sealed record OrganizacionAdministradaDto(string Id, string Nombre);
 
+public sealed record CoincidenciaFestivalHistoricoDto(
+    string FestivalId,
+    string NombreFestival,
+    string? Descripcion,
+    string? CodigoDepartamento,
+    string? NombreDepartamento,
+    string? CodigoMunicipio,
+    string? NombreMunicipio,
+    string? OrganizadorHistorico,
+    string TipoCoincidencia,
+    IReadOnlyList<string> Evidencias);
+
 public sealed record FestivalBorradorDto(
     string Id,
     string Nombre,

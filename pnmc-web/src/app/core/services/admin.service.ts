@@ -3,6 +3,19 @@ import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { ApiClientService } from '../http/api-client.service';
 
+export interface CoincidenciaFestivalHistorico {
+  festivalId: string;
+  nombreFestival: string;
+  descripcion: string | null;
+  codigoDepartamento: string | null;
+  nombreDepartamento: string | null;
+  codigoMunicipio: string | null;
+  nombreMunicipio: string | null;
+  organizadorHistorico: string | null;
+  tipoCoincidencia: 'NominalExacta' | 'NominalYTerritorial' | 'EvidenciaHistoricaTerritorial';
+  evidencias: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -143,6 +156,12 @@ export class AdminService {
   fetchDraftFestivals(organizacionId: number): Observable<any[]> {
     return this.apiClient.get<any[]>(`/api/v1/externo/organizaciones/${organizacionId}/festivales`, {
       errorFallback: 'No fue posible consultar los Festivales de la organización',
+    });
+  }
+
+  fetchHistoricalFestivalMatches(organizacionId: number): Observable<CoincidenciaFestivalHistorico[]> {
+    return this.apiClient.get<CoincidenciaFestivalHistorico[]>(`/api/v1/externo/organizaciones/${organizacionId}/festivales/coincidencias`, {
+      errorFallback: 'No fue posible consultar los registros históricos relacionados con esta organización',
     });
   }
 

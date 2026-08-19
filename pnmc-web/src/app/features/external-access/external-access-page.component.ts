@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService } from '../../core/services/admin.service';
+import { AdminService, CoincidenciaFestivalHistorico } from '../../core/services/admin.service';
 
 type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'festival' | 'complete';
 
@@ -29,6 +29,10 @@ export class ExternalAccessPageComponent implements OnInit {
   festivalEnRevision = signal<any | null>(null);
   festivalEnEdicion = signal<any | null>(null);
   propuestaEnEdicion = signal<any | null>(null);
+  coincidenciasHistoricas = signal<CoincidenciaFestivalHistorico[]>([]);
+  cargandoCoincidencias = signal(false);
+  coincidenciasConsultadas = signal(false);
+  coincidenciaEnDetalle = signal<CoincidenciaFestivalHistorico | null>(null);
   locations = signal<any[]>([]);
   departments = computed(() => Array.from(new Map(this.locations().map(item => [item.departmentCode, item.departmentName])).entries())
     .map(([code, name]) => ({ code, name })));
@@ -181,6 +185,7 @@ export class ExternalAccessPageComponent implements OnInit {
         if (!this.festival.organizacionId && organizations.length === 1) {
           this.festival.organizacionId = String(organizations[0].id);
           this.loadDraftFestivals();
+          this.loadHistoricalFestivalMatches();
         }
         this.adminService.fetchFestivalCatalogs().subscribe({
           next: catalogs => {
@@ -253,6 +258,42 @@ export class ExternalAccessPageComponent implements OnInit {
       next: festivals => this.draftFestivals.set(festivals),
       error: error => this.fail(error),
     });
+  }
+
+  onFestivalOrganizationChange(): void {
+    this.coincidenciaEnDetalle.set(null);
+    this.loadDraftFestivals();
+    this.loadHistoricalFestivalMatches();
+  }
+
+  loadHistoricalFestivalMatches(): void {
+    const organizacionId = Number(this.festival.organizacionId);
+    if (!organizacionId) {
+      this.coincidenciasHistoricas.set([]);
+      this.coincidenciasConsultadas.set(false);
+      return;
+    }
+
+    this.cargandoCoincidencias.set(true);
+    this.coincidenciasConsultadas.set(false);
+    this.adminService.fetchHistoricalFestivalMatches(organizacionId).subscribe({
+      next: coincidencias => {
+        this.coincidenciasHistoricas.set(coincidencias);
+        this.cargandoCoincidencias.set(false);
+        this.coincidenciasConsultadas.set(true);
+      },
+      error: error => {
+        this.coincidenciasHistoricas.set([]);
+        this.coincidenciasConsultadas.set(true);
+        this.fail(error);
+      },
+    });
+  }
+
+  etiquetaCoincidencia(tipo: CoincidenciaFestivalHistorico['tipoCoincidencia']): string {
+    if (tipo === 'NominalYTerritorial') return 'Coincidencia nominal y territorial';
+    if (tipo === 'NominalExacta') return 'Coincidencia nominal';
+    return 'Evidencia histórica territorial';
   }
 
   sendFestivalToReview(festivalBorrador: any): void {

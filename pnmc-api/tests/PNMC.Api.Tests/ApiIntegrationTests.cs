@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PNMC.Contracts;
 using PNMC.Infrastructure.Data;
@@ -17,6 +18,21 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     {
         _factory = factory;
         _client = factory.CreateClient();
+    }
+
+    private async Task<(string Festivales, int Versiones, int Propuestas, int Solicitudes)> CapturarEstadoCoincidenciasAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+        var festivales = await db.FestivalRecords.AsNoTracking()
+            .OrderBy(item => item.Id)
+            .Select(item => $"{item.Id}|{item.StatusCode}|{item.OrganizacionPrincipalId}")
+            .ToListAsync();
+        return (
+            string.Join(';', festivales),
+            await db.VersionesFestival.CountAsync(),
+            await db.PropuestasCambioFestival.CountAsync(),
+            await db.RecordLinkRequests.CountAsync());
     }
 
     private async Task LoginAsWebmasterAsync()
@@ -762,6 +778,140 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         var otherCsrf = await GetExternalCsrfTokenAsync(otherClient);
         var otherCreate = await CreateDraftFestivalAsync(otherClient, int.Parse(organization.Id), otherCsrf, new { nombre = "Festival ajeno", nivelCobertura = "nacional" });
         Assert.Equal(HttpStatusCode.Forbidden, otherCreate.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_Administrator_Can_Read_Only_Eligible_Historical_Festival_Matches_Without_Mutations()
+    {
+        const string email = "coincidencias.festival@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, await GetExternalCsrfTokenAsync(_client), new
+        {
+            name = "Fundación Musical del Tolima",
+            contactEmail = "contacto@fundacion-tolima.test",
+            coverageLevel = "municipal",
+            departmentCode = "05",
+            municipalityCode = "05001"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+        var organizationId = int.Parse(organization!.Id);
+
+        FestivalRow coincidenciaNominal;
+        FestivalRow coincidenciaHistorica;
+        FestivalRow conResponsable;
+        FestivalRow borrador;
+        FestivalRow enRevision;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            coincidenciaNominal = new FestivalRow
+            {
+                Name = "Festival de la Montaña",
+                Description = "Registro histórico para coincidencia nominal.",
+                OrganizerDisplayName = "FUNDACION MUSICAL DEL TOLIMA",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "Publicado",
+                CreatedAt = DateTime.UtcNow
+            };
+            coincidenciaHistorica = new FestivalRow
+            {
+                Name = "Festival con referencia histórica",
+                Description = "Registro histórico con evidencia contextual.",
+                OrganizerDisplayName = "Nombre histórico diferente",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "Publicado",
+                CreatedAt = DateTime.UtcNow
+            };
+            conResponsable = new FestivalRow
+            {
+                Name = "Festival ya administrado",
+                OrganizerDisplayName = "Fundación Musical del Tolima",
+                OrganizacionPrincipalId = organizationId,
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "Publicado",
+                CreatedAt = DateTime.UtcNow
+            };
+            borrador = new FestivalRow
+            {
+                Name = "Festival borrador no elegible",
+                OrganizerDisplayName = "Fundación Musical del Tolima",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "Borrador",
+                CreatedAt = DateTime.UtcNow
+            };
+            enRevision = new FestivalRow
+            {
+                Name = "Festival en revisión no elegible",
+                OrganizerDisplayName = "Fundación Musical del Tolima",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "EnRevision",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.FestivalRecords.AddRange(coincidenciaNominal, coincidenciaHistorica, conResponsable, borrador, enRevision);
+            db.SaveChanges();
+            db.EntitySourceRecords.Add(new EntitySourceRecordRow
+            {
+                EntityId = organizationId,
+                SourceTable = "Festivales",
+                SourceRecordId = coincidenciaHistorica.Id,
+                IsPrimary = false,
+                CreatedAt = DateTime.UtcNow
+            });
+            db.SaveChanges();
+        }
+
+        var before = await CapturarEstadoCoincidenciasAsync();
+        var matchesResponse = await _client.GetAsync($"/api/v1/externo/organizaciones/{organization.Id}/festivales/coincidencias");
+        matchesResponse.EnsureSuccessStatusCode();
+        var matches = await matchesResponse.Content.ReadFromJsonAsync<List<CoincidenciaFestivalHistoricoDto>>();
+        Assert.NotNull(matches);
+        Assert.Contains(matches!, item => item.FestivalId == coincidenciaNominal.Id.ToString() && item.TipoCoincidencia == "NominalYTerritorial"
+            && item.Evidencias.Any(evidencia => evidencia.Contains("organizador histórico", StringComparison.OrdinalIgnoreCase)));
+        Assert.Contains(matches, item => item.FestivalId == coincidenciaHistorica.Id.ToString() && item.TipoCoincidencia == "EvidenciaHistoricaTerritorial"
+            && item.Evidencias.Any(evidencia => evidencia.Contains("referencia histórica", StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(matches, item => item.FestivalId == conResponsable.Id.ToString() || item.FestivalId == borrador.Id.ToString() || item.FestivalId == enRevision.Id.ToString());
+        Assert.All(matches, item =>
+        {
+            Assert.DoesNotContain("correo", JsonSerializer.Serialize(item), StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("auditoria", JsonSerializer.Serialize(item), StringComparison.OrdinalIgnoreCase);
+        });
+
+        var after = await CapturarEstadoCoincidenciasAsync();
+        Assert.Equal(before, after);
+
+        var anonymous = _factory.CreateClient();
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await anonymous.GetAsync($"/api/v1/externo/organizaciones/{organization.Id}/festivales/coincidencias")).StatusCode);
+
+        var institutional = _factory.CreateClient();
+        (await institutional.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest { Email = "test@pnmc.local", Password = "pnmc-master" })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await institutional.GetAsync($"/api/v1/externo/organizaciones/{organization.Id}/festivales/coincidencias")).StatusCode);
+
+        var externalOther = _factory.CreateClient();
+        var otherRegister = await externalOther.PostAsJsonAsync("/api/v1/external/auth/register", new ExternalRegisterRequest
+        {
+            ProfileType = "persona", FullName = "Persona no autorizada", Email = "coincidencias.ajena@example.com", Password = "ClaveExterna123", AcceptTerms = true, AcceptDataPolicy = true
+        });
+        var otherAccount = await otherRegister.Content.ReadFromJsonAsync<ExternalRegisterResponse>();
+        Assert.NotNull(otherAccount);
+        (await externalOther.PostAsJsonAsync("/api/v1/external/auth/verify-email", new ExternalVerifyEmailRequest { Email = "coincidencias.ajena@example.com", Code = otherAccount!.DebugVerificationCode })).EnsureSuccessStatusCode();
+        await LoginExternalAsync(externalOther, "coincidencias.ajena@example.com");
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await externalOther.GetAsync($"/api/v1/externo/organizaciones/{organization.Id}/festivales/coincidencias")).StatusCode);
     }
 
     [Fact]
