@@ -318,7 +318,7 @@ public static class FestivalesExternosEndpoints
             .FirstOrDefaultAsync(cancellationToken);
 
         return new FestivalBorradorDto(
-            festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, festival.StatusCode,
+            festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, festival.Description, festival.StatusCode,
             festival.OrganizacionPrincipalId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, organizacionNombre,
             festival.CoverageLevel, string.IsNullOrWhiteSpace(festival.DepartmentCode) ? null : festival.DepartmentCode,
             festival.MunicipalityCode, festival.Periodicidad, festival.ContactEmail, practicas, territorios, observacionRevision);

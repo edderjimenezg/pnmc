@@ -807,6 +807,7 @@ public sealed record OrganizacionAdministradaDto(string Id, string Nombre);
 public sealed record FestivalBorradorDto(
     string Id,
     string Nombre,
+    string? Descripcion,
     string Estado,
     string OrganizacionPrincipalId,
     string OrganizacionPrincipalNombre,
