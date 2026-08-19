@@ -24,8 +24,8 @@ export class SimusHomePageComponent implements OnInit {
   readonly simusPaths = [
     { title: 'Acerca de SIMUS', description: 'Conoce el propósito, alcance y principios de este sistema de información.', icon: 'about', path: 'simus/acerca-de' },
     { title: 'Ayuda y tutoriales', description: 'Encuentra orientación para navegar, consultar y participar en SIMUS.', icon: 'help', path: 'simus/ayuda' },
-    { title: 'Ingresar', description: 'Accede a los espacios de gestión y actualización de información.', icon: 'login', path: 'simus/ingresar' },
-    { title: 'Ser parte del SIMUS', description: 'Crea tu cuenta o registra una organización para participar en SIMUS.', icon: 'participate', path: 'registro' },
+    { title: 'Ingresar', description: 'Accede a los espacios de gestión y actualización de información.', icon: 'login', path: 'registro?modo=ingresar' },
+    { title: 'Ser parte del SIMUS', description: 'Crea tu cuenta o registra una organización para participar en SIMUS.', icon: 'participate', path: 'registro?modo=registro' },
   ];
 
   // Ecosistema musical: antes una sección aparte, ahora vive dentro de SIMUS.

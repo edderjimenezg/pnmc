@@ -10,8 +10,22 @@
     @if (message()) { <p class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{{ message() }}</p> }
     @if (error()) { <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ error() }}</p> }
 
+    @if (isAccessScreen()) {
+      <section class="mx-auto mt-8 max-w-xl overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+        <div class="flex justify-center bg-[#291242] px-6 py-5">
+          <img src="/assets/branding/pnmc-blanco.png" alt="Plan Nacional de Música para la Convivencia" class="h-12 w-auto object-contain">
+        </div>
+        <div role="tablist" aria-label="Acceso externo a SIMUS" class="grid grid-cols-2 border-b border-slate-200 bg-slate-50">
+          <button type="button" role="tab" [attr.aria-selected]="view() === 'login'" (click)="openExternalLogin()" [class]="view() === 'login' ? 'border-b-2 border-[#00A849] bg-white text-[#291242]' : 'border-b-2 border-transparent text-slate-500 hover:bg-white hover:text-[#291242]'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Ingresar</button>
+          <button type="button" role="tab" [attr.aria-selected]="view() !== 'login'" (click)="openRegistrationChoice()" [class]="view() !== 'login' ? 'border-b-2 border-[#00A849] bg-white text-[#291242]' : 'border-b-2 border-transparent text-slate-500 hover:bg-white hover:text-[#291242]'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Crear cuenta</button>
+        </div>
+      </section>
+    }
+
     @if (view() === 'choice') {
-      <div class="mt-8 grid gap-5 md:grid-cols-2">
+      <div role="tabpanel" class="mx-auto mt-0 max-w-xl rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <p class="text-sm leading-relaxed text-slate-600">Tu cuenta es personal. Desde ella podrás administrar organizaciones cuando tengas autorización.</p>
+      <div class="mt-5 grid gap-4 md:grid-cols-2">
         <button type="button" (click)="chooseAccount()" class="rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
           <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Registro personal</p>
           <h2 class="mt-2 font-alternate text-lg font-bold uppercase text-[#291242]">Crear mi cuenta</h2>
@@ -23,8 +37,9 @@
           <p class="mt-3 text-sm leading-relaxed text-white/75">Registra una fundación, asociación, empresa, entidad pública u otra organización. Durante el proceso identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         </button>
       </div>
+      </div>
       @if (session()) {
-        <button type="button" (click)="openOrganizationHome()" class="mt-5 w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
+        <button type="button" (click)="openOrganizationHome()" class="mx-auto mt-5 block w-full max-w-xl rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
           <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Mis organizaciones</h2>
           <p class="mt-3 text-sm leading-relaxed">Consulta las organizaciones que administras, sus Festivales y los registros históricos que podrían estar relacionados con ellas.</p>
         </button>
@@ -32,7 +47,7 @@
     }
 
     @if (view() === 'register') {
-      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); register()">
+      <form role="tabpanel" class="mx-auto mt-0 max-w-xl space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); register()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Crea tu cuenta personal</h2>
         <label class="block text-sm font-bold">Nombre completo<input [(ngModel)]="account.fullName" name="fullName" class="mt-1 w-full rounded-lg border p-3" autocomplete="name"></label>
         <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="account.email" name="email" type="email" class="mt-1 w-full rounded-lg border p-3" autocomplete="email"></label>
@@ -46,7 +61,7 @@
     }
 
     @if (view() === 'verify') {
-      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); verify()">
+      <form role="tabpanel" class="mx-auto mt-0 max-w-xl space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); verify()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Verifica tu correo</h2>
         <p class="text-sm">Escribe el código recibido en <strong>{{ registeredEmail() }}</strong>.</p>
         <label class="block text-sm font-bold">Código<input [(ngModel)]="verificationCode" name="verificationCode" inputmode="numeric" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -55,18 +70,18 @@
     }
 
     @if (view() === 'login') {
-      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); startLogin()">
-        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Identifica a quien administrará la organización</h2>
-        <p class="text-sm">Una organización no tiene contraseña compartida. Inicia sesión con tu cuenta personal o crea una.</p>
+      <form role="tabpanel" class="mx-auto mt-0 max-w-xl space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); startLogin()">
+        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">{{ wantsOrganization() ? 'Identifica a quien administrará la organización' : 'Ingresa a SIMUS' }}</h2>
+        <p class="text-sm">{{ wantsOrganization() ? 'Una organización no tiene contraseña compartida. Inicia sesión con tu cuenta personal o crea una.' : 'Usa tu cuenta personal para gestionar las organizaciones y procesos para los cuales tienes autorización.' }}</p>
         <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="login.email" name="loginEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
         <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="login.password" name="loginPassword" type="password" class="mt-1 w-full rounded-lg border p-3"></label>
-        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Iniciar sesión</button>
-        <button type="button" (click)="goToRegister()" class="ml-3 text-sm font-bold text-[#291242]">Crear una cuenta personal</button>
+        <button [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Ingresar</button>
+        <button type="button" (click)="openRegistrationChoice()" class="ml-3 text-sm font-bold text-[#291242]">Crear una cuenta</button>
       </form>
     }
 
     @if (view() === 'organization') {
-      <form class="mt-8 space-y-4 rounded-2xl bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
+      <form role="tabpanel" class="mx-auto mt-0 max-w-xl space-y-4 rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-sm" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Datos básicos de la organización</h2>
         <p class="text-sm">Estás registrando una organización. Después identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         <label class="block text-sm font-bold">Nombre de la organización<input [(ngModel)]="organization.name" name="organizationName" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -84,12 +99,23 @@
     }
 
     @if (view() === 'responsible') {
-      <section class="mt-8 rounded-2xl bg-white p-6 shadow-sm">
+      <section role="tabpanel" class="mx-auto mt-0 max-w-xl rounded-b-[1.75rem] border border-t-0 border-slate-200 bg-white p-6 shadow-sm">
         <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Persona responsable</p>
         <h2 class="mt-2 font-alternate text-xl font-bold uppercase text-[#291242]">¿Quién administrará inicialmente esta organización?</h2>
         <p class="mt-3 max-w-2xl text-sm leading-relaxed">La organización no tiene contraseña compartida. Una persona concreta recibe la autorización inicial para administrarla; esta autorización podrá cambiar más adelante.</p>
         <div class="mt-6 flex flex-col gap-3 sm:flex-row"><button type="button" (click)="goToLogin()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white">Ya tengo cuenta</button><button type="button" (click)="goToRegister()" class="rounded-lg border border-[#291242] px-5 py-3 text-sm font-bold text-[#291242]">Crear mi cuenta</button></div>
       </section>
+    }
+
+    @if (isAccessScreen()) {
+      <div class="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-x-5 gap-y-3 rounded-2xl bg-[#291242] px-6 py-4">
+        <img src="/assets/branding/logo-gov-co.png" alt="GOV.CO" class="h-5 w-auto object-contain">
+        <span class="h-5 w-px bg-white/25"></span>
+        <img src="/assets/branding/gov-co-footer.png" alt="Colombia" class="h-7 w-auto object-contain">
+        <span class="h-5 w-px bg-white/25"></span>
+        <img src="/assets/branding/Culturas-Blanco.png" alt="Ministerio de las Culturas" class="h-7 w-auto object-contain">
+      </div>
+      <p class="mx-auto mt-4 max-w-xl text-center text-xs leading-relaxed text-slate-500">Este es el acceso externo de SIMUS. El acceso institucional se mantiene separado.</p>
     }
 
     @if (view() === 'organization-home') {

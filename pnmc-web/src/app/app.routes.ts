@@ -67,6 +67,11 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'simus/ingresar',
+    loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
+    data: { modoAcceso: 'ingresar' },
+  },
+  {
     path: 'simus/:section',
     loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
   },

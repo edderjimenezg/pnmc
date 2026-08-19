@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AdminService, CoincidenciaFestivalHistorico } from '../../core/services/admin.service';
 
 type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'responsible' | 'organization-home' | 'festival' | 'complete';
@@ -14,6 +14,7 @@ type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'respo
 })
 export class ExternalAccessPageComponent implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly route = inject(ActivatedRoute);
 
   view = signal<View>('choice');
   wantsOrganization = signal(false);
@@ -71,6 +72,9 @@ export class ExternalAccessPageComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('modo') === 'ingresar' || this.route.snapshot.data['modoAcceso'] === 'ingresar') {
+      this.openExternalLogin();
+    }
     this.adminService.fetchExternalSession().subscribe({
       next: session => this.session.set(session),
       error: () => undefined,
@@ -81,6 +85,22 @@ export class ExternalAccessPageComponent implements OnInit {
     this.wantsOrganization.set(false);
     this.view.set('register');
     this.clearFeedback();
+  }
+
+  openExternalLogin(): void {
+    this.wantsOrganization.set(false);
+    this.clearFeedback();
+    this.view.set('login');
+  }
+
+  openRegistrationChoice(): void {
+    this.wantsOrganization.set(false);
+    this.clearFeedback();
+    this.view.set('choice');
+  }
+
+  isAccessScreen(): boolean {
+    return ['choice', 'register', 'verify', 'login', 'organization', 'responsible'].includes(this.view());
   }
 
   chooseOrganization(): void {
