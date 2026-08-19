@@ -32,6 +32,16 @@ export interface RespuestaPaginada<T> {
   total: number;
 }
 
+export interface DistribucionAnaliticaFestival { nombre: string; total: number; }
+export interface ResumenAnaliticoFestivales {
+  totalFestivales: number;
+  porDepartamento: DistribucionAnaliticaFestival[];
+  porMunicipio: DistribucionAnaliticaFestival[];
+  porPracticaMusical: DistribucionAnaliticaFestival[];
+  porTerritorioSonoro: DistribucionAnaliticaFestival[];
+  porPeriodicidad: DistribucionAnaliticaFestival[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class FestivalesPublicosService {
   private readonly apiClient = inject(ApiClientService);
@@ -46,6 +56,12 @@ export class FestivalesPublicosService {
   consultarFestival(festivalId: string): Observable<FestivalPublico> {
     return this.apiClient.get<FestivalPublico>(`/api/v1/publico/festivales/${encodeURIComponent(festivalId)}`, {
       errorFallback: 'No fue posible consultar esta ficha pública del Festival.',
+    });
+  }
+
+  consultarResumenAnalitico(): Observable<ResumenAnaliticoFestivales> {
+    return this.apiClient.get<ResumenAnaliticoFestivales>('/api/v1/publico/analitica/festivales/resumen', {
+      errorFallback: 'No fue posible consultar el resumen analítico de Festivales.',
     });
   }
 }

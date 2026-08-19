@@ -1228,6 +1228,40 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
+    public async Task Public_Read_Map_And_Analytics_Use_Only_The_Current_Festival_Version()
+    {
+        int festivalId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            var festival = new FestivalRow { Name = "Nombre heredado no canónico", CoverageLevel = "municipal", DepartmentCode = "05", MunicipalityCode = "05001", StatusCode = "Publicado", CreatedAt = DateTime.UtcNow };
+            db.FestivalRecords.Add(festival);
+            db.SaveChanges();
+            festivalId = festival.Id;
+            var anterior = new VersionFestivalRow { FestivalOrigenId = festival.Id, NumeroVersion = 1, EsVigente = false, Nombre = "Versión anterior", NivelCobertura = "municipal", CodigoDepartamento = "05", CodigoMunicipio = "05001", FechaPublicacion = DateTime.UtcNow.AddDays(-1), FechaCreacion = DateTime.UtcNow.AddDays(-1) };
+            var vigente = new VersionFestivalRow { FestivalOrigenId = festival.Id, NumeroVersion = 2, EsVigente = true, Nombre = "Festival canónico vigente", Descripcion = "Contenido vigente", NivelCobertura = "municipal", CodigoDepartamento = "76", CodigoMunicipio = "76001", Periodicidad = "anual", FechaPublicacion = DateTime.UtcNow, FechaCreacion = DateTime.UtcNow };
+            db.VersionesFestival.AddRange(anterior, vigente);
+            db.SaveChanges();
+            db.VersionesFestivalPracticasMusicales.Add(new VersionFestivalPracticaMusicalRow { VersionFestivalId = vigente.Id, PracticaMusicalId = 1, FechaCreacion = DateTime.UtcNow });
+            db.VersionesFestivalTerritoriosSonoros.Add(new VersionFestivalTerritorioSonoroRow { VersionFestivalId = vigente.Id, TerritorioSonoroId = 1, FechaCreacion = DateTime.UtcNow });
+            db.PropuestasCambioFestival.Add(new PropuestaCambioFestivalRow { FestivalOrigenId = festival.Id, VersionOrigenId = vigente.Id, OrganizacionId = 1, PersonaProponenteId = 1, Estado = "Borrador", Activa = true, Nombre = "Cambio privado no público", NivelCobertura = "municipal", CodigoDepartamento = "05", CodigoMunicipio = "05001", FechaPropuesta = DateTime.UtcNow, FechaActualizacion = DateTime.UtcNow });
+            db.SaveChanges();
+        }
+
+        var ficha = await _client.GetFromJsonAsync<FestivalPublicoDto>($"/api/v1/publico/festivales/{festivalId}");
+        Assert.Equal("Festival canónico vigente", ficha!.Nombre);
+        Assert.Equal("Contenido vigente", ficha.Descripcion);
+        var mapaActual = await _client.GetFromJsonAsync<DepartmentDrilldownResponseDto>("/api/v1/map/departments/76/drilldown");
+        Assert.Contains(mapaActual!.Festivals, item => item.Id == festivalId.ToString() && item.Name == "Festival canónico vigente");
+        var mapaAnterior = await _client.GetFromJsonAsync<DepartmentDrilldownResponseDto>("/api/v1/map/departments/05/drilldown");
+        Assert.DoesNotContain(mapaAnterior!.Festivals, item => item.Id == festivalId.ToString());
+        var resumen = await _client.GetFromJsonAsync<ResumenAnaliticoFestivalesDto>("/api/v1/publico/analitica/festivales/resumen");
+        Assert.Contains(resumen!.PorDepartamento, item => item.Nombre == "76");
+        Assert.Contains(resumen.PorPracticaMusical, item => item.Nombre == "Música andina colombiana");
+        Assert.Equal(1, resumen.PorDepartamento.Single(item => item.Nombre == "76").Total);
+    }
+
+    [Fact]
     public async Task Admin_Global_User_Rejects_Obsolete_Role()
     {
         await LoginAsWebmasterAsync();

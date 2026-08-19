@@ -25,9 +25,7 @@ public static class MapEndpoints
         {
             var normalizedLayer = string.IsNullOrWhiteSpace(layer) ? "General" : layer;
 
-            var festivals = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(item => item.StatusCode == null || (item.StatusCode != "Borrador" && item.StatusCode != "EnRevision" && item.StatusCode != "AjustesSolicitados" && item.StatusCode != "Rechazado"))
-                .ToListAsync(cancellationToken);
+            var festivals = await LecturaFestivalesPublicados.ConsultarAsync(dbContext, cancellationToken);
             var schools = await dbContext.SchoolRecords.AsNoTracking().ToListAsync(cancellationToken);
             var markets = await dbContext.MarketRecords.AsNoTracking().ToListAsync(cancellationToken);
             var departments = await dbContext.DivipolaLocations.AsNoTracking()
@@ -39,7 +37,7 @@ public static class MapEndpoints
 
             foreach (var item in festivals)
             {
-                AddRecord(summary, item.DepartmentCode, isFestival: true, isSchool: false, isMarket: false);
+                AddRecord(summary, item.CodigoDepartamento, isFestival: true, isSchool: false, isMarket: false);
             }
 
             foreach (var item in schools)
@@ -73,9 +71,7 @@ public static class MapEndpoints
             var targetCode = NormalizeDepartmentCode(departmentCode);
             if (targetCode.Length == 0) return Results.NotFound();
 
-            var festivals = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(item => item.StatusCode == null || (item.StatusCode != "Borrador" && item.StatusCode != "EnRevision" && item.StatusCode != "AjustesSolicitados" && item.StatusCode != "Rechazado"))
-                .ToListAsync(cancellationToken);
+            var festivals = await LecturaFestivalesPublicados.ConsultarAsync(dbContext, cancellationToken);
             var schools = await dbContext.SchoolRecords.AsNoTracking().ToListAsync(cancellationToken);
             var markets = await dbContext.MarketRecords.AsNoTracking().ToListAsync(cancellationToken);
             var departments = await dbContext.DivipolaLocations.AsNoTracking()
@@ -86,11 +82,10 @@ public static class MapEndpoints
                 .ToDictionaryAsync(x => x.MunicipalityCode, x => x.MunicipalityName, cancellationToken);
 
             var festivalItems = festivals
-                .Where(item => NormalizeDepartmentCode(item.DepartmentCode) == targetCode)
+                .Where(item => NormalizeDepartmentCode(item.CodigoDepartamento) == targetCode)
                 .Select(item => new FestivalDrilldownItemDto(
-                    item.Id.ToString(CultureInfo.InvariantCulture),
-                    item.Name,
-                    ResolveMunicipality(item.MunicipalityCode, municipalities)))
+                    item.Festival.Id.ToString(CultureInfo.InvariantCulture), item.Nombre,
+                    ResolveMunicipality(item.CodigoMunicipio, municipalities)))
                 .ToList();
 
             var schoolItems = schools

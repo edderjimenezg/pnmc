@@ -854,6 +854,16 @@ public sealed record VersionFestivalInstitucionalDto(
     string Nombre,
     DateTime FechaPublicacion);
 
+public sealed record DistribucionAnaliticaFestivalDto(string Nombre, int Total);
+
+public sealed record ResumenAnaliticoFestivalesDto(
+    int TotalFestivales,
+    IReadOnlyList<DistribucionAnaliticaFestivalDto> PorDepartamento,
+    IReadOnlyList<DistribucionAnaliticaFestivalDto> PorMunicipio,
+    IReadOnlyList<DistribucionAnaliticaFestivalDto> PorPracticaMusical,
+    IReadOnlyList<DistribucionAnaliticaFestivalDto> PorTerritorioSonoro,
+    IReadOnlyList<DistribucionAnaliticaFestivalDto> PorPeriodicidad);
+
 public sealed class DecisionRevisionFestivalSolicitud
 {
     public string Accion { get; set; } = string.Empty;

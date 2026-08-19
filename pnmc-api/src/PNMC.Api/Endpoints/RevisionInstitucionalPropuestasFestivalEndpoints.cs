@@ -96,7 +96,6 @@ public static class RevisionInstitucionalPropuestasFestivalEndpoints
                 var territorios = await db.PropuestasCambioFestivalTerritoriosSonoros.AsNoTracking().Where(item => item.PropuestaCambioFestivalId == propuesta.Id).Select(item => item.TerritorioSonoroId).ToListAsync(ct);
                 db.VersionesFestivalPracticasMusicales.AddRange(practicas.Select(id => new VersionFestivalPracticaMusicalRow { VersionFestivalId = nuevaVersion.Id, PracticaMusicalId = id, FechaCreacion = ahora }));
                 db.VersionesFestivalTerritoriosSonoros.AddRange(territorios.Select(id => new VersionFestivalTerritorioSonoroRow { VersionFestivalId = nuevaVersion.Id, TerritorioSonoroId = id, FechaCreacion = ahora }));
-                await SincronizarProyeccionFestivalAsync(db, festival, propuesta, practicas, territorios, ahora, ct);
                 propuesta.VersionNuevaId = nuevaVersion.Id;
             }
 
@@ -120,18 +119,6 @@ public static class RevisionInstitucionalPropuestasFestivalEndpoints
             return Results.Ok(new { id = propuesta.Id, estado = propuesta.Estado, versionNuevaId = propuesta.VersionNuevaId, observacion = decision.Observacion ?? decision.MotivoRechazo });
         });
         return group;
-    }
-
-    private static async Task SincronizarProyeccionFestivalAsync(PnmcDbContext db, FestivalRow festival, PropuestaCambioFestivalRow propuesta, IReadOnlyList<int> practicas, IReadOnlyList<int> territorios, DateTime fecha, CancellationToken ct)
-    {
-        festival.Name = propuesta.Nombre; festival.Description = propuesta.Descripcion; festival.CoverageLevel = propuesta.NivelCobertura;
-        festival.DepartmentCode = propuesta.CodigoDepartamento ?? string.Empty; festival.MunicipalityCode = propuesta.CodigoMunicipio;
-        festival.Periodicidad = propuesta.Periodicidad; festival.ContactEmail = propuesta.CorreoContacto; festival.UpdatedAt = fecha;
-        var practicasActuales = await db.FestivalesPracticasMusicales.Where(item => item.FestivalId == festival.Id).ToListAsync(ct);
-        var territoriosActuales = await db.FestivalesTerritoriosSonoros.Where(item => item.FestivalId == festival.Id).ToListAsync(ct);
-        db.FestivalesPracticasMusicales.RemoveRange(practicasActuales); db.FestivalesTerritoriosSonoros.RemoveRange(territoriosActuales);
-        db.FestivalesPracticasMusicales.AddRange(practicas.Select(id => new FestivalPracticaMusicalRow { FestivalId = festival.Id, PracticaMusicalId = id, FechaCreacion = fecha }));
-        db.FestivalesTerritoriosSonoros.AddRange(territorios.Select(id => new FestivalTerritorioSonoroRow { FestivalId = festival.Id, TerritorioSonoroId = id, FechaCreacion = fecha }));
     }
 
     private static async Task<object> CrearDetallePropuestaAsync(PropuestaCambioFestivalRow p, PnmcDbContext db, CancellationToken ct) => new { p.Id, p.FestivalOrigenId, p.VersionOrigenId, p.VersionNuevaId, p.Estado, p.Nombre, p.Descripcion, p.NivelCobertura, p.CodigoDepartamento, p.CodigoMunicipio, p.Periodicidad, p.CorreoContacto, p.FechaEnvioRevision, practicasMusicales = await CatalogosPropuestaAsync(db.PropuestasCambioFestivalPracticasMusicales.AsNoTracking().Where(x => x.PropuestaCambioFestivalId == p.Id).Select(x => x.PracticaMusicalId), db.PracticasMusicales, ct), territoriosSonoros = await CatalogosPropuestaAsync(db.PropuestasCambioFestivalTerritoriosSonoros.AsNoTracking().Where(x => x.PropuestaCambioFestivalId == p.Id).Select(x => x.TerritorioSonoroId), db.TerritoriosSonoros, ct) };

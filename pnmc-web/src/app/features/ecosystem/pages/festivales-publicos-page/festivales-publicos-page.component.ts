@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { LucideArrowRight, LucideMapPin, LucideMusic2, LucideSearch } from '@lucide/angular';
-import { FestivalPublico, FestivalesPublicosService } from '../../../../core/services/festivales-publicos.service';
+import { FestivalPublico, FestivalesPublicosService, ResumenAnaliticoFestivales } from '../../../../core/services/festivales-publicos.service';
 import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
 
 @Component({
@@ -19,6 +19,7 @@ export class FestivalesPublicosPageComponent implements OnInit {
   readonly festivales = signal<FestivalPublico[]>([]);
   readonly cargando = signal(true);
   readonly error = signal('');
+  readonly resumen = signal<ResumenAnaliticoFestivales | null>(null);
   readonly busqueda = signal('');
   readonly resultados = computed(() => {
     const termino = this.busqueda().trim().toLocaleLowerCase();
@@ -38,6 +39,7 @@ export class FestivalesPublicosPageComponent implements OnInit {
       next: respuesta => { this.festivales.set(respuesta.items); this.cargando.set(false); },
       error: error => { this.error.set(error?.message || 'No fue posible consultar los Festivales públicos.'); this.cargando.set(false); },
     });
+    this.festivalesPublicos.consultarResumenAnalitico().subscribe({ next: resumen => this.resumen.set(resumen), error: () => undefined });
   }
 
   actualizarBusqueda(valor: string): void { this.busqueda.set(valor); }

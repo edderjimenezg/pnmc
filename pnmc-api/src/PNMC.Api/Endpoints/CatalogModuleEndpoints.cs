@@ -28,37 +28,21 @@ public static class CatalogModuleEndpoints
             int? offset,
             CancellationToken cancellationToken) =>
         {
-            var rows = await dbContext.FestivalRecords.AsNoTracking()
-                .Where(row => row.StatusCode == null || (row.StatusCode != "Borrador" && row.StatusCode != "EnRevision" && row.StatusCode != "AjustesSolicitados" && row.StatusCode != "Rechazado"))
-                .ToListAsync(cancellationToken);
+            var rows = await LecturaFestivalesPublicados.ConsultarAsync(dbContext, cancellationToken);
             var departments = await BuildDepartmentDictionaryAsync(dbContext, cancellationToken);
             var municipalities = await BuildMunicipalityDictionaryAsync(dbContext, cancellationToken);
-            var relations = await LoadRelationsAsync(dbContext, cancellationToken);
-
             var mapped = rows.Select(row => {
-                relations.TryGetValue((1, row.Id), out var rel);
                 return new FestivalDto(
-                    row.Id.ToString(),
-                    row.Name,
-                    row.DepartmentCode,
-                    ResolveDepartmentName(row.DepartmentCode, departments),
-                    row.MunicipalityCode ?? string.Empty,
-                    ResolveMunicipalityName(row.MunicipalityCode, municipalities),
-                    row.CoverageLevel,
-                    row.Description ?? string.Empty,
-                    row.SpecificLocation ?? string.Empty,
-                    row.VersionsCount ?? 0,
-                    FormatDate(row.LastEditionDate),
-                    row.OrganizerDisplayName ?? string.Empty,
-                    row.ContactEmail ?? string.Empty,
-                    row.ContactPhone ?? string.Empty,
-                    row.WebsiteUrl ?? string.Empty,
-                    row.HasCurrentYearEdition,
-                    row.CurrentYearEditionStatus ?? string.Empty,
-                    FormatDate(row.CurrentYearStartDate),
-                    FormatDate(row.CurrentYearEndDate),
-                    rel.Territorios ?? string.Empty,
-                    rel.Practicas ?? string.Empty);
+                    row.Festival.Id.ToString(), row.Nombre, row.CodigoDepartamento ?? string.Empty,
+                    ResolveDepartmentName(row.CodigoDepartamento, departments), row.CodigoMunicipio ?? string.Empty,
+                    ResolveMunicipalityName(row.CodigoMunicipio, municipalities), row.NivelCobertura,
+                    row.Descripcion ?? string.Empty, row.Festival.SpecificLocation ?? string.Empty,
+                    row.Festival.VersionsCount ?? 0, FormatDate(row.Festival.LastEditionDate),
+                    row.Festival.OrganizerDisplayName ?? string.Empty, row.CorreoContacto ?? string.Empty,
+                    row.Festival.ContactPhone ?? string.Empty, row.Festival.WebsiteUrl ?? string.Empty,
+                    row.Festival.HasCurrentYearEdition, row.Festival.CurrentYearEditionStatus ?? string.Empty,
+                    FormatDate(row.Festival.CurrentYearStartDate), FormatDate(row.Festival.CurrentYearEndDate),
+                    string.Join(", ", row.TerritoriosSonoros.Select(item => item.Nombre)), string.Join(", ", row.PracticasMusicales.Select(item => item.Nombre)));
             }).ToList();
 
             return Results.Ok(ToPage(mapped, limit, offset));
