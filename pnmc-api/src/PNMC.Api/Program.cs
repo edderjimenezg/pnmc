@@ -15,13 +15,17 @@ builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
+var requiereCookiesSeguras = !(builder.Environment.IsDevelopment()
+    || builder.Environment.IsEnvironment("Local")
+    || builder.Environment.IsEnvironment("Test"));
+var politicaCookieSegura = requiereCookiesSeguras ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.Name = "pnmc.external.csrf";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = politicaCookieSegura;
 });
 builder.Services.AddAuthentication(SimusAuthentication.InstitutionalScheme)
     .AddCookie(SimusAuthentication.InstitutionalScheme, options =>
@@ -29,7 +33,7 @@ builder.Services.AddAuthentication(SimusAuthentication.InstitutionalScheme)
         options.Cookie.Name = "pnmc.admin";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy = politicaCookieSegura;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.Events.OnRedirectToLogin = context =>
@@ -48,7 +52,7 @@ builder.Services.AddAuthentication(SimusAuthentication.InstitutionalScheme)
         options.Cookie.Name = "pnmc.external";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy = politicaCookieSegura;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.Events.OnRedirectToLogin = context =>

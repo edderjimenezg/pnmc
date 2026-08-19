@@ -1,11 +1,9 @@
 using System.Globalization;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+using PNMC.Api.Security;
 using PNMC.Contracts;
 using PNMC.Infrastructure.Data;
 using PNMC.Infrastructure.Common;
@@ -25,7 +23,7 @@ public static class AdminDataEndpoints
     public static RouteGroupBuilder MapAdminDataEndpoints(this RouteGroupBuilder group)
     {
         var admin = group.MapGroup("/admin/data").WithTags("admin-data");
-        admin.AddEndpointFilter(ValidateAdminAccessAsync);
+        admin.RequireAuthorization(SimusAuthentication.InstitutionalPolicy);
 
         admin.MapGet("/schema", () =>
         {
@@ -50,6 +48,8 @@ public static class AdminDataEndpoints
                 festivals = new
                 {
                     table = "Festivales",
+                    soloLectura = true,
+                    escrituraGobernada = "El contenido de Festivales se gestiona mediante el circuito versionado.",
                     required = new[] { "name", "department" },
                     fields = new[] { "id", "name", "department", "municipality", "description" }
                 },
@@ -558,6 +558,11 @@ public static class AdminDataEndpoints
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
+            if (string.Equals(moduleId, "festivals", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Conflict(new { message = "El estado de un Festival no se modifica desde la administración genérica. Use el circuito institucional de revisión y publicación." });
+            }
+
             var statusCode = CleanStatusCode(request.Status);
             if (!await dbContext.ContentStatuses.AsNoTracking().AnyAsync(status => status.Code == statusCode, cancellationToken))
             {
@@ -588,7 +593,6 @@ public static class AdminDataEndpoints
                 "news" => await UpdateContentStatusAsync(dbContext.NewsArticles, id, statusId, actingUserId, now, cancellationToken),
                 "gallery" => await UpdateContentStatusAsync(dbContext.GalleryAlbums, id, statusId, actingUserId, now, cancellationToken),
                 "editorial" => await UpdateEditorialCatalogStatusAsync(dbContext.EditorialCatalogResources, id, statusCode, now, cancellationToken),
-                "festivals" => await UpdateEcosystemStatusAsync(dbContext.FestivalRecords, id, statusCode, now, cancellationToken),
                 "musicSchools" => await UpdateEcosystemStatusAsync(dbContext.SchoolRecords, id, statusCode, now, cancellationToken),
                 "musicMarkets" => await UpdateEcosystemStatusAsync(dbContext.MarketRecords, id, statusCode, now, cancellationToken),
                 "organizations" => await UpdateEcosystemStatusAsync(dbContext.Organizations, id, statusCode, now, cancellationToken),
@@ -723,68 +727,8 @@ public static class AdminDataEndpoints
             return Results.Ok(new { id = row.Id });
         });
 
-        admin.MapPost("/map/festivals", async (
-            MapFestivalUpsertRequest request,
-            PnmcDbContext dbContext,
-            HttpContext httpContext,
-            CancellationToken cancellationToken) =>
-        {
-            if (ValidationHelpers.IsMissing(request.Name))
-            {
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["name"] = ["Name is required."] });
-            }
-
-            var statusCode = CleanStatusCode(request.Status);
-            var createdByUserId = await ResolveActingUserIdAsync(httpContext, dbContext, cancellationToken);
-            var departmentCode = await ResolveDepartmentCodeAsync(dbContext, request.Department, cancellationToken);
-            if (string.IsNullOrWhiteSpace(departmentCode))
-            {
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["department"] = ["Department is required and must exist in DivipolaLocations."] });
-            }
-
-            var municipalityCode = await ResolveMunicipalityCodeAsync(dbContext, departmentCode, request.Municipality, cancellationToken);
-            var existing = await FindFestivalAsync(dbContext, request.Id, cancellationToken);
-            var isNew = existing is null;
-            var row = existing ?? new FestivalRow();
-
-            row.Name = request.Name.Trim();
-            row.VersionsCount = ParseIntOrNull(request.VersionsCount);
-            row.LastEditionDate = ParseDateOrNull(request.LastEditionDate);
-            row.Description = request.Description?.Trim();
-            row.OrganizerDisplayName = request.Organizer?.Trim();
-            row.OrganizerContactEmail = request.OrganizerEmail?.Trim();
-            row.OrganizerContactPhone = request.OrganizerPhone?.Trim();
-            row.OrganizerWebsiteUrl = request.OrganizerWebsiteUrl?.Trim();
-            row.ContactEmail = request.ContactEmail?.Trim();
-            row.InstagramUrl = request.InstagramUrl?.Trim();
-            row.FacebookUrl = request.FacebookUrl?.Trim();
-            row.WebsiteUrl = request.WebsiteUrl?.Trim();
-            row.OtherUrl = request.OtherUrl?.Trim();
-            row.ContactPhone = request.ContactPhone?.Trim();
-            row.HasCurrentYearEdition = request.HasCurrentYearEdition;
-            row.CurrentYearEditionStatus = request.CurrentYearEditionStatus?.Trim();
-            row.CurrentYearStartDate = ParseDateOrNull(request.CurrentYearStartDate);
-            row.CurrentYearEndDate = ParseDateOrNull(request.CurrentYearEndDate);
-            row.DepartmentCode = departmentCode;
-            row.MunicipalityCode = municipalityCode;
-            row.CoverageLevel = ResolveCoverageLevel(request.CoverageLevel, municipalityCode, departmentCode);
-            row.StatusCode = statusCode;
-            row.HasRegisteredOrganizer = false;
-
-            if (isNew)
-            {
-                row.CreatedByUserId = createdByUserId;
-                row.CreatedAt = DateTime.UtcNow;
-                dbContext.FestivalRecords.Add(row);
-            }
-            else
-            {
-                row.UpdatedAt = DateTime.UtcNow;
-            }
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return Results.Ok(new { id = row.Id });
-        });
+        admin.MapPost("/map/festivals", () =>
+            Results.Conflict(new { message = "La escritura administrativa genérica de Festivales fue retirada. Use el circuito gobernado de Festival." }));
 
         admin.MapPost("/map/schools", async (
             MapSchoolUpsertRequest request,
@@ -1401,6 +1345,15 @@ public static class AdminDataEndpoints
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
+            if (string.Equals(moduleId, "festivals", StringComparison.OrdinalIgnoreCase)
+                && records.Any(item => !string.IsNullOrWhiteSpace(GetStringProp(item, "id"))))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["records"] = ["La importación de Festivales no actualiza registros existentes. Los Festivales gobernados deben usar propuestas y revisión institucional."]
+                });
+            }
+
             var createdByUserId = await ResolveActingUserIdAsync(httpContext, dbContext, cancellationToken);
             var now = DateTime.UtcNow;
 
@@ -1761,50 +1714,6 @@ public static class AdminDataEndpoints
         });
 
         return group;
-    }
-
-    private static ValueTask<object?> ValidateAdminAccessAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
-    {
-        var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
-        var environment = context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
-
-        if (context.HttpContext.User.Identity?.IsAuthenticated == true)
-        {
-            return next(context);
-        }
-
-        var configuredApiKey = configuration["Security:AdminApiKey"] ?? configuration["PNMC_ADMIN_API_KEY"];
-        if (!string.IsNullOrWhiteSpace(configuredApiKey))
-        {
-            var providedApiKey = context.HttpContext.Request.Headers["X-Admin-Api-Key"].FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(providedApiKey))
-            {
-                return ValueTask.FromResult<object?>(Results.Unauthorized());
-            }
-
-            var configuredBytes = Encoding.UTF8.GetBytes(configuredApiKey);
-            var providedBytes = Encoding.UTF8.GetBytes(providedApiKey);
-            if (!CryptographicOperations.FixedTimeEquals(configuredBytes, providedBytes))
-            {
-                return ValueTask.FromResult<object?>(Results.Unauthorized());
-            }
-
-            return next(context);
-        }
-
-        if (environment.IsEnvironment("Test"))
-        {
-            return next(context);
-        }
-
-        if (environment.IsDevelopment() || environment.IsEnvironment("Local"))
-        {
-            return ValueTask.FromResult<object?>(Results.Unauthorized());
-        }
-
-        return ValueTask.FromResult<object?>(Results.Problem(
-            title: "Admin authentication is not configured.",
-            statusCode: StatusCodes.Status503ServiceUnavailable));
     }
 
     private static async Task<int> ResolveActingUserIdAsync(

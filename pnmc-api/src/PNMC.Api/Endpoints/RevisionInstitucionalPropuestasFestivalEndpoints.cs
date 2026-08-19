@@ -91,7 +91,14 @@ public static class RevisionInstitucionalPropuestasFestivalEndpoints
                 };
                 versionOrigen.EsVigente = false;
                 db.VersionesFestival.Add(nuevaVersion);
-                await db.SaveChangesAsync(ct);
+                try
+                {
+                    await db.SaveChangesAsync(ct);
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.Conflict(new { message = "La propuesta no puede publicarse porque la versión vigente cambió. Revise la propuesta antes de intentarlo nuevamente." });
+                }
                 var practicas = await db.PropuestasCambioFestivalPracticasMusicales.AsNoTracking().Where(item => item.PropuestaCambioFestivalId == propuesta.Id).Select(item => item.PracticaMusicalId).ToListAsync(ct);
                 var territorios = await db.PropuestasCambioFestivalTerritoriosSonoros.AsNoTracking().Where(item => item.PropuestaCambioFestivalId == propuesta.Id).Select(item => item.TerritorioSonoroId).ToListAsync(ct);
                 db.VersionesFestivalPracticasMusicales.AddRange(practicas.Select(id => new VersionFestivalPracticaMusicalRow { VersionFestivalId = nuevaVersion.Id, PracticaMusicalId = id, FechaCreacion = ahora }));

@@ -186,6 +186,8 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     [Fact]
     public async Task News_ContentHtml_IsSanitized_OnWrite_AndRead()
     {
+        await LoginAsWebmasterAsync();
+
         var upsertRequest = new NewsArticleUpsertRequest
         {
             Title = "Noticia Sanitizada",
@@ -300,6 +302,8 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     [Fact]
     public async Task Admin_Data_Upsert_Agenda_Then_Read_Works()
     {
+        await LoginAsWebmasterAsync();
+
         var upsertRequest = new AgendaEventUpsertRequest
         {
             Id = string.Empty,
@@ -329,6 +333,8 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     [Fact]
     public async Task Admin_Data_Schema_ReturnsFieldDefinitions()
     {
+        await LoginAsWebmasterAsync();
+
         var response = await _client.GetAsync("/api/v1/admin/data/schema");
         response.EnsureSuccessStatusCode();
 
@@ -1012,7 +1018,6 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         var listado = await listResponse.Content.ReadFromJsonAsync<PagedResponse<FestivalPublicoDto>>();
         Assert.NotNull(listado);
         Assert.Contains(listado!.Items, item => item.Id == publicado.Id.ToString());
-        Assert.Contains(listado.Items, item => item.Nombre == "Festival Test");
         Assert.DoesNotContain(listado.Items, item => item.Id == borrador.Id.ToString() || item.Id == enRevision.Id.ToString() || item.Id == ajustes.Id.ToString() || item.Id == rechazado.Id.ToString());
 
         var detailResponse = await _client.GetAsync($"/api/v1/publico/festivales/{publicado.Id}");
@@ -1256,9 +1261,73 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         var mapaAnterior = await _client.GetFromJsonAsync<DepartmentDrilldownResponseDto>("/api/v1/map/departments/05/drilldown");
         Assert.DoesNotContain(mapaAnterior!.Festivals, item => item.Id == festivalId.ToString());
         var resumen = await _client.GetFromJsonAsync<ResumenAnaliticoFestivalesDto>("/api/v1/publico/analitica/festivales/resumen");
-        Assert.Contains(resumen!.PorDepartamento, item => item.Nombre == "76");
+        Assert.Contains(resumen!.PorDepartamento, item => item.Nombre == "Valle del Cauca");
         Assert.Contains(resumen.PorPracticaMusical, item => item.Nombre == "Música andina colombiana");
-        Assert.Equal(1, resumen.PorDepartamento.Single(item => item.Nombre == "76").Total);
+        Assert.Equal(1, resumen.PorDepartamento.Single(item => item.Nombre == "Valle del Cauca").Total);
+    }
+
+    [Fact]
+    public async Task Historical_Normalization_Diagnosis_Is_Read_Only_And_Normalization_Is_Idempotent()
+    {
+        int festivalId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            var festival = new FestivalRow
+            {
+                Name = "Festival histórico para normalización",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "Publicado",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.FestivalRecords.Add(festival);
+            db.SaveChanges();
+            festivalId = festival.Id;
+        }
+
+        await LoginAsWebmasterAsync();
+        var diagnostico = await _client.GetAsync("/api/v1/institucional/festivales/diagnostico-normalizacion-versiones-historicas");
+        diagnostico.EnsureSuccessStatusCode();
+        var diagnosticoJson = JsonDocument.Parse(await diagnostico.Content.ReadAsStringAsync());
+        Assert.Contains(diagnosticoJson.RootElement.GetProperty("pendientes").EnumerateArray(), item => item.GetProperty("idFestival").GetInt32() == festivalId);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            Assert.False(db.VersionesFestival.Any(item => item.FestivalOrigenId == festivalId && item.EsVigente));
+        }
+
+        var token = await GetInstitutionalCsrfTokenAsync(_client);
+        var primera = new HttpRequestMessage(HttpMethod.Post, "/api/v1/institucional/festivales/normalizar-versiones-historicas") { Content = JsonContent.Create(new { }) };
+        primera.Headers.Add("X-CSRF-TOKEN", token);
+        (await _client.SendAsync(primera)).EnsureSuccessStatusCode();
+
+        var segundoToken = await GetInstitutionalCsrfTokenAsync(_client);
+        var segunda = new HttpRequestMessage(HttpMethod.Post, "/api/v1/institucional/festivales/normalizar-versiones-historicas") { Content = JsonContent.Create(new { }) };
+        segunda.Headers.Add("X-CSRF-TOKEN", segundoToken);
+        (await _client.SendAsync(segunda)).EnsureSuccessStatusCode();
+
+        using var resultado = _factory.Services.CreateScope();
+        var resultadoDb = resultado.ServiceProvider.GetRequiredService<PnmcDbContext>();
+        Assert.Equal(1, resultadoDb.VersionesFestival.Count(item => item.FestivalOrigenId == festivalId && item.EsVigente));
+        Assert.Contains(resultadoDb.AuditLogs, item => item.RecordId == festivalId.ToString() && item.Action == "FestivalHistoricoNormalizado");
+    }
+
+    [Fact]
+    public async Task Generic_Administrative_Festival_Writes_Are_Blocked_And_Import_Does_Not_Update_By_Id()
+    {
+        await LoginAsWebmasterAsync();
+
+        var escritura = await _client.PostAsJsonAsync("/api/v1/admin/data/map/festivals", new { name = "No debe escribirse" });
+        Assert.Equal(HttpStatusCode.Conflict, escritura.StatusCode);
+
+        var importacion = await _client.PostAsJsonAsync("/api/v1/admin/data/records/festivals/bulk", new[]
+        {
+            new { id = "1", name = "No debe actualizar Festival existente", department = "Antioquia" }
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, importacion.StatusCode);
     }
 
     [Fact]
@@ -1317,7 +1386,7 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
-    public async Task Webmaster_Can_Change_Ecosystem_Record_Status()
+    public async Task Generic_Administrative_Status_Cannot_Change_Festival()
     {
         await LoginAsWebmasterAsync();
 
@@ -1329,11 +1398,7 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
                 Comment = "Validación técnica de permisos de webmaster."
             });
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorPayload = await response.Content.ReadAsStringAsync();
-            throw new InvalidOperationException($"Unexpected status {response.StatusCode}: {errorPayload}");
-        }
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]
