@@ -201,6 +201,17 @@ export class AdminService {
     );
   }
 
+  enviarPropuestaCambioFestivalARevision(festivalId: number): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar el envío de la propuesta',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>(`/api/v1/externo/festivales/${festivalId}/propuesta-cambio/enviar-a-revision`, {}, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible enviar la propuesta a revisión',
+      }))
+    );
+  }
+
   fetchInstitutionalFestivalReviewQueue(): Observable<any[]> {
     return this.apiClient.get<any[]>('/api/v1/institucional/festivales/en-revision', {
       errorFallback: 'No fue posible consultar los Festivales en revisión',
@@ -214,6 +225,29 @@ export class AdminService {
       switchMap(token => this.apiClient.post<any>(`/api/v1/institucional/festivales/${festivalId}/decisiones`, payload, {
         headers: { 'X-CSRF-TOKEN': token.requestToken },
         errorFallback: 'No fue posible registrar la decisión institucional',
+      }))
+    );
+  }
+
+  fetchInstitutionalProposalReviewQueue(): Observable<any[]> {
+    return this.apiClient.get<any[]>('/api/v1/institucional/propuestas-cambio-festival/en-revision', {
+      errorFallback: 'No fue posible consultar las propuestas en revisión',
+    });
+  }
+
+  fetchInstitutionalProposalReviewDetail(propuestaId: number): Observable<any> {
+    return this.apiClient.get<any>(`/api/v1/institucional/propuestas-cambio-festival/${propuestaId}`, {
+      errorFallback: 'No fue posible consultar el detalle de la propuesta',
+    });
+  }
+
+  decideInstitutionalProposalReview(propuestaId: number, payload: any): Observable<any> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/institucional/propuestas-cambio-festival/csrf', {
+      errorFallback: 'No fue posible preparar la decisión sobre la propuesta',
+    }).pipe(
+      switchMap(token => this.apiClient.post<any>(`/api/v1/institucional/propuestas-cambio-festival/${propuestaId}/decisiones`, payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible registrar la decisión sobre la propuesta',
       }))
     );
   }

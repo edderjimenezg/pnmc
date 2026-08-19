@@ -299,6 +299,22 @@ export class ExternalAccessPageComponent implements OnInit {
     });
   }
 
+  enviarPropuestaARevision(festival: any): void {
+    if (festival.estadoPropuesta !== 'Borrador' && festival.estadoPropuesta !== 'AjustesSolicitados') return;
+    this.clearFeedback();
+    if (!window.confirm('Al enviar la propuesta, SIMUS revisará los cambios. La ficha pública vigente no se modificará hasta una eventual publicación. ¿Deseas continuar?')) return;
+    this.loading.set(true);
+    this.adminService.enviarPropuestaCambioFestivalARevision(Number(festival.id)).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.propuestaEnEdicion.set(null);
+        this.message.set(`La propuesta de cambios para ${festival.nombre} fue enviada a revisión.`);
+        this.loadDraftFestivals();
+      },
+      error: error => this.fail(error),
+    });
+  }
+
   private cargarFormularioFestival(fuente: any, organizacionId?: string): void {
     this.festival.organizacionId = organizacionId || fuente.organizacionPrincipalId || this.festival.organizacionId;
     this.festival.nombre = fuente.nombre || '';

@@ -151,6 +151,7 @@ api.MapExternalOrganizationEndpoints();
 api.MapFestivalesExternosEndpoints();
 api.MapPropuestasCambioFestivalExternosEndpoints();
 api.MapRevisionInstitucionalFestivalesEndpoints();
+api.MapRevisionInstitucionalPropuestasFestivalEndpoints();
 api.MapFestivalesPublicosEndpoints();
 api.MapNotificationEndpoints();
 api.MapRecordGovernanceEndpoints();

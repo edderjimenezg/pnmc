@@ -818,7 +818,9 @@ public sealed record FestivalBorradorDto(
     string? CorreoContacto,
     IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
     IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
-    string? ObservacionRevision = null);
+    string? ObservacionRevision = null,
+    string? EstadoPropuesta = null,
+    string? ObservacionPropuesta = null);
 
 public sealed record PropuestaCambioFestivalDto(
     string Id,
@@ -833,7 +835,24 @@ public sealed record PropuestaCambioFestivalDto(
     string? Periodicidad,
     string? CorreoContacto,
     IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
-    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros);
+    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
+    DateTime? FechaEnvioRevision = null,
+    string? ObservacionRevision = null);
+
+public sealed record PropuestaCambioFestivalRevisionDto(
+    string Id,
+    string FestivalOrigenId,
+    string NombreFestival,
+    string OrganizacionNombre,
+    string Estado,
+    DateTime? FechaEnvioRevision);
+
+public sealed record VersionFestivalInstitucionalDto(
+    string Id,
+    int NumeroVersion,
+    bool EsVigente,
+    string Nombre,
+    DateTime FechaPublicacion);
 
 public sealed class DecisionRevisionFestivalSolicitud
 {

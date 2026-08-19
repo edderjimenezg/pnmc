@@ -996,6 +996,7 @@ public static class DatabaseBootstrapper
                     [IdPropuestaCambioFestival] int IDENTITY(1,1) NOT NULL,
                     [FestivalOrigenId] int NOT NULL,
                     [VersionOrigenId] int NOT NULL,
+                    [VersionNuevaId] int NULL,
                     [OrganizacionId] int NOT NULL,
                     [PersonaProponenteId] int NOT NULL,
                     [Estado] nvarchar(80) NOT NULL,
@@ -1008,14 +1009,25 @@ public static class DatabaseBootstrapper
                     [Periodicidad] nvarchar(80) NULL,
                     [CorreoContacto] nvarchar(180) NULL,
                     [FechaPropuesta] datetime2(0) NOT NULL CONSTRAINT [DF_PropuestasCambioFestival_FechaPropuesta] DEFAULT (SYSUTCDATETIME()),
+                    [FechaEnvioRevision] datetime2(0) NULL,
                     [FechaActualizacion] datetime2(0) NOT NULL CONSTRAINT [DF_PropuestasCambioFestival_FechaActualizacion] DEFAULT (SYSUTCDATETIME()),
                     CONSTRAINT [PK_PropuestasCambioFestival] PRIMARY KEY ([IdPropuestaCambioFestival]),
                     CONSTRAINT [FK_PropuestasCambioFestival_Festival] FOREIGN KEY ([FestivalOrigenId]) REFERENCES [Festivales] ([IdFestival]),
                     CONSTRAINT [FK_PropuestasCambioFestival_Version] FOREIGN KEY ([VersionOrigenId]) REFERENCES [VersionesFestival] ([IdVersionFestival]),
+                    CONSTRAINT [FK_PropuestasCambioFestival_VersionNueva] FOREIGN KEY ([VersionNuevaId]) REFERENCES [VersionesFestival] ([IdVersionFestival]),
                     CONSTRAINT [FK_PropuestasCambioFestival_Organizacion] FOREIGN KEY ([OrganizacionId]) REFERENCES [Entidades] ([IdEntidad]),
                     CONSTRAINT [FK_PropuestasCambioFestival_Persona] FOREIGN KEY ([PersonaProponenteId]) REFERENCES [Usuarios] ([IdUsuario])
                 );
             END;
+
+            IF COL_LENGTH(N'[PropuestasCambioFestival]', N'VersionNuevaId') IS NULL
+                ALTER TABLE [PropuestasCambioFestival] ADD [VersionNuevaId] int NULL;
+            IF COL_LENGTH(N'[PropuestasCambioFestival]', N'FechaEnvioRevision') IS NULL
+                ALTER TABLE [PropuestasCambioFestival] ADD [FechaEnvioRevision] datetime2(0) NULL;
+            IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_PropuestasCambioFestival_VersionNueva')
+                ALTER TABLE [PropuestasCambioFestival] ADD CONSTRAINT [FK_PropuestasCambioFestival_VersionNueva] FOREIGN KEY ([VersionNuevaId]) REFERENCES [VersionesFestival] ([IdVersionFestival]);
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PropuestasCambioFestival_Estado' AND object_id = OBJECT_ID(N'[PropuestasCambioFestival]'))
+                CREATE INDEX [IX_PropuestasCambioFestival_Estado] ON [PropuestasCambioFestival] ([Estado]);
 
             IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_PropuestasCambioFestival_Activa' AND object_id = OBJECT_ID(N'[PropuestasCambioFestival]'))
             BEGIN

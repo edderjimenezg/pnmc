@@ -225,6 +225,7 @@ public sealed class PropuestaCambioFestivalRow
     public int Id { get; set; }
     public int FestivalOrigenId { get; set; }
     public int VersionOrigenId { get; set; }
+    public int? VersionNuevaId { get; set; }
     public int OrganizacionId { get; set; }
     public int PersonaProponenteId { get; set; }
     public string Estado { get; set; } = "Borrador";
@@ -237,6 +238,7 @@ public sealed class PropuestaCambioFestivalRow
     public string? Periodicidad { get; set; }
     public string? CorreoContacto { get; set; }
     public DateTime FechaPropuesta { get; set; }
+    public DateTime? FechaEnvioRevision { get; set; }
     public DateTime FechaActualizacion { get; set; }
 }
 

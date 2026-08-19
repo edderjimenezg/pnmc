@@ -337,6 +337,7 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.Id).HasColumnName("IdPropuestaCambioFestival");
             entity.Property(x => x.FestivalOrigenId).HasColumnName("FestivalOrigenId");
             entity.Property(x => x.VersionOrigenId).HasColumnName("VersionOrigenId");
+            entity.Property(x => x.VersionNuevaId).HasColumnName("VersionNuevaId");
             entity.Property(x => x.OrganizacionId).HasColumnName("OrganizacionId");
             entity.Property(x => x.PersonaProponenteId).HasColumnName("PersonaProponenteId");
             entity.Property(x => x.Estado).HasColumnName("Estado");
@@ -349,12 +350,15 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.Periodicidad).HasColumnName("Periodicidad");
             entity.Property(x => x.CorreoContacto).HasColumnName("CorreoContacto");
             entity.Property(x => x.FechaPropuesta).HasColumnName("FechaPropuesta");
+            entity.Property(x => x.FechaEnvioRevision).HasColumnName("FechaEnvioRevision");
             entity.Property(x => x.FechaActualizacion).HasColumnName("FechaActualizacion");
             entity.HasOne<FestivalRow>().WithMany().HasForeignKey(x => x.FestivalOrigenId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<VersionFestivalRow>().WithMany().HasForeignKey(x => x.VersionOrigenId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<VersionFestivalRow>().WithMany().HasForeignKey(x => x.VersionNuevaId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<EntityProfileRow>().WithMany().HasForeignKey(x => x.OrganizacionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<UserRow>().WithMany().HasForeignKey(x => x.PersonaProponenteId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => new { x.FestivalOrigenId, x.Activa }).IsUnique().HasFilter("[Activa] = 1");
+            entity.HasIndex(x => x.Estado);
         });
 
         modelBuilder.Entity<PropuestaCambioFestivalPracticaMusicalRow>(entity =>

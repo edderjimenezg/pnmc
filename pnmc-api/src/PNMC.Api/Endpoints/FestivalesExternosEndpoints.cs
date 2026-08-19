@@ -316,12 +316,20 @@ public static class FestivalesExternosEndpoints
             .OrderByDescending(item => item.Fecha)
             .Select(item => item.Comentario ?? item.MotivoRechazo)
             .FirstOrDefaultAsync(cancellationToken);
+        var propuesta = await dbContext.PropuestasCambioFestival.AsNoTracking()
+            .Where(item => item.FestivalOrigenId == festival.Id)
+            .OrderByDescending(item => item.Activa).ThenByDescending(item => item.FechaActualizacion)
+            .FirstOrDefaultAsync(cancellationToken);
+        var observacionPropuesta = propuesta is null ? null : await dbContext.HistorialesRevisionRegistros.AsNoTracking()
+            .Where(item => item.ModuloId == "propuestas-cambio-festival" && item.RegistroId == propuesta.Id.ToString())
+            .OrderByDescending(item => item.Fecha).Select(item => item.Comentario ?? item.MotivoRechazo).FirstOrDefaultAsync(cancellationToken);
 
         return new FestivalBorradorDto(
             festival.Id.ToString(CultureInfo.InvariantCulture), festival.Name, festival.Description, festival.StatusCode,
             festival.OrganizacionPrincipalId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, organizacionNombre,
             festival.CoverageLevel, string.IsNullOrWhiteSpace(festival.DepartmentCode) ? null : festival.DepartmentCode,
-            festival.MunicipalityCode, festival.Periodicidad, festival.ContactEmail, practicas, territorios, observacionRevision);
+            festival.MunicipalityCode, festival.Periodicidad, festival.ContactEmail, practicas, territorios, observacionRevision,
+            propuesta?.Estado, observacionPropuesta);
     }
 
     private static async Task<bool> PuedeAdministrarOrganizacionAsync(PnmcDbContext dbContext, int personaId, int organizacionId, CancellationToken cancellationToken) =>

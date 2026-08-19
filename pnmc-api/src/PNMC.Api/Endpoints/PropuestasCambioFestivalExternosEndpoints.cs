@@ -96,7 +96,9 @@ public static class PropuestasCambioFestivalExternosEndpoints
             if (festival.OrganizacionPrincipalId is null
                 || !await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, festival.OrganizacionPrincipalId.Value, cancellationToken)) return Results.Forbid();
             var propuesta = await dbContext.PropuestasCambioFestival.AsNoTracking()
-                .FirstOrDefaultAsync(item => item.FestivalOrigenId == festival.Id && item.Activa, cancellationToken);
+                .Where(item => item.FestivalOrigenId == festival.Id)
+                .OrderByDescending(item => item.Activa).ThenByDescending(item => item.FechaActualizacion)
+                .FirstOrDefaultAsync(cancellationToken);
             return propuesta is null ? Results.NotFound() : Results.Ok(await ADtoAsync(propuesta, dbContext, cancellationToken));
         });
 
@@ -121,7 +123,7 @@ public static class PropuestasCambioFestivalExternosEndpoints
             var propuesta = await dbContext.PropuestasCambioFestival
                 .FirstOrDefaultAsync(item => item.FestivalOrigenId == festival.Id && item.Activa, cancellationToken);
             if (propuesta is null) return Results.NotFound();
-            if (propuesta.Estado != "Borrador")
+            if (propuesta.Estado is not ("Borrador" or "AjustesSolicitados"))
                 return Results.Conflict(new { message = "Esta propuesta no puede modificarse directamente en su estado actual.", estado = propuesta.Estado });
 
             var errores = await ValidarSolicitudAsync(solicitud, dbContext, cancellationToken);
@@ -152,6 +154,46 @@ public static class PropuestasCambioFestivalExternosEndpoints
                 PropuestaCambioFestivalId = propuesta.Id, TerritorioSonoroId = id, FechaCreacion = ahora
             }));
             RegistrarAuditoria(dbContext, personaId.Value, propuesta, "FestivalCambioPropuestoActualizado", ahora);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Results.Ok(await ADtoAsync(propuesta, dbContext, cancellationToken));
+        });
+
+        externo.MapPost("/{festivalId:int}/propuesta-cambio/enviar-a-revision", async (
+            int festivalId,
+            ClaimsPrincipal principal,
+            PnmcDbContext dbContext,
+            IAntiforgery antiforgery,
+            HttpContext httpContext,
+            CancellationToken cancellationToken) =>
+        {
+            if (!await ValidarAntiforgeryAsync(antiforgery, httpContext))
+                return Results.BadRequest(new { message = "El envío de la propuesta no pudo validarse. Actualiza la página e inténtalo nuevamente." });
+            var personaId = ObtenerPersonaId(principal);
+            if (personaId is null) return Results.Unauthorized();
+            var festival = await dbContext.FestivalRecords.AsNoTracking().FirstOrDefaultAsync(item => item.Id == festivalId, cancellationToken);
+            if (festival?.OrganizacionPrincipalId is not int organizacionId) return festival is null ? Results.NotFound() : Results.Forbid();
+            if (!await PuedeAdministrarOrganizacionAsync(dbContext, personaId.Value, organizacionId, cancellationToken)) return Results.Forbid();
+            var propuesta = await dbContext.PropuestasCambioFestival.FirstOrDefaultAsync(item => item.FestivalOrigenId == festivalId && item.Activa, cancellationToken);
+            if (propuesta is null) return Results.NotFound();
+            if (propuesta.Estado is not ("Borrador" or "AjustesSolicitados"))
+                return Results.Conflict(new { message = "Solo una propuesta en Borrador o con ajustes solicitados puede enviarse a revisión.", estado = propuesta.Estado });
+            var errores = await ValidarPropuestaParaRevisionAsync(propuesta, dbContext, cancellationToken);
+            if (errores.Count > 0) return Results.ValidationProblem(errores);
+
+            var estadoAnterior = propuesta.Estado;
+            var ahora = DateTime.UtcNow;
+            propuesta.Estado = "EnRevision";
+            propuesta.FechaEnvioRevision = ahora;
+            propuesta.FechaActualizacion = ahora;
+            dbContext.HistorialesRevisionRegistros.Add(new HistorialRevisionRegistroRow
+            {
+                ModuloId = "propuestas-cambio-festival", RegistroId = propuesta.Id.ToString(CultureInfo.InvariantCulture),
+                EstadoAnterior = estadoAnterior, EstadoNuevo = "EnRevision", Accion = "FestivalPropuestaEnviadaARevision",
+                UsuarioId = personaId.Value, Fecha = ahora,
+                MetadataJson = $"{{\"FestivalOrigenId\":{propuesta.FestivalOrigenId},\"VersionOrigenId\":{propuesta.VersionOrigenId},\"OrganizacionId\":{propuesta.OrganizacionId}}}"
+            });
+            RegistrarAuditoria(dbContext, personaId.Value, propuesta, "FestivalPropuestaEnviadaARevision", ahora);
+            await CrearNotificacionAsync(dbContext, personaId.Value, propuesta, festival.Name, "FestivalPropuestaEnviadaARevision", "Propuesta enviada a revisión", "Tu propuesta de cambios para el Festival", ahora, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             return Results.Ok(await ADtoAsync(propuesta, dbContext, cancellationToken));
         });
@@ -215,7 +257,9 @@ public static class PropuestasCambioFestivalExternosEndpoints
             propuesta.Id.ToString(CultureInfo.InvariantCulture), propuesta.FestivalOrigenId.ToString(CultureInfo.InvariantCulture),
             propuesta.VersionOrigenId.ToString(CultureInfo.InvariantCulture), propuesta.Estado, propuesta.Nombre, propuesta.Descripcion,
             propuesta.NivelCobertura, propuesta.CodigoDepartamento, propuesta.CodigoMunicipio, propuesta.Periodicidad,
-            propuesta.CorreoContacto, practicas, territorios);
+            propuesta.CorreoContacto, practicas, territorios, propuesta.FechaEnvioRevision,
+            await dbContext.HistorialesRevisionRegistros.AsNoTracking().Where(item => item.ModuloId == "propuestas-cambio-festival" && item.RegistroId == propuesta.Id.ToString())
+                .OrderByDescending(item => item.Fecha).Select(item => item.Comentario ?? item.MotivoRechazo).FirstOrDefaultAsync(cancellationToken));
     }
 
     private static async Task<Dictionary<string, string[]>> ValidarSolicitudAsync(CrearFestivalBorradorSolicitud solicitud, PnmcDbContext dbContext, CancellationToken cancellationToken)
@@ -254,6 +298,19 @@ public static class PropuestasCambioFestivalExternosEndpoints
         return errores;
     }
 
+    private static async Task<Dictionary<string, string[]>> ValidarPropuestaParaRevisionAsync(PropuestaCambioFestivalRow propuesta, PnmcDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var solicitud = new CrearFestivalBorradorSolicitud
+        {
+            Nombre = propuesta.Nombre, Descripcion = propuesta.Descripcion, Periodicidad = propuesta.Periodicidad,
+            CorreoContacto = propuesta.CorreoContacto, NivelCobertura = propuesta.NivelCobertura,
+            CodigoDepartamento = propuesta.CodigoDepartamento, CodigoMunicipio = propuesta.CodigoMunicipio,
+            PracticasMusicalesIds = await dbContext.PropuestasCambioFestivalPracticasMusicales.AsNoTracking().Where(item => item.PropuestaCambioFestivalId == propuesta.Id).Select(item => item.PracticaMusicalId).ToListAsync(cancellationToken),
+            TerritoriosSonorosIds = await dbContext.PropuestasCambioFestivalTerritoriosSonoros.AsNoTracking().Where(item => item.PropuestaCambioFestivalId == propuesta.Id).Select(item => item.TerritorioSonoroId).ToListAsync(cancellationToken)
+        };
+        return await ValidarSolicitudAsync(solicitud, dbContext, cancellationToken);
+    }
+
     private static async Task<bool> PuedeAdministrarOrganizacionAsync(PnmcDbContext dbContext, int personaId, int organizacionId, CancellationToken cancellationToken) =>
         await dbContext.UserEntities.AsNoTracking()
             .Where(item => item.UserId == personaId && item.EntityId == organizacionId && item.EntityRole == "administrador" && item.IsActive)
@@ -270,6 +327,19 @@ public static class PropuestasCambioFestivalExternosEndpoints
             NewValuesJson = $"{{\"FestivalOrigenId\":{propuesta.FestivalOrigenId},\"VersionOrigenId\":{propuesta.VersionOrigenId},\"OrganizacionId\":{propuesta.OrganizacionId},\"Estado\":\"{propuesta.Estado}\"}}",
             CreatedAt = fecha
         });
+
+    private static async Task CrearNotificacionAsync(PnmcDbContext dbContext, int personaId, PropuestaCambioFestivalRow propuesta, string nombreFestival, string evento, string titulo, string inicioCuerpo, DateTime fecha, CancellationToken cancellationToken)
+    {
+        var persona = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(item => item.Id == personaId && item.IsActive, cancellationToken);
+        if (persona is null) return;
+        dbContext.Notifications.Add(new NotificationRow
+        {
+            RecipientUserId = persona.Id, RecipientEmail = persona.Email, EventType = evento, Channel = "internal", Title = titulo,
+            Body = $"{inicioCuerpo} “{nombreFestival}” fue enviada a revisión institucional.", Status = "enviada",
+            ModuleId = "propuestas-cambio-festival", RecordId = propuesta.Id.ToString(CultureInfo.InvariantCulture),
+            MetadataJson = $"{{\"FestivalOrigenId\":{propuesta.FestivalOrigenId},\"Estado\":\"{propuesta.Estado}\"}}", CreatedAt = fecha, SentAt = fecha, Attempts = 0
+        });
+    }
 
     private static int? ObtenerPersonaId(ClaimsPrincipal principal) =>
         int.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.Integer, CultureInfo.InvariantCulture, out var personaId) ? personaId : null;
