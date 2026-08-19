@@ -947,6 +947,88 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
+    public async Task Public_Festival_Directory_Exposes_Only_Approved_Fields_And_States()
+    {
+        FestivalRow publicado;
+        FestivalRow borrador;
+        FestivalRow enRevision;
+        FestivalRow ajustes;
+        FestivalRow rechazado;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            var organizacion = new EntityProfileRow
+            {
+                EntityType = "organizacion",
+                Name = "Fundación Pública de Prueba",
+                IdentificationNumber = $"PUB-{Guid.NewGuid():N}",
+                ContactEmail = "privado@organizacion.test",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "activo",
+                IsActive = true,
+                CreatedByUserId = 1,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.EntityProfiles.Add(organizacion);
+            db.SaveChanges();
+
+            publicado = new FestivalRow
+            {
+                Name = "Festival Público CV-008",
+                Description = "Descripción estable para consulta pública.",
+                OrganizacionPrincipalId = organizacion.Id,
+                Periodicidad = "Anual",
+                ContactEmail = "contacto@festival-publico.test",
+                CoverageLevel = "municipal",
+                DepartmentCode = "05",
+                MunicipalityCode = "05001",
+                StatusCode = "Publicado",
+                CreatedAt = DateTime.UtcNow
+            };
+            borrador = new FestivalRow { Name = "Festival Borrador CV-008", CoverageLevel = "municipal", DepartmentCode = "05", MunicipalityCode = "05001", StatusCode = "Borrador", CreatedAt = DateTime.UtcNow };
+            enRevision = new FestivalRow { Name = "Festival En Revisión CV-008", CoverageLevel = "municipal", DepartmentCode = "05", MunicipalityCode = "05001", StatusCode = "EnRevision", CreatedAt = DateTime.UtcNow };
+            ajustes = new FestivalRow { Name = "Festival Ajustes CV-008", CoverageLevel = "municipal", DepartmentCode = "05", MunicipalityCode = "05001", StatusCode = "AjustesSolicitados", CreatedAt = DateTime.UtcNow };
+            rechazado = new FestivalRow { Name = "Festival Rechazado CV-008", CoverageLevel = "municipal", DepartmentCode = "05", MunicipalityCode = "05001", StatusCode = "Rechazado", CreatedAt = DateTime.UtcNow };
+            db.FestivalRecords.AddRange(publicado, borrador, enRevision, ajustes, rechazado);
+            db.SaveChanges();
+            db.FestivalesPracticasMusicales.Add(new FestivalPracticaMusicalRow { FestivalId = publicado.Id, PracticaMusicalId = 1, FechaCreacion = DateTime.UtcNow });
+            db.FestivalesTerritoriosSonoros.Add(new FestivalTerritorioSonoroRow { FestivalId = publicado.Id, TerritorioSonoroId = 1, FechaCreacion = DateTime.UtcNow });
+            db.SaveChanges();
+        }
+
+        var listResponse = await _client.GetAsync("/api/v1/publico/festivales?limit=100&offset=0");
+        listResponse.EnsureSuccessStatusCode();
+        var listado = await listResponse.Content.ReadFromJsonAsync<PagedResponse<FestivalPublicoDto>>();
+        Assert.NotNull(listado);
+        Assert.Contains(listado!.Items, item => item.Id == publicado.Id.ToString());
+        Assert.Contains(listado.Items, item => item.Nombre == "Festival Test");
+        Assert.DoesNotContain(listado.Items, item => item.Id == borrador.Id.ToString() || item.Id == enRevision.Id.ToString() || item.Id == ajustes.Id.ToString() || item.Id == rechazado.Id.ToString());
+
+        var detailResponse = await _client.GetAsync($"/api/v1/publico/festivales/{publicado.Id}");
+        detailResponse.EnsureSuccessStatusCode();
+        var detalle = await detailResponse.Content.ReadFromJsonAsync<FestivalPublicoDto>();
+        Assert.NotNull(detalle);
+        Assert.Equal("Fundación Pública de Prueba", detalle!.OrganizacionResponsable);
+        Assert.Equal("Antioquia", detalle.TerritorioPrincipal.Departamento);
+        Assert.Equal("Medellin", detalle.TerritorioPrincipal.Municipio);
+        Assert.Single(detalle.PracticasMusicales);
+        Assert.Single(detalle.TerritoriosSonoros);
+        Assert.Equal("contacto@festival-publico.test", detalle.CorreoContacto);
+        var body = await detailResponse.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("privado@organizacion.test", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("observacion", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("auditoria", body, StringComparison.OrdinalIgnoreCase);
+
+        var hiddenDetail = await _client.GetAsync($"/api/v1/publico/festivales/{borrador.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, hiddenDetail.StatusCode);
+        var map = await _client.GetFromJsonAsync<DepartmentDrilldownResponseDto>("/api/v1/map/departments/05/drilldown");
+        Assert.Contains(map!.Festivals, item => item.Name == "Festival Público CV-008");
+        Assert.DoesNotContain(map.Festivals, item => item.Name == "Festival Borrador CV-008" || item.Name == "Festival En Revisión CV-008" || item.Name == "Festival Ajustes CV-008" || item.Name == "Festival Rechazado CV-008");
+    }
+
+    [Fact]
     public async Task Admin_Global_User_Rejects_Obsolete_Role()
     {
         await LoginAsWebmasterAsync();

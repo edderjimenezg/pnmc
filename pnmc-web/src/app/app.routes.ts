@@ -50,6 +50,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/ecosystem/pages/schools-page/schools-page.component').then(m => m.SchoolsPageComponent),
   },
   {
+    path: 'simus/festivales/:festivalId',
+    loadComponent: () => import('./features/ecosystem/pages/festival-publico-detalle-page/festival-publico-detalle-page.component').then(m => m.FestivalPublicoDetallePageComponent),
+  },
+  {
+    path: 'simus/festivales',
+    loadComponent: () => import('./features/ecosystem/pages/festivales-publicos-page/festivales-publicos-page.component').then(m => m.FestivalesPublicosPageComponent),
+  },
+  {
     path: 'registro',
     loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
   },

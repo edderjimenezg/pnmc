@@ -873,6 +873,22 @@ public sealed record FestivalDto(
     string MusicalPractices
 );
 
+public sealed record TerritorioPrincipalPublicoDto(
+    string? Departamento,
+    string? Municipio,
+    string NivelCobertura);
+
+public sealed record FestivalPublicoDto(
+    string Id,
+    string Nombre,
+    string? Descripcion,
+    string? OrganizacionResponsable,
+    TerritorioPrincipalPublicoDto TerritorioPrincipal,
+    string? Periodicidad,
+    IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
+    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
+    string? CorreoContacto);
+
 public sealed record MusicSchoolDto(
     string Id,
     string Name,
