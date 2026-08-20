@@ -1,62 +1,72 @@
-# PNMC Platform — Angular
+# SIMUS — Plataforma PNMC
 
-Versión integral e independiente de la plataforma PNMC.
+Sistema de Información de la Música en Colombia. Versión integral e independiente de la
+plataforma PNMC.
 
-## Arquitectura
+## Estructura
 
-- `pnmc-web/`: Angular 21, Tailwind CSS, Leaflet y ExcelJS.
-- `pnmc-api/`: .NET 10, Entity Framework Core y autenticación por cookie.
-- `pnmc-database/`: SQL Server/Azure SQL y migraciones versionadas.
-- `scripts/`: arranque, carga de base y comprobaciones locales.
-- `docs/`: documentación funcional y técnica.
+```
+pnmc-web/        Angular 21, Tailwind CSS, Leaflet y ExcelJS
+pnmc-api/        .NET 10, Entity Framework Core, autenticacion por cookie
+pnmc-database/   SQL Server / Azure SQL, esquema, migraciones y semillas
+scripts/         arranque, carga de base y comprobaciones locales
+docs/            documentacion funcional, tecnica y de marca
+tools/           generadores del manual de marca
+```
 
-La única comunicación de datos del frontend ocurre mediante `pnmc-api`; la API es la responsable de autorización y persistencia.
+Toda la comunicación de datos del frontend pasa por `pnmc-api`. La API es la única
+responsable de autorización y persistencia.
 
 ## Arranque local
+
+Requisitos: Docker Desktop, Node con Angular 21 y .NET 10.
 
 ```bash
 ./scripts/dev-up.sh
 ```
 
-Para detener el frontend, API y la base de datos Docker sin borrar sus datos:
+Levanta la base en Docker, la API y el frontend. Para detener sin borrar datos:
 
 ```bash
 ./scripts/dev-down.sh
 ```
 
-En macOS también puedes hacer doble clic en `Iniciar PNMC.command` o
-`Detener PNMC.command` desde Finder. Estos accesos abren Terminal y muestran
-el resultado antes de cerrarse.
-
-O por separado:
+Por separado:
 
 ```bash
 ./scripts/local-db-up.sh
 ./scripts/api-local.sh
-cd pnmc-web
-npm install
-npm start
+cd pnmc-web && npm install && npm start
 ```
 
 Servicios:
 
-- Frontend: `http://127.0.0.1:4200`
-- API y Swagger: `http://localhost:8080/swagger`
-- Salud API: `http://localhost:8080/health/live`
+| Servicio | URL |
+|---|---|
+| Frontend | http://127.0.0.1:4200 |
+| API y Swagger | http://localhost:8080/swagger |
+| Salud de la API | http://localhost:8080/health/live |
+| SQL Server | 127.0.0.1:14333 |
 
 ## Validación
 
 ```bash
-cd pnmc-web
-npm test
-npm run build
-
-cd ../pnmc-api
-dotnet test PNMC.Api.sln
+cd pnmc-web && npm test && npm run build
+cd ../pnmc-api && dotnet test PNMC.Api.sln
 ```
 
 ## Configuración
 
-En desarrollo Angular utiliza `src/environments/environment.ts`. La compilación de producción reemplaza ese archivo por `environment.production.ts` y usa rutas de API relativas. Para orígenes separados, ajuste `apiBaseUrl` durante el despliegue y configure `PNMC_CORS_ORIGINS` en la API.
+En desarrollo Angular usa `pnmc-web/src/environments/environment.ts`. La compilación de
+producción lo reemplaza por `environment.production.ts` y usa rutas de API relativas. Para
+orígenes separados, ajusta `apiBaseUrl` en el despliegue y configura `PNMC_CORS_ORIGINS`
+en la API.
 
-Nunca publique archivos `.env` ni credenciales reales.
+La configuración local de la API va en `pnmc-api/src/PNMC.Api/appsettings.Local.json`, que
+se crea a partir de `appsettings.Local.example.json` y **no se versiona**. Nunca publiques
+archivos `.env` ni credenciales reales.
+
+## Ramas y versiones
+
+`main` es la rama principal. El trabajo se hace en ramas temáticas y se integra en `main`.
+Ver `CONTRIBUIR.md`.
