@@ -57,45 +57,27 @@ public static class NormalizacionVersionesFestivalEndpoints
             var pendientes = candidatos.Where(item => !existentes.Contains(item.Id)).ToList();
             if (pendientes.Count == 0) return Results.Ok(new { normalizados = 0, message = "No hay Festivales públicos sin versión vigente." });
             await using var transaccion = await db.Database.BeginTransactionAsync(ct);
-            var ahora = DateTime.UtcNow;
-            var versiones = pendientes.Select(festival => new VersionFestivalRow
-            {
-                FestivalOrigenId = festival.Id, NumeroVersion = 1, EsVigente = true, Nombre = festival.Name,
-                Descripcion = festival.Description, NivelCobertura = festival.CoverageLevel, CodigoDepartamento = festival.DepartmentCode,
-                CodigoMunicipio = festival.MunicipalityCode, Periodicidad = festival.Periodicidad, CorreoContacto = festival.ContactEmail,
-                FechaPublicacion = festival.UpdatedAt ?? festival.CreatedAt, FechaCreacion = ahora
-            }).ToList();
-            db.VersionesFestival.AddRange(versiones);
-            await db.SaveChangesAsync(ct);
-            var ids = pendientes.Select(item => item.Id).ToArray();
-            var practicas = await db.FestivalesPracticasMusicales.AsNoTracking().Where(item => ids.Contains(item.FestivalId)).ToListAsync(ct);
-            var territorios = await db.FestivalesTerritoriosSonoros.AsNoTracking().Where(item => ids.Contains(item.FestivalId)).ToListAsync(ct);
-            var versionesPorFestival = versiones.ToDictionary(item => item.FestivalOrigenId, item => item.Id);
-            db.VersionesFestivalPracticasMusicales.AddRange(practicas.Select(item => new VersionFestivalPracticaMusicalRow { VersionFestivalId = versionesPorFestival[item.FestivalId], PracticaMusicalId = item.PracticaMusicalId, FechaCreacion = ahora }));
-            db.VersionesFestivalTerritoriosSonoros.AddRange(territorios.Select(item => new VersionFestivalTerritorioSonoroRow { VersionFestivalId = versionesPorFestival[item.FestivalId], TerritorioSonoroId = item.TerritorioSonoroId, FechaCreacion = ahora }));
-            var personaInstitucionalId = ObtenerPersonaInstitucionalId(context.User);
-            foreach (var festival in pendientes)
-            {
-                db.AuditLogs.Add(new AuditLogRow
-                {
-                    UserId = personaInstitucionalId,
-                    TableName = "Festivales",
-                    RecordId = festival.Id.ToString(),
-                    Action = "FestivalHistoricoNormalizado",
-                    PreviousValuesJson = null,
-                    NewValuesJson = JsonSerializer.Serialize(new
-                    {
-                        versionFestivalId = versionesPorFestival[festival.Id],
-                        numeroVersion = 1,
-                        esVigente = true,
-                        origen = "normalizacion-historica"
-                    }),
-                    CreatedAt = ahora
-                });
-            }
-            await db.SaveChangesAsync(ct);
+            await NormalizarFestivalesAsync(pendientes, db, context.User, ct);
             await transaccion.CommitAsync(ct);
             return Results.Ok(new { normalizados = pendientes.Count, message = "Se crearon instantáneas técnicas de versiones públicas sin modificar estados institucionales." });
+        });
+
+        institucional.MapPost("/{festivalId:int}/normalizar-version-historica", async (int festivalId, PnmcDbContext db, IAntiforgery antiforgery, HttpContext context, CancellationToken ct) =>
+        {
+            try { await antiforgery.ValidateRequestAsync(context); }
+            catch (AntiforgeryValidationException) { return Results.BadRequest(new { message = "La normalización no pudo validarse. Actualiza la página e inténtalo nuevamente." }); }
+
+            var festival = await db.FestivalRecords.FirstOrDefaultAsync(item => item.Id == festivalId, ct);
+            if (festival is null) return Results.NotFound();
+            if (!EsFestivalPublicado(festival))
+                return Results.Conflict(new { message = "Solo un Festival histórico publicado puede normalizarse para iniciar su gobierno versionado." });
+            if (await db.VersionesFestival.AsNoTracking().AnyAsync(item => item.FestivalOrigenId == festivalId && item.EsVigente, ct))
+                return Results.Ok(new { normalizado = false, festivalId, message = "El Festival ya tiene una versión pública vigente." });
+
+            await using var transaccion = await db.Database.BeginTransactionAsync(ct);
+            await NormalizarFestivalesAsync(new[] { festival }, db, context.User, ct);
+            await transaccion.CommitAsync(ct);
+            return Results.Ok(new { normalizado = true, festivalId, message = "El Festival histórico fue preparado para una actualización gobernada sin alterar su estado institucional." });
         });
         return group;
     }
@@ -105,6 +87,63 @@ public static class NormalizacionVersionesFestivalEndpoints
 
     private static int? ObtenerPersonaInstitucionalId(ClaimsPrincipal principal) =>
         int.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var personaId) ? personaId : null;
+
+    private static bool EsFestivalPublicado(FestivalRow festival) =>
+        festival.StatusCode is "Publicado" or "publicado";
+
+    private static async Task NormalizarFestivalesAsync(
+        IReadOnlyCollection<FestivalRow> festivales,
+        PnmcDbContext db,
+        ClaimsPrincipal principal,
+        CancellationToken ct)
+    {
+        var ahora = DateTime.UtcNow;
+        var versiones = festivales.Select(festival => new VersionFestivalRow
+        {
+            FestivalOrigenId = festival.Id,
+            NumeroVersion = 1,
+            EsVigente = true,
+            Nombre = festival.Name,
+            Descripcion = festival.Description,
+            NivelCobertura = festival.CoverageLevel,
+            CodigoDepartamento = festival.DepartmentCode,
+            CodigoMunicipio = festival.MunicipalityCode,
+            Periodicidad = festival.Periodicidad,
+            CorreoContacto = festival.ContactEmail,
+            FechaPublicacion = festival.UpdatedAt ?? festival.CreatedAt,
+            FechaCreacion = ahora
+        }).ToList();
+        db.VersionesFestival.AddRange(versiones);
+        await db.SaveChangesAsync(ct);
+
+        var ids = festivales.Select(item => item.Id).ToArray();
+        var practicas = await db.FestivalesPracticasMusicales.AsNoTracking().Where(item => ids.Contains(item.FestivalId)).ToListAsync(ct);
+        var territorios = await db.FestivalesTerritoriosSonoros.AsNoTracking().Where(item => ids.Contains(item.FestivalId)).ToListAsync(ct);
+        var versionesPorFestival = versiones.ToDictionary(item => item.FestivalOrigenId, item => item.Id);
+        db.VersionesFestivalPracticasMusicales.AddRange(practicas.Select(item => new VersionFestivalPracticaMusicalRow { VersionFestivalId = versionesPorFestival[item.FestivalId], PracticaMusicalId = item.PracticaMusicalId, FechaCreacion = ahora }));
+        db.VersionesFestivalTerritoriosSonoros.AddRange(territorios.Select(item => new VersionFestivalTerritorioSonoroRow { VersionFestivalId = versionesPorFestival[item.FestivalId], TerritorioSonoroId = item.TerritorioSonoroId, FechaCreacion = ahora }));
+        var personaInstitucionalId = ObtenerPersonaInstitucionalId(principal);
+        foreach (var festival in festivales)
+        {
+            db.AuditLogs.Add(new AuditLogRow
+            {
+                UserId = personaInstitucionalId,
+                TableName = "Festivales",
+                RecordId = festival.Id.ToString(),
+                Action = "FestivalHistoricoNormalizado",
+                PreviousValuesJson = null,
+                NewValuesJson = JsonSerializer.Serialize(new
+                {
+                    versionFestivalId = versionesPorFestival[festival.Id],
+                    numeroVersion = 1,
+                    esVigente = true,
+                    origen = "normalizacion-historica"
+                }),
+                CreatedAt = ahora
+            });
+        }
+        await db.SaveChangesAsync(ct);
+    }
 
     private static IReadOnlyList<string> ObtenerInconsistencias(FestivalRow festival)
     {

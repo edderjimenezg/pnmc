@@ -41,7 +41,14 @@ public static class PropuestasCambioFestivalExternosEndpoints
             if (existente is not null) return Results.Ok(await ADtoAsync(existente, dbContext, cancellationToken));
 
             await using var transaccion = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-            var version = await ObtenerOCrearVersionVigenteAsync(festival, dbContext, cancellationToken);
+            var version = await dbContext.VersionesFestival
+                .FirstOrDefaultAsync(item => item.FestivalOrigenId == festival.Id && item.EsVigente, cancellationToken);
+            if (version is null)
+                return Results.Conflict(new
+                {
+                    codigo = "requiereNormalizacionInstitucional",
+                    message = "Este Festival histórico requiere una normalización institucional explícita antes de recibir una propuesta de cambios."
+                });
             var ahora = DateTime.UtcNow;
             var propuesta = new PropuestaCambioFestivalRow
             {
@@ -199,46 +206,6 @@ public static class PropuestasCambioFestivalExternosEndpoints
         });
 
         return group;
-    }
-
-    private static async Task<VersionFestivalRow> ObtenerOCrearVersionVigenteAsync(FestivalRow festival, PnmcDbContext dbContext, CancellationToken cancellationToken)
-    {
-        var vigente = await dbContext.VersionesFestival.FirstOrDefaultAsync(item => item.FestivalOrigenId == festival.Id && item.EsVigente, cancellationToken);
-        if (vigente is not null) return vigente;
-
-        var ahora = DateTime.UtcNow;
-        vigente = new VersionFestivalRow
-        {
-            FestivalOrigenId = festival.Id,
-            NumeroVersion = 1,
-            EsVigente = true,
-            Nombre = festival.Name,
-            Descripcion = festival.Description,
-            NivelCobertura = festival.CoverageLevel,
-            CodigoDepartamento = festival.DepartmentCode,
-            CodigoMunicipio = festival.MunicipalityCode,
-            Periodicidad = festival.Periodicidad,
-            CorreoContacto = festival.ContactEmail,
-            FechaPublicacion = festival.UpdatedAt ?? festival.CreatedAt,
-            FechaCreacion = ahora
-        };
-        dbContext.VersionesFestival.Add(vigente);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var practicas = await dbContext.FestivalesPracticasMusicales.AsNoTracking()
-            .Where(item => item.FestivalId == festival.Id).Select(item => item.PracticaMusicalId).ToListAsync(cancellationToken);
-        var territorios = await dbContext.FestivalesTerritoriosSonoros.AsNoTracking()
-            .Where(item => item.FestivalId == festival.Id).Select(item => item.TerritorioSonoroId).ToListAsync(cancellationToken);
-        dbContext.VersionesFestivalPracticasMusicales.AddRange(practicas.Select(id => new VersionFestivalPracticaMusicalRow
-        {
-            VersionFestivalId = vigente.Id, PracticaMusicalId = id, FechaCreacion = ahora
-        }));
-        dbContext.VersionesFestivalTerritoriosSonoros.AddRange(territorios.Select(id => new VersionFestivalTerritorioSonoroRow
-        {
-            VersionFestivalId = vigente.Id, TerritorioSonoroId = id, FechaCreacion = ahora
-        }));
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return vigente;
     }
 
     private static async Task<PropuestaCambioFestivalDto> ADtoAsync(PropuestaCambioFestivalRow propuesta, PnmcDbContext dbContext, CancellationToken cancellationToken)
