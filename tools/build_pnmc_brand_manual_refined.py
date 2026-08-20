@@ -8,7 +8,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
 
 ROOT=Path('.')
-OUT=ROOT/'output/pdf/Manual_de_Marca_PNMC_Propuesta_Light_Dark.pdf'
+OUT=ROOT/'docs/marca/pdf/Manual_de_Marca_PNMC_Propuesta_Light_Dark.pdf'
 TMP=ROOT/'tmp/pdfs/refined'; TMP.mkdir(parents=True,exist_ok=True)
 LOGO_SRC=ROOT/'tmp/pdfs/min-fonts/logo-1.png'
 GREGOR=ROOT/'tmp/pdfs/min-fonts/gregor.bin'; ALT=ROOT/'tmp/pdfs/min-fonts/alternate.bin'

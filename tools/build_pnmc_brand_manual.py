@@ -8,9 +8,9 @@ from PIL import Image
 import math
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/Manual_de_Marca_PNMC_2025-2035.pdf"
+OUT = ROOT / "docs/marca/pdf/Manual_de_Marca_PNMC_2025-2035.pdf"
 PREV = ROOT / "tmp/pdfs/source-previews"
-ASSETS = ROOT / "output/assets"
+ASSETS = ROOT / "docs/marca/assets"
 
 W, H = 960, 540
 PURPLE = HexColor("#291242")
