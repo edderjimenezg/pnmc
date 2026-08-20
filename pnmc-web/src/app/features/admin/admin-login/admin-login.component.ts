@@ -1,6 +1,7 @@
 import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { 
   LucideMail, 
   LucideLock, 
@@ -24,6 +25,7 @@ import { ADMIN_ROLES } from '../domain/admin-config';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     LucideMail,
     LucideLock,
     LucideEye,
@@ -148,15 +150,9 @@ export class AdminLoginComponent {
     }, 1000);
   }
 
-  handleToggleExternal() {
-    this.isExternalPortal.set(true);
-    this.message.set('');
-  }
-
-  handleToggleInternal() {
-    this.isExternalPortal.set(false);
-    this.loginState.set({ status: 'idle', message: '' });
-  }
+  // El cambio institucional <-> externo ya no ocurre dentro de la pagina:
+  // cada publico tiene su propia ruta ('/consola-interna' e '/ingreso' o
+  // '/colaboradores'), enlazadas entre si con routerLink en la plantilla.
 
   // External Portal Methods
   handleSocialAuth(providerLabel: string) {

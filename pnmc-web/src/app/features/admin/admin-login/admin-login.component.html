@@ -317,13 +317,12 @@
             }
 
             <div class="pt-4 mt-4 border-t border-white/10">
-              <button
-                type="button"
-                (click)="handleToggleInternal()"
+              <a
+                routerLink="/consola-interna"
                 class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 px-4 py-2.5 text-[0.68rem] font-black uppercase tracking-wider text-[#00DA5E] hover:text-[#00f56a] transition-all duration-300 cursor-pointer active:scale-[0.98]"
               >
-                Volver al Ingreso Administrativo
-              </button>
+                ¿Eres del equipo interno? Ingresa aquí
+              </a>
             </div>
           </div>
         </div>
@@ -504,14 +503,13 @@
         }
 
         <div class="pt-4 mt-4 border-t border-white/5">
-          <button
-            type="button"
-            (click)="handleToggleExternal()"
+          <a
+            routerLink="/ingreso"
             class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 px-4 py-2.5 text-[0.68rem] font-black uppercase tracking-wider text-[#00DA5E] hover:text-[#00f56a] transition-all duration-300 cursor-pointer group active:scale-[0.98]"
           >
             <span>Ingresar al Portal de Colaboradores Externos</span>
             <svg lucideChevronRight size="12" class="transform group-hover:translate-x-1 transition-transform duration-300 text-[#00DA5E] group-hover:text-[#00f56a]"></svg>
-          </button>
+          </a>
         </div>
       </div>
     }

@@ -35,7 +35,7 @@ export const PAGE_PATHS: Record<string, string> = {
   [PAGE_IDS.mapa]: '/mapa',
   [PAGE_IDS.simus]: '/simus',
   [PAGE_IDS.mapaParticipa]: '/mapa/participa',
-  [PAGE_IDS.admin]: '/admin',
+  [PAGE_IDS.admin]: '/consola-interna',
   [PAGE_IDS.colaboradores]: '/colaboradores',
   [PAGE_IDS.registro]: '/registro',
   [PAGE_IDS.estrategiaCirculacion]: '/estrategia/circulacion',
@@ -128,7 +128,7 @@ export class NavigationService {
     const normalizedPath = this.normalizePathname(path);
 
     const pathSegments = normalizedPath.split('/').filter(Boolean);
-    if (normalizedPath === '/registro' || normalizedPath === '/simus/ingresar') {
+    if (normalizedPath === '/registro' || normalizedPath === '/ingreso' || normalizedPath === '/simus/ingresar') {
       return PAGE_IDS.registro;
     }
     if (normalizedPath === '/simus' || normalizedPath.startsWith('/simus/')) {

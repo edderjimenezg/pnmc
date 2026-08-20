@@ -67,9 +67,17 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'simus/ingresar',
+    path: 'ingreso',
     loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
     data: { modoAcceso: 'ingresar' },
+  },
+  // 'simus/ingresar' era la ruta anterior de login externo: se conserva como
+  // redireccion para no romper enlaces existentes. 'ingreso' es la ruta
+  // clara y de primer nivel para colaboradores externos.
+  {
+    path: 'simus/ingresar',
+    redirectTo: 'ingreso',
+    pathMatch: 'full',
   },
   {
     path: 'simus/:section',
@@ -96,8 +104,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/content/pages/strategy-page/strategy-page.component').then(m => m.StrategyPageComponent),
     data: { strategy: 'investigacion' },
   },
+  // 'admin' se retiro a proposito: es la primera ruta que cualquiera prueba
+  // al adivinar un panel de administracion. 'consola-interna' cumple la
+  // misma funcion sin ser la ruta obvia. No hay redireccion desde 'admin':
+  // mantenerla, aunque fuera a otra parte, seguiria confirmando que existe
+  // un panel administrativo en esa direccion.
   {
-    path: 'admin',
+    path: 'consola-interna',
     loadComponent: () => import('./features/admin/admin-shell-page/admin-shell-page.component').then(m => m.AdminShellPageComponent),
   },
   {
