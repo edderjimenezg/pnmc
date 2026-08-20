@@ -1,70 +1,78 @@
-<main class="portal-acceso relative min-h-[100dvh] overflow-hidden bg-[#0d0915] px-4 py-6 font-nunito text-slate-700 sm:px-6 sm:py-8">
-  <div aria-hidden="true" class="pointer-events-none absolute -right-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-[#00A849]/10 blur-[130px]"></div>
-  <div aria-hidden="true" class="pointer-events-none absolute -bottom-56 -left-48 h-[34rem] w-[34rem] rounded-full bg-[#6100D7]/15 blur-[150px]"></div>
+<main class="portal-acceso relative flex min-h-[100dvh] w-screen items-center justify-center overflow-hidden bg-[#0d0915] px-4 py-6 font-nunito text-slate-700 select-none sm:px-6 sm:py-8">
+  <div aria-hidden="true" class="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#00DA5E]/8 blur-[130px]"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute -bottom-60 -left-60 h-[600px] w-[600px] rounded-full bg-[#6100D7]/12 blur-[150px]"></div>
   <div aria-hidden="true" class="pointer-events-none absolute left-1/4 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-emerald-500/5 blur-[120px]"></div>
-  <section class="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] max-w-5xl flex-col">
-    <a routerLink="/simus" class="self-start text-xs font-bold text-white/60 transition hover:text-white">← Volver a SIMUS</a>
+  <section class="relative z-10 mx-auto flex w-full max-w-5xl flex-col">
+    <a routerLink="/simus" class="absolute left-0 top-0 z-20 text-xs font-bold text-white/60 transition hover:text-white sm:left-2">← Volver a SIMUS</a>
     <div class="flex flex-1 flex-col justify-center py-8">
+
+    @if (isAccessScreen()) {
+      <img src="/assets/branding/pnmc-blanco.png" alt="Plan Nacional de Música para la Convivencia" class="mx-auto mb-5 h-24 w-auto object-contain drop-shadow-[0_4px_32px_rgba(0,218,94,0.25)] transition-transform duration-300 hover:scale-[1.03] sm:h-28 md:h-32">
+    }
 
     @if (message()) { <p class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{{ message() }}</p> }
     @if (error()) { <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{{ error() }}</p> }
 
     @if (isAccessScreen()) {
-      <section class="portal-tarjeta mx-auto w-full max-w-md overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-900/40 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-        <div class="relative flex flex-col items-center justify-center px-6 pb-6 pt-8 text-center">
-          <div aria-hidden="true" class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#00A849]/40 to-transparent"></div>
-          <img src="/assets/branding/pnmc-blanco.png" alt="Plan Nacional de Música para la Convivencia" class="h-16 w-auto object-contain drop-shadow-[0_4px_24px_rgba(0,168,73,0.20)]">
-          <p class="mt-5 font-alternate text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[#00A849]">Acceso externo</p>
-          <h1 class="mt-2 font-alternate text-2xl font-bold uppercase tracking-wide text-white">Haz parte de SIMUS</h1>
-          <p class="mt-3 max-w-sm text-xs leading-relaxed text-white/60">Crea tu cuenta, gestiona organizaciones y mantiene actualizada la información del ecosistema musical.</p>
-        </div>
-        <div role="tablist" aria-label="Acceso externo a SIMUS" class="grid grid-cols-2 border-b border-white/10">
-          <button type="button" role="tab" [attr.aria-selected]="view() === 'login'" (click)="openExternalLogin()" [class]="view() === 'login' ? 'border-b-2 border-[#00A849] bg-white/5 text-white' : 'border-b-2 border-transparent text-white/45 hover:bg-white/5 hover:text-white/80'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Ingresar</button>
-          <button type="button" role="tab" [attr.aria-selected]="view() !== 'login'" (click)="openRegistrationChoice()" [class]="view() !== 'login' ? 'border-b-2 border-[#00A849] bg-white/5 text-white' : 'border-b-2 border-transparent text-white/45 hover:bg-white/5 hover:text-white/80'" class="px-4 py-4 font-alternate text-xs font-bold uppercase tracking-widest transition">Registrarse</button>
+      <section class="terminal-card-glow mx-auto w-full max-w-md overflow-hidden rounded-t-[1.75rem] border border-b-0 border-white/10 bg-slate-900/40 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+        <div aria-hidden="true" class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-[#00DA5E]/30 to-transparent"></div>
+        <div role="tablist" aria-label="Acceso externo a SIMUS" class="relative flex border-b border-white/10">
+          <button type="button" role="tab" [attr.aria-selected]="view() === 'login'" (click)="openExternalLogin()" [class]="view() === 'login' ? 'text-white border-b-2 border-[#00DA5E] bg-white/5' : 'text-white/45 hover:text-white/80'" class="flex-1 cursor-pointer py-4 font-alternate text-xs font-bold uppercase tracking-wider transition">Ingresar</button>
+          <button type="button" role="tab" [attr.aria-selected]="view() !== 'login'" (click)="openRegistrationChoice()" [class]="view() !== 'login' ? 'text-white border-b-2 border-[#00DA5E] bg-white/5' : 'text-white/45 hover:text-white/80'" class="flex-1 cursor-pointer py-4 font-alternate text-xs font-bold uppercase tracking-wider transition">Registrarse</button>
         </div>
       </section>
     }
 
-    @if (view() === 'choice') {
-      <div role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-5 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-6">
-      <p class="text-sm leading-relaxed text-white/60">Tu cuenta es personal. Desde ella podrás administrar organizaciones cuando tengas autorización.</p>
-      <div class="mt-5 grid gap-4 md:grid-cols-2">
-        <button type="button" (click)="chooseAccount()" class="rounded-2xl border border-white/10 bg-white/5 p-6 text-left shadow-sm transition hover:border-[#00A849]/70 hover:bg-white/10">
-          <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Registro personal</p>
-          <h2 class="mt-2 font-alternate text-lg font-bold uppercase text-white">Crear mi cuenta</h2>
-          <p class="mt-3 text-sm leading-relaxed text-white/60">Crea tu acceso personal a SIMUS. Esta cuenta también podrá ser autorizada posteriormente para administrar organizaciones y sus procesos.</p>
-        </button>
-        <button type="button" (click)="chooseOrganization()" class="rounded-2xl border border-[#00A849]/35 bg-[#00A849]/10 p-6 text-left text-white shadow-sm transition hover:bg-[#00A849]/15">
-          <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Organización</p>
-          <h2 class="mt-2 font-alternate text-lg font-bold uppercase">Registrar una organización</h2>
-          <p class="mt-3 text-sm leading-relaxed text-white/75">Registra una fundación, asociación, empresa, entidad pública u otra organización. Durante el proceso identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
-        </button>
-      </div>
-      </div>
-      @if (session()) {
-        <button type="button" (click)="openOrganizationHome()" class="mx-auto mt-5 block w-full max-w-md rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-left shadow-sm transition hover:border-[#00A849] hover:shadow-md">
-          <h2 class="font-alternate text-lg font-bold uppercase text-[#291242]">Mis organizaciones</h2>
-          <p class="mt-3 text-sm leading-relaxed">Consulta las organizaciones que administras, sus Festivales y los registros históricos que podrían estar relacionados con ellas.</p>
-        </button>
-      }
-    }
-
     @if (view() === 'register') {
-      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); register()">
-        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Crea tu cuenta personal</h2>
-        <label class="block text-sm font-bold">Nombre completo<input [(ngModel)]="account.fullName" name="fullName" class="mt-1 w-full rounded-lg border p-3" autocomplete="name"></label>
-        <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="account.email" name="email" type="email" class="mt-1 w-full rounded-lg border p-3" autocomplete="email"></label>
-        <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="account.password" name="password" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
-        <label class="block text-sm font-bold">Confirma tu contraseña<input [(ngModel)]="account.confirmPassword" name="confirmPassword" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
-        <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptTerms" name="terms" type="checkbox"> Acepto los términos de uso.</label>
-        <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptDataPolicy" name="dataPolicy" type="checkbox"> Acepto la política de tratamiento de datos.</label>
-        <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Continuar</button>
-        @if (wantsOrganization()) { <button type="button" (click)="goToLogin()" class="ml-3 text-sm font-bold text-[#291242]">Ya tengo cuenta</button> }
+      <form role="tabpanel" class="portal-panel terminal-card-glow mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-8" (submit)="$event.preventDefault(); tipoRegistro() === 'organizacion' ? continueWithResponsible() : register()">
+        <div class="mb-6 text-center">
+          <h1 class="font-alternate text-xl font-bold uppercase tracking-wide text-white">Haz parte de SIMUS</h1>
+          <p class="mt-1 text-xs text-white/60">Crea tu cuenta, gestiona organizaciones y mantén actualizada la información del Ecosistema Musical de Colombia.</p>
+        </div>
+
+        <div class="space-y-1">
+          <label for="tipo-registro" class="block text-xs font-bold uppercase tracking-wider text-slate-400">Tipo de perfil</label>
+          <select id="tipo-registro" [ngModel]="tipoRegistro()" (ngModelChange)="cambiarTipoRegistro($event)" name="tipoRegistro" class="w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 text-sm text-white outline-none transition focus:border-[#00DA5E]">
+            <option value="persona" title="Crea tu acceso personal a SIMUS. Podrás administrar organizaciones y sus procesos cuando recibas autorización.">Persona natural / artista independiente</option>
+            <option value="organizacion" title="Registra una fundación, asociación, empresa, entidad pública u otra organización e identifica a su persona administradora inicial.">Organización</option>
+          </select>
+          @if (tipoRegistro() === 'persona') {
+            <p class="text-[0.7rem] leading-relaxed text-white/55">Crea tu acceso personal a SIMUS. Esta cuenta podrá ser autorizada posteriormente para administrar organizaciones y sus procesos.</p>
+          } @else {
+            <p class="text-[0.7rem] leading-relaxed text-white/55">Registra una organización e identifica a la persona responsable que quedará inicialmente como administradora.</p>
+          }
+        </div>
+
+        @if (tipoRegistro() === 'organizacion') {
+          <section class="space-y-4 border-t border-white/10 pt-4">
+            <p class="text-xs font-bold uppercase tracking-wider text-[#00DA5E]">Información de la organización</p>
+            <label class="block text-sm font-bold">Nombre de la organización<input [(ngModel)]="organization.name" name="organizationName" class="mt-1 w-full rounded-lg border p-3" autocomplete="organization"></label>
+            <label class="block text-sm font-bold">NIT u otra identificación <span class="font-normal">(si aplica)</span><input [(ngModel)]="organization.identificationNumber" name="identificationNumber" class="mt-1 w-full rounded-lg border p-3"></label>
+            <label class="block text-sm font-bold">Correo institucional o de contacto<input [(ngModel)]="organization.contactEmail" name="contactEmail" type="email" class="mt-1 w-full rounded-lg border p-3" autocomplete="email"></label>
+          </section>
+          <p class="text-[0.7rem] leading-relaxed text-white/55">En el siguiente paso identificarás a la persona responsable que administrará inicialmente la organización.</p>
+          <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptTerms" name="terms" type="checkbox"> Acepto los términos de uso.</label>
+          <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptDataPolicy" name="dataPolicy" type="checkbox"> Acepto la política de tratamiento de datos.</label>
+          <button type="button" [disabled]="loading()" (click)="continueWithResponsible()" class="w-full rounded-lg bg-[#00DA5E] px-5 py-3 font-alternate text-sm font-bold uppercase text-[#0d0915] disabled:opacity-50">Continuar</button>
+        } @else {
+          @if (wantsOrganization()) {
+            <p class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-relaxed text-white/65">Estás creando la cuenta de la persona responsable. Cuando la actives, continuarás con el registro de la organización.</p>
+          }
+          <label class="block text-sm font-bold">Nombre completo<input [(ngModel)]="account.fullName" name="fullName" class="mt-1 w-full rounded-lg border p-3" autocomplete="name"></label>
+          <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="account.email" name="email" type="email" class="mt-1 w-full rounded-lg border p-3" autocomplete="email"></label>
+          <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="account.password" name="password" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
+          <label class="block text-sm font-bold">Confirma tu contraseña<input [(ngModel)]="account.confirmPassword" name="confirmPassword" type="password" class="mt-1 w-full rounded-lg border p-3" autocomplete="new-password"></label>
+          @if (!wantsOrganization()) {
+            <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptTerms" name="terms" type="checkbox"> Acepto los términos de uso.</label>
+            <label class="flex gap-2 text-sm"><input [(ngModel)]="account.acceptDataPolicy" name="dataPolicy" type="checkbox"> Acepto la política de tratamiento de datos.</label>
+          }
+          <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{{ wantsOrganization() ? 'Crear cuenta y continuar' : 'Crear mi cuenta' }}</button>
+        }
       </form>
     }
 
     @if (view() === 'verify') {
-      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); verify()">
+      <form role="tabpanel" class="portal-panel terminal-card-glow mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-8" (submit)="$event.preventDefault(); verify()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Verifica tu correo</h2>
         <p class="text-sm">Escribe el código recibido en <strong>{{ registeredEmail() }}</strong>.</p>
         <label class="block text-sm font-bold">Código<input [(ngModel)]="verificationCode" name="verificationCode" inputmode="numeric" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -73,18 +81,60 @@
     }
 
     @if (view() === 'login') {
-      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); startLogin()">
-        <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">{{ wantsOrganization() ? 'Identifica a quien administrará la organización' : 'Ingresa a SIMUS' }}</h2>
-        <p class="text-sm">{{ wantsOrganization() ? 'Una organización no tiene contraseña compartida. Inicia sesión con tu cuenta personal o crea una.' : 'Usa tu cuenta personal para gestionar las organizaciones y procesos para los cuales tienes autorización.' }}</p>
-        <label class="block text-sm font-bold">Correo de acceso<input [(ngModel)]="login.email" name="loginEmail" type="email" class="mt-1 w-full rounded-lg border p-3"></label>
-        <label class="block text-sm font-bold">Contraseña<input [(ngModel)]="login.password" name="loginPassword" type="password" class="mt-1 w-full rounded-lg border p-3"></label>
+      <form role="tabpanel" class="portal-panel terminal-card-glow mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-8" (submit)="$event.preventDefault(); startLogin()">
+        <div class="mb-6 text-center">
+          <h1 class="font-alternate text-xl font-bold uppercase tracking-wide text-white">{{ wantsOrganization() ? 'Identifica a quien administrará la organización' : 'Acceso externo a SIMUS' }}</h1>
+          <p class="mt-1 text-xs text-white/60">{{ wantsOrganization() ? 'Una organización no tiene contraseña compartida. Inicia sesión con tu cuenta personal o crea una.' : 'Crea tu cuenta, gestiona organizaciones y mantén actualizada la información del Ecosistema Musical de Colombia.' }}</p>
+        </div>
+        <div class="group space-y-1.5">
+          <label for="correo-acceso" class="block pl-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-slate-400 transition-colors duration-300 group-focus-within:text-[#00DA5E]">Correo electrónico</label>
+          <div class="relative">
+            <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500 transition-colors duration-300 group-focus-within:text-[#00DA5E]">
+              <svg viewBox="0 0 24 24" class="h-4 w-4 fill-none stroke-current" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+            </span>
+            <input id="correo-acceso" [(ngModel)]="login.email" name="loginEmail" type="email" autocomplete="username" class="campo-acceso w-full rounded-xl border py-2.5 pl-11 pr-4 text-xs text-white outline-none transition-all duration-300 sm:text-sm">
+          </div>
+        </div>
+        <div class="group space-y-1.5">
+          <div class="flex items-center justify-between pl-1">
+            <label for="contrasena-acceso" class="block text-[0.62rem] font-black uppercase tracking-[0.16em] text-slate-400 transition-colors duration-300 group-focus-within:text-[#00DA5E]">Contraseña</label>
+            <button type="button" disabled title="La recuperación de contraseña estará disponible próximamente" class="recuperar-contrasena cursor-not-allowed text-[0.62rem] font-bold uppercase tracking-wider">¿Olvidaste tu contraseña?</button>
+          </div>
+          <div class="relative">
+            <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500 transition-colors duration-300 group-focus-within:text-[#00DA5E]">
+              <svg viewBox="0 0 24 24" class="h-4 w-4 fill-none stroke-current" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+            </span>
+            <input id="contrasena-acceso" [(ngModel)]="login.password" name="loginPassword" [type]="showLoginPassword() ? 'text' : 'password'" autocomplete="current-password" class="campo-acceso w-full rounded-xl border py-2.5 pl-11 pr-12 text-xs text-white outline-none transition-all duration-300 sm:text-sm">
+            <button type="button" (click)="showLoginPassword.set(!showLoginPassword())" [attr.aria-label]="showLoginPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-pressed]="showLoginPassword()" class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 transition-colors hover:text-[#00DA5E]">
+              @if (showLoginPassword()) {
+                <svg viewBox="0 0 24 24" class="h-4 w-4 fill-none stroke-current" stroke-width="1.8"><path d="m3 3 18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c5.5 0 9.6 4.8 10 8-.2 1.4-1.2 3.4-2.8 5"></path><path d="M6.6 6.6C4.4 8.1 2.4 10.5 2 12c.6 3.4 4.7 8 10 8 1.7 0 3.3-.5 4.6-1.3"></path></svg>
+              } @else {
+                <svg viewBox="0 0 24 24" class="h-4 w-4 fill-none stroke-current" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              }
+            </button>
+          </div>
+        </div>
         <button type="submit" [disabled]="loading()" class="rounded-lg bg-[#291242] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">Ingresar</button>
-        <button type="button" (click)="openRegistrationChoice()" class="ml-3 text-sm font-bold text-[#291242]">Crear una cuenta</button>
+        <div class="border-t border-white/10 pt-4">
+          <p class="text-center text-[0.62rem] font-bold uppercase tracking-widest text-white/40">Acceso con terceros</p>
+          <div class="mt-3 flex items-center justify-center gap-5" aria-label="Proveedores de acceso previstos, aún no habilitados">
+            <span role="img" aria-label="Google, próximamente" title="Inicio con Google próximamente" class="logo-tercero">
+              <svg viewBox="0 0 24 24" class="h-6 w-6"><path fill="#4285F4" d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.23a4.47 4.47 0 0 1-1.94 2.93v2.79h3.15c1.84-1.69 2.91-4.18 2.91-7.75Z"></path><path fill="#34A853" d="M12 21.75c2.62 0 4.82-.87 6.43-2.36l-3.15-2.79c-.87.58-1.99.92-3.28.92-2.53 0-4.67-1.71-5.44-4.01H3.31v2.88A9.72 9.72 0 0 0 12 21.75Z"></path><path fill="#FBBC05" d="M6.56 13.51a5.86 5.86 0 0 1 0-3.75V6.88H3.31a9.73 9.73 0 0 0 0 9.51l3.25-2.88Z"></path><path fill="#EA4335" d="M12 5.75c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.82 2.83 14.62 1.75 12 1.75a9.72 9.72 0 0 0-8.69 5.13l3.25 2.88C7.33 7.46 9.47 5.75 12 5.75Z"></path></svg>
+            </span>
+            <span role="img" aria-label="Apple, próximamente" title="Inicio con Apple próximamente" class="logo-tercero text-white/70">
+              <svg viewBox="0 0 24 24" class="h-6 w-6 fill-current"><path d="M16.7 12.8c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.5-.7-2.5-.7-1.3 0-2.5.8-3.2 1.9-1.4 2.5-.4 6.2 1 8.3.7 1 1.5 2.1 2.6 2 1 0 1.4-.7 2.7-.7s1.6.7 2.7.7c1.1 0 1.8-1 2.5-2 .8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3Zm-2-6.1c.6-.8 1-1.9.9-3-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2-.5 2.7-1.3Z"></path></svg>
+            </span>
+            <span role="img" aria-label="Microsoft, próximamente" title="Inicio con Microsoft próximamente" class="logo-tercero">
+              <svg viewBox="0 0 24 24" class="h-6 w-6"><path fill="#f35325" d="M2 2h9v9H2z"></path><path fill="#81bc06" d="M13 2h9v9h-9z"></path><path fill="#05a6f0" d="M2 13h9v9H2z"></path><path fill="#ffba08" d="M13 13h9v9h-9z"></path></svg>
+            </span>
+          </div>
+        </div>
+        <button type="button" (click)="openRegistrationChoice()" class="text-left text-sm font-bold text-[#291242]">Crear una cuenta</button>
       </form>
     }
 
     @if (view() === 'organization') {
-      <form role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
+      <form role="tabpanel" class="portal-panel terminal-card-glow mx-auto mt-0 w-full max-w-md space-y-4 rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-8" (submit)="$event.preventDefault(); session() ? createOrganization() : continueWithResponsible()">
         <h2 class="font-alternate text-xl font-bold uppercase text-[#291242]">Datos básicos de la organización</h2>
         <p class="text-sm">Estás registrando una organización. Después identificaremos a la persona responsable que quedará inicialmente como administradora.</p>
         <label class="block text-sm font-bold">Nombre de la organización<input [(ngModel)]="organization.name" name="organizationName" class="mt-1 w-full rounded-lg border p-3"></label>
@@ -102,7 +152,7 @@
     }
 
     @if (view() === 'responsible') {
-      <section role="tabpanel" class="portal-panel mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+      <section role="tabpanel" class="portal-panel terminal-card-glow mx-auto mt-0 w-full max-w-md rounded-b-[1.75rem] border border-t-0 border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_32px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-8">
         <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#00A849]">Persona responsable</p>
         <h2 class="mt-2 font-alternate text-xl font-bold uppercase text-[#291242]">¿Quién administrará inicialmente esta organización?</h2>
         <p class="mt-3 max-w-2xl text-sm leading-relaxed">La organización no tiene contraseña compartida. Una persona concreta recibe la autorización inicial para administrarla; esta autorización podrá cambiar más adelante.</p>
@@ -111,14 +161,13 @@
     }
 
     @if (isAccessScreen()) {
-      <div class="mx-auto mt-8 flex max-w-md flex-wrap items-center justify-center gap-x-5 gap-y-3 px-6 py-4">
+      <div class="mx-auto mt-8 flex max-w-md flex-wrap items-center justify-center gap-x-5 gap-y-3 px-6 py-4 opacity-80">
         <img src="/assets/branding/logo-gov-co.png" alt="GOV.CO" class="h-5 w-auto object-contain">
         <span class="h-5 w-px bg-white/25"></span>
         <img src="/assets/branding/gov-co-footer.png" alt="Colombia" class="h-7 w-auto object-contain">
         <span class="h-5 w-px bg-white/25"></span>
         <img src="/assets/branding/Culturas-Blanco.png" alt="Ministerio de las Culturas" class="h-7 w-auto object-contain">
       </div>
-      <p class="mx-auto mt-3 max-w-md text-center text-xs leading-relaxed text-white/65">Este es el acceso externo de SIMUS. El acceso institucional se mantiene separado.</p>
     }
 
     @if (view() === 'organization-home') {
@@ -208,8 +257,14 @@
             <div><dt class="text-xs font-bold uppercase tracking-wide text-slate-400">Razón de coincidencia</dt><dd class="mt-1 font-medium text-slate-700">{{ etiquetaCoincidencia(coincidencia.tipoCoincidencia) }}</dd></div>
           </dl>
           <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"><strong>Información de SIMUS:</strong><ul class="mt-2 list-disc space-y-1 pl-5">@for (evidencia of coincidencia.evidencias; track evidencia) { <li>{{ evidencia }}</li> }</ul></div>
-          <p class="mt-5 text-xs leading-relaxed text-slate-500">Esta consulta es informativa. Aún no crea una solicitud de vinculación ni cambia la información pública del Festival.</p>
-          <div class="mt-5 flex flex-wrap gap-3"><button type="button" disabled class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-bold text-slate-400" title="Esta acción se habilitará en PV-02">Solicitar administración · Próximamente</button><button type="button" (click)="coincidenciaEnDetalle.set(null)" class="rounded-lg bg-[#291242] px-4 py-2 text-xs font-bold text-white">Cerrar</button></div>
+          @if (solicitudActivaPara(coincidencia.festivalId); as solicitud) {
+            <p class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><strong>Solicitud {{ solicitud.estado === 'InformacionSolicitada' ? 'con información pendiente' : 'en trámite' }}.</strong>@if (solicitud.comentarioDecision) { <span> {{ solicitud.comentarioDecision }}</span> } Esta acción no modifica el Festival ni su información pública.</p>
+            @if (solicitud.estado === 'InformacionSolicitada') { <label class="mt-4 block text-sm font-bold text-slate-700">Información adicional solicitada<textarea [(ngModel)]="respuestaSolicitud" name="respuestaSolicitud" rows="4" maxlength="1200" class="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm font-normal"></textarea></label> }
+          } @else {
+            <label class="mt-5 block text-sm font-bold text-slate-700">¿Por qué tu organización solicita administrar este Festival?<textarea [(ngModel)]="justificacionSolicitud" name="justificacionSolicitud" rows="4" maxlength="1200" class="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm font-normal" placeholder="Describe la relación de tu organización con este Festival histórico."></textarea></label>
+            <p class="mt-3 text-xs leading-relaxed text-slate-500">La solicitud no confirma propiedad ni cambia la información pública. SIMUS revisará la justificación y la evidencia de coincidencia mostrada arriba.</p>
+          }
+          <div class="mt-5 flex flex-wrap gap-3">@if (!solicitudActivaPara(coincidencia.festivalId)) { <button type="button" [disabled]="enviandoSolicitud()" (click)="solicitarAdministracion(coincidencia)" class="rounded-lg bg-[#00A849] px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{{ enviandoSolicitud() ? 'Enviando…' : 'Solicitar administración' }}</button> } @else if (solicitudActivaPara(coincidencia.festivalId)?.estado === 'InformacionSolicitada') { <button type="button" [disabled]="enviandoSolicitud()" (click)="responderInformacionSolicitud(solicitudActivaPara(coincidencia.festivalId)!)" class="rounded-lg bg-[#00A849] px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{{ enviandoSolicitud() ? 'Enviando…' : 'Enviar información' }}</button> }<button type="button" (click)="coincidenciaEnDetalle.set(null)" class="rounded-lg bg-[#291242] px-4 py-2 text-xs font-bold text-white">Cerrar</button></div>
         </section>
       </div>
     }

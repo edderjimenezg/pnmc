@@ -2,9 +2,10 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AdminService, CoincidenciaFestivalHistorico } from '../../core/services/admin.service';
+import { AdminService, CoincidenciaFestivalHistorico, SolicitudAdministracionFestival } from '../../core/services/admin.service';
 
 type View = 'choice' | 'register' | 'verify' | 'login' | 'organization' | 'responsible' | 'organization-home' | 'festival' | 'complete';
+type TipoRegistro = 'persona' | 'organizacion';
 
 @Component({
   selector: 'app-external-access-page',
@@ -17,10 +18,12 @@ export class ExternalAccessPageComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly route = inject(ActivatedRoute);
 
-  view = signal<View>('choice');
+  view = signal<View>('register');
+  tipoRegistro = signal<TipoRegistro>('persona');
   wantsOrganization = signal(false);
   session = signal<any | null>(null);
   loading = signal(false);
+  showLoginPassword = signal(false);
   message = signal('');
   error = signal('');
   registeredEmail = signal('');
@@ -35,6 +38,10 @@ export class ExternalAccessPageComponent implements OnInit {
   cargandoCoincidencias = signal(false);
   coincidenciasConsultadas = signal(false);
   coincidenciaEnDetalle = signal<CoincidenciaFestivalHistorico | null>(null);
+  solicitudesAdministracion = signal<SolicitudAdministracionFestival[]>([]);
+  justificacionSolicitud = '';
+  respuestaSolicitud = '';
+  enviandoSolicitud = signal(false);
   locations = signal<any[]>([]);
   departments = computed(() => Array.from(new Map(this.locations().map(item => [item.departmentCode, item.departmentName])).entries())
     .map(([code, name]) => ({ code, name })));
@@ -83,6 +90,7 @@ export class ExternalAccessPageComponent implements OnInit {
   }
 
   chooseAccount(): void {
+    this.tipoRegistro.set('persona');
     this.wantsOrganization.set(false);
     this.view.set('register');
     this.clearFeedback();
@@ -95,9 +103,16 @@ export class ExternalAccessPageComponent implements OnInit {
   }
 
   openRegistrationChoice(): void {
+    this.tipoRegistro.set('persona');
     this.wantsOrganization.set(false);
     this.clearFeedback();
-    this.view.set('choice');
+    this.view.set('register');
+  }
+
+  cambiarTipoRegistro(tipo: TipoRegistro): void {
+    this.tipoRegistro.set(tipo);
+    this.wantsOrganization.set(tipo === 'organizacion');
+    this.clearFeedback();
   }
 
   isAccessScreen(): boolean {
@@ -186,6 +201,10 @@ export class ExternalAccessPageComponent implements OnInit {
     this.clearFeedback();
     if (!this.organization.name.trim() || !this.organization.contactEmail.trim()) {
       this.error.set('Escribe el nombre y un correo de contacto de la organización para continuar.');
+      return;
+    }
+    if (!this.account.acceptTerms || !this.account.acceptDataPolicy) {
+      this.error.set('Debes aceptar los términos de uso y la política de tratamiento de datos para continuar.');
       return;
     }
     this.wantsOrganization.set(true);
@@ -348,6 +367,53 @@ export class ExternalAccessPageComponent implements OnInit {
         this.fail(error);
       },
     });
+    this.adminService.fetchFestivalAdministrationRequests(organizacionId).subscribe({
+      next: solicitudes => this.solicitudesAdministracion.set(solicitudes),
+      error: error => this.fail(error),
+    });
+  }
+
+  solicitarAdministracion(coincidencia: CoincidenciaFestivalHistorico): void {
+    const organizacionId = Number(this.festival.organizacionId);
+    if (!organizacionId || !this.justificacionSolicitud.trim()) {
+      this.error.set('Explica brevemente por qué tu organización solicita administrar este Festival.');
+      return;
+    }
+    this.clearFeedback();
+    this.enviandoSolicitud.set(true);
+    this.adminService.requestFestivalAdministration(organizacionId, Number(coincidencia.festivalId), this.justificacionSolicitud).subscribe({
+      next: solicitud => {
+        this.enviandoSolicitud.set(false);
+        this.solicitudesAdministracion.update(actuales => [solicitud, ...actuales]);
+        this.justificacionSolicitud = '';
+        this.coincidenciaEnDetalle.set(null);
+        this.message.set(`La solicitud para administrar “${coincidencia.nombreFestival}” fue enviada a SIMUS.`);
+      },
+      error: error => { this.enviandoSolicitud.set(false); this.fail(error); },
+    });
+  }
+
+  solicitudActivaPara(festivalId: string): SolicitudAdministracionFestival | undefined {
+    return this.solicitudesAdministracion().find(item => item.festivalId === festivalId && ['Pendiente', 'EnRevision', 'InformacionSolicitada'].includes(item.estado));
+  }
+
+  responderInformacionSolicitud(solicitud: SolicitudAdministracionFestival): void {
+    const organizacionId = Number(this.festival.organizacionId);
+    if (!this.respuestaSolicitud.trim()) {
+      this.error.set('Describe la información adicional solicitada por SIMUS.');
+      return;
+    }
+    this.enviandoSolicitud.set(true);
+    this.adminService.respondFestivalAdministrationRequest(organizacionId, solicitud.id, this.respuestaSolicitud).subscribe({
+      next: actualizada => {
+        this.enviandoSolicitud.set(false);
+        this.solicitudesAdministracion.update(actuales => actuales.map(item => item.id === actualizada.id ? actualizada : item));
+        this.respuestaSolicitud = '';
+        this.coincidenciaEnDetalle.set(null);
+        this.message.set('La información adicional fue enviada a SIMUS para continuar la revisión.');
+      },
+      error: error => { this.enviandoSolicitud.set(false); this.fail(error); },
+    });
   }
 
   etiquetaCoincidencia(tipo: CoincidenciaFestivalHistorico['tipoCoincidencia']): string {
@@ -430,7 +496,12 @@ export class ExternalAccessPageComponent implements OnInit {
   }
 
   goToLogin(): void { this.clearFeedback(); this.view.set('login'); }
-  goToRegister(): void { this.clearFeedback(); this.view.set('register'); }
+  goToRegister(): void {
+    this.tipoRegistro.set('persona');
+    this.wantsOrganization.set(true);
+    this.clearFeedback();
+    this.view.set('register');
+  }
 
   private clearFeedback(): void { this.message.set(''); this.error.set(''); }
   private loadTerritories(): void {

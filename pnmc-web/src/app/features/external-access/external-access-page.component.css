@@ -4,7 +4,7 @@
   color: inherit;
 }
 
-.portal-acceso .portal-panel input,
+.portal-acceso .portal-panel input:not([type='checkbox']),
 .portal-acceso .portal-panel select,
 .portal-acceso .portal-panel textarea {
   width: 100%;
@@ -14,7 +14,7 @@
   outline: none;
 }
 
-.portal-acceso .portal-panel input:focus,
+.portal-acceso .portal-panel input:not([type='checkbox']):focus,
 .portal-acceso .portal-panel select:focus,
 .portal-acceso .portal-panel textarea:focus {
   border-color: #00a849 !important;
@@ -34,7 +34,7 @@
 .portal-acceso .portal-panel button[type='submit'] {
   width: 100%;
   border-radius: 0.75rem;
-  background: #00a849 !important;
+  background: #00da5e !important;
   color: #0d0915 !important;
   font-family: var(--font-alternate, inherit);
   font-weight: 800;
@@ -47,4 +47,51 @@
 
 .portal-acceso .portal-panel [class*='text-[#291242]'] {
   color: #fff !important;
+}
+
+.portal-acceso .portal-panel .campo-acceso {
+  background: rgba(2, 6, 23, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.portal-acceso .portal-panel .campo-acceso:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.portal-acceso .portal-panel .campo-acceso:focus {
+  border-color: #00da5e !important;
+  background: rgba(2, 6, 23, 0.7) !important;
+  box-shadow: 0 0 0 2px rgba(0, 218, 94, 0.2), 0 0 20px rgba(0, 218, 94, 0.1);
+}
+
+.portal-acceso .portal-panel .recuperar-contrasena {
+  color: rgba(0, 218, 94, 0.65) !important;
+}
+
+.logo-tercero {
+  cursor: default;
+  opacity: 0.78;
+}
+
+@keyframes card-glow {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(0, 218, 94, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(0, 218, 94, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  }
+}
+
+.terminal-card-glow {
+  animation: card-glow 6s ease-in-out infinite;
+}
+
+.portal-acceso .portal-panel input:-webkit-autofill,
+.portal-acceso .portal-panel input:-webkit-autofill:hover,
+.portal-acceso .portal-panel input:-webkit-autofill:focus,
+.portal-acceso .portal-panel input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #090610 inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff !important;
+  transition: background-color 5000s ease-in-out 0s !important;
 }
