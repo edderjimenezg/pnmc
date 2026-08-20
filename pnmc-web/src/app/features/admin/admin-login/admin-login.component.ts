@@ -96,13 +96,13 @@ export class AdminLoginComponent {
   LucideChevronRight = LucideChevronRight;
   LucideCheckCircle = LucideCheckCircle;
 
+  // Panel "Cuentas de Prueba": solo webmaster (control total). Las cuentas de
+  // aliado no se ofrecen aqui porque su consola es una linea de trabajo
+  // aparte. 'externo' tampoco: AdminAuthEndpoints rechaza ese rol en este
+  // login a proposito (no es una cuenta institucional); su acceso es el
+  // boton "Ingresar al Portal de Colaboradores Externos", mas abajo.
   ROLE_CREDENTIALS: Record<string, { email: string; password?: string }> = {
     webmaster: { email: 'admin@pnmc.local', password: 'admin' },
-    gestor_interno: { email: 'gestor@pnmc.local', password: 'admin' },
-    aliado_admin: { email: 'aliado-admin@pnmc.local', password: 'admin' },
-    aliado_editor: { email: 'aliado-editor@pnmc.local', password: 'admin' },
-    aliado_lector: { email: 'aliado-lector@pnmc.local', password: 'admin' },
-    externo: { email: 'externo@pnmc.local', password: 'admin' },
   };
 
   adminRoles = Object.values(ADMIN_ROLES);
