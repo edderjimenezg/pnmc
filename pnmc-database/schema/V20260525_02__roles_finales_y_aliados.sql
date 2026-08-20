@@ -98,6 +98,18 @@ BEGIN
        AND COL_LENGTH(N'dbo.UsuariosEntidadesAliadas', N'EntidadAliadaId') IS NULL
         EXEC sp_rename N'dbo.UsuariosEntidadesAliadas.EntidadColaboradoraId', N'EntidadAliadaId', N'COLUMN';
 
+    -- El CHECK constraint original queda ligado a RolEnEntidad incluso
+    -- despues de renombrar la tabla, y sp_rename rechaza renombrar una
+    -- columna con una dependencia forzada activa. Por eso el constraint
+    -- se retira antes del EXEC sp_rename de la columna, no despues.
+    IF EXISTS (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE name = N'CK_UsuariosEntidadesColaboradoras_Rol'
+          AND parent_object_id = OBJECT_ID(N'dbo.UsuariosEntidadesAliadas', N'U')
+    )
+        ALTER TABLE dbo.UsuariosEntidadesAliadas DROP CONSTRAINT CK_UsuariosEntidadesColaboradoras_Rol;
+
     IF COL_LENGTH(N'dbo.UsuariosEntidadesAliadas', N'RolEnEntidad') IS NOT NULL
        AND COL_LENGTH(N'dbo.UsuariosEntidadesAliadas', N'RolAliado') IS NULL
         EXEC sp_rename N'dbo.UsuariosEntidadesAliadas.RolEnEntidad', N'RolAliado', N'COLUMN';
@@ -115,14 +127,6 @@ BEGIN
         WHEN N'lector_entidad' THEN N'aliado_lector'
         ELSE RolAliado
     END;
-
-    IF EXISTS (
-        SELECT 1
-        FROM sys.check_constraints
-        WHERE name = N'CK_UsuariosEntidadesColaboradoras_Rol'
-          AND parent_object_id = OBJECT_ID(N'dbo.UsuariosEntidadesAliadas', N'U')
-    )
-        ALTER TABLE dbo.UsuariosEntidadesAliadas DROP CONSTRAINT CK_UsuariosEntidadesColaboradoras_Rol;
 
     IF OBJECT_ID(N'dbo.CK_UsuariosEntidadesAliadas_Rol', N'C') IS NULL
         ALTER TABLE dbo.UsuariosEntidadesAliadas
