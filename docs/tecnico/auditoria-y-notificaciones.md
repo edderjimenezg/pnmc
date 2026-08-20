@@ -32,7 +32,7 @@ El guardado de estos logs se realiza de manera centralizada en el `DbContext` de
 
 ### 2.1 Garantías de Seguridad en la Auditoría:
 1. **No Modificación (Append-Only)**: El endpoint administrativo de auditoría no expone verbos `PUT`, `PATCH` ni `DELETE` sobre la tabla `RegistrosRevisionHistorial`. La base de datos restringe permisos de escritura directos para que solo inserciones acumulativas sean permitidas.
-2. **Historial Completo**: El frontend de `/admin` dibuja en vivo la línea de tiempo del registro leyendo este historial, lo que le permite al Gestor Interno auditar quién cometió errores en cargas pasadas.
+2. **Historial Completo**: El frontend de `/consola-interna` dibuja en vivo la línea de tiempo del registro leyendo este historial, lo que le permite al Gestor Interno auditar quién cometió errores en cargas pasadas.
 
 ---
 

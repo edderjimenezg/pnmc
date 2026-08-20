@@ -32,14 +32,14 @@ El frontend contiene 66 archivos TypeScript, 43 componentes y 8 servicios. Sus p
 | Capa | Estado observado |
 |---|---|
 | Presentación pública | Inicio, PNMC, ejes, noticias, agenda, editorial, galería, mapa, SIMUS y escuelas. |
-| Presentación privada | Un solo `AdminShellPageComponent` sirve `/admin` y `/colaboradores`; decide vistas dentro del componente. |
+| Presentación privada | Un solo `AdminShellPageComponent` sirve `/consola-interna` (institucional) y `/colaboradores` (externo); decide vistas dentro del componente. |
 | Datos frontend | `AdminService`, `BackendDataService`, `CatalogService`, `MapDataService`, `WebTextsService`; varios integran fallback o mocks. |
 | API | 17 grupos de endpoints: catálogo, mapa, contenidos, participación, autenticación externa/admin, administración, aliados, gobernanza de registros y notificaciones. |
 | Datos | Entidades de contenidos, procesos, organizaciones, usuarios/roles, territorialidad DIVIPOLA, solicitudes de vínculo, duplicados, alertas de calidad y trazabilidad. |
 
 ### Autenticación y autorización
 
-La API utiliza cookies HTTP-only de 8 horas y controla accesos de endpoints con `RequireAuthorization`. Hay límites de tasa para registro externo y participación. El frontend posee `SessionService` y `authGuard`, pero el guard retorna `true` incluso si no existe sesión; por tanto no protege navegación. Además, las rutas `/admin` y `/colaboradores` no lo aplican. La autorización efectiva está en la API, pero la separación y la experiencia de acceso en frontend están incompletas.
+La API utiliza cookies HTTP-only de 8 horas y controla accesos de endpoints con `RequireAuthorization`. Hay límites de tasa para registro externo y participación. El frontend posee `SessionService` y `authGuard`, pero el guard retorna `true` incluso si no existe sesión; por tanto no protege navegación. Además, las rutas `/consola-interna` y `/colaboradores` no lo aplican. La autorización efectiva está en la API, pero la separación y la experiencia de acceso en frontend están incompletas.
 
 ### Evaluación
 
@@ -143,14 +143,14 @@ Se comparan alternativas por seguridad efectiva, reutilización, entregabilidad,
 | Persistencia | **VERIFICADO**: un `PnmcDbContext` y SQL Server fuera de pruebas | `DependencyInjection.cs`; SQLite se usa solo en entorno `Test`. |
 | Dominios existentes | **PARCIAL** | Endpoints de mapa, catálogos, contenidos, externo, aliados, gobernanza y administración comparten proceso/API/DbContext. |
 | Frontend público | **VERIFICADO** | PNMC, SIMUS, mapa, escuelas, agenda, noticias, editorial y galería. |
-| Administración | **VERIFICADO** | Ruta `/admin`; `/colaboradores` carga el mismo shell. |
-| Externo | **PARCIAL** | Registro/verificación API y paneles con partes mock; no existe ruta externa autenticada integral comprobada. |
+| Administración | **VERIFICADO** | Ruta `/consola-interna`; `/colaboradores` carga el mismo shell en modo externo. |
+| Externo | **PARCIAL** | Registro, verificación y login (`/ingreso`, `/registro`, `/colaboradores`) verificados con sesión real; paneles con partes mock. |
 
 ### Identidad y seguridad actual
 
 `Program.cs` configura un único esquema de cookie llamado `pnmc.admin`, `HttpOnly`, `SameSite=Lax`, con ocho horas de expiración deslizante. Hay autorización y limitadores específicos para registro externo y participación. Los endpoints sensibles usan `RequireAuthorization()` en varios grupos.
 
-Esto **no materializa aún** dos ámbitos de autenticación: el flujo externo de registro/verificación no prueba una sesión externa independiente. En Angular las rutas `/admin` y `/colaboradores` no tienen `canActivate`; el `authGuard` existente permite continuar cuando no hay sesión. La API debe seguir siendo la autoridad efectiva. **VERIFICADO**: `pnmc-web/src/app/core/guards/auth.guard.ts`.
+Esto **no materializa aún** dos ámbitos de autenticación: el flujo externo de registro/verificación no prueba una sesión externa independiente. En Angular las rutas `/consola-interna` y `/colaboradores` no tienen `canActivate`; el `authGuard` existente permite continuar cuando no hay sesión. La API debe seguir siendo la autoridad efectiva. **VERIFICADO**: `pnmc-web/src/app/core/guards/auth.guard.ts`.
 
 ### Datos y gobierno actuales
 

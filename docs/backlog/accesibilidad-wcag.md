@@ -18,7 +18,7 @@ El objetivo de la plataforma es garantizar los cuatro pilares fundamentales de l
 ## 2. LISTA DE RIESGOS Y ACCIONES DE MITIGACIÓN
 
 ### 2.1 Contraste de Colores (Pilar Perceptible)
-* **Riesgo**: Algunos paneles del módulo `/admin` presentan textos en tonalidades violetas apagadas sobre fondos slate/oscuros, lo que incumple la relación de contraste mínima de `4.5:1` para texto normal.
+* **Riesgo**: Algunos paneles del módulo `/consola-interna` presentan textos en tonalidades violetas apagadas sobre fondos slate/oscuros, lo que incumple la relación de contraste mínima de `4.5:1` para texto normal.
 * **Acciones de Mitigación**:
   * Ejecutar una auditoría de contraste HSL utilizando herramientas automáticas.
   * Reajustar las clases CSS de colores para asegurar contrastes nítidos y legibles en el tema oscuro del administrador.

@@ -115,20 +115,33 @@ referencia: son cuentas con las que se puede iniciar sesión de verdad.
 
 | Rol | Correo | Contraseña | Inicia sesión en |
 |---|---|---|---|
-| Webmaster (control total) | `admin@pnmc.local` | `admin` | `/admin` — botón de acceso rápido |
-| Gestor interno | `gestor@pnmc.local` | `admin` | `/admin` — escribir credenciales |
-| Aliado administrador | `aliado-admin@pnmc.local` | `admin` | `/admin` — escribir credenciales |
-| Aliado editor | `aliado-editor@pnmc.local` | `admin` | `/admin` — escribir credenciales |
-| Aliado lector | `aliado-lector@pnmc.local` | `admin` | `/admin` — escribir credenciales |
-| Colaborador externo | `externo@pnmc.local` | `admin` | Portal de Colaboradores Externos |
+| Webmaster (control total) | `admin@pnmc.local` | `admin` | `/consola-interna` — botón de acceso rápido |
+| Gestor interno | `gestor@pnmc.local` | `admin` | `/consola-interna` — escribir credenciales |
+| Aliado administrador | `aliado-admin@pnmc.local` | `admin` | `/consola-interna` — escribir credenciales |
+| Aliado editor | `aliado-editor@pnmc.local` | `admin` | `/consola-interna` — escribir credenciales |
+| Aliado lector | `aliado-lector@pnmc.local` | `admin` | `/consola-interna` — escribir credenciales |
+| Colaborador externo | `externo@pnmc.local` | `admin` | `/colaboradores`, `/ingreso` o `/registro` |
 
-En `/admin`, el botón **Cuentas de Prueba** (esquina inferior izquierda del login) solo
-ofrece Webmaster: es el único caso de uso real de un login de un clic para evaluar la
-consola completa. Las demás cuentas existen y funcionan igual de bien — verificado contra
-la API—, solo que se escriben a mano en el formulario correspondiente.
+En `/consola-interna`, el botón **Cuentas de Prueba** (esquina inferior izquierda del login)
+solo ofrece Webmaster: es el único caso de uso real de un login de un clic para evaluar la
+consola completa. Las demás cuentas institucionales existen y funcionan igual de bien —
+verificado contra la API—, solo que se escriben a mano en el formulario.
 
-**`externo@pnmc.local` no inicia sesión en `/admin`.** Ese login institucional la rechaza a
-propósito, por diseño: no es una cuenta institucional. Su acceso real es el botón
-**"Ingresar al Portal de Colaboradores Externos"**, debajo del formulario de `/admin` —
-verificado con un login real en el navegador, con panel propio, procesos culturales y
-ficha de caracterización.
+**`externo@pnmc.local` no inicia sesión en `/consola-interna`.** Ese login institucional la
+rechaza a propósito, por diseño: no es una cuenta institucional. Su acceso real es
+`/colaboradores` (o el enlace "Ingresar al Portal de Colaboradores Externos" que hay en
+`/consola-interna`) — verificado con un login real en el navegador, con panel propio,
+procesos culturales y ficha de caracterización.
+
+### Rutas de acceso
+
+| Ruta | Público | Qué ofrece |
+|---|---|---|
+| `/consola-interna` | Equipo interno (webmaster, gestor, aliados) | Login institucional y consola completa. Reemplaza a `/admin`, retirada a propósito. |
+| `/colaboradores` | Colaboradores externos | Login externo y panel de colaborador (perfil, caracterización, procesos culturales). |
+| `/ingreso` | Colaboradores externos | Login externo, con pestaña "Ingresar" activa por defecto. |
+| `/registro` | Colaboradores externos | Registro externo, con pestaña "Registrarse" activa por defecto. |
+
+`/admin` ya no existe: devuelve la página 404 genérica, sin ninguna pista de que haya un
+panel administrativo detrás. No hay redirección desde ahí a propósito — una redirección
+seguiría confirmando que la ruta existe en algún lado.

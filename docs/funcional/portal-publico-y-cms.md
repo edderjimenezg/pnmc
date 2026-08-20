@@ -18,7 +18,7 @@ Los textos se catalogan en la base de datos mediante la siguiente convención:
 * **Ejemplo**: Llave `nav.aboutUs` ──► Valor `"Sobre el PNMC"`
 * **Ejemplo**: Llave `home.hero.title` ──► Valor `"La música es motor de vida, paz y justicia social"`
 
-### 1.2 Interfaz de Edición del Webmaster (`/admin`)
+### 1.2 Interfaz de Edición del Webmaster (`/consola-interna`)
 El panel de "Administración de Textos" ofrece:
 * **Filtros por Secciones**: Organización limpia por pestañas (Home, Navegación, Ejes, Agenda/Galería).
 * **Campos Editables en Vivo**: Cajas de texto enriquecido y entradas de texto tradicionales.

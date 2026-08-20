@@ -2,6 +2,37 @@
 
 Cambios relevantes de SIMUS. Las versiones corresponden a tags del repositorio.
 
+## Sin versión — rutas de acceso separadas, 2026-08-20
+
+`/admin` y `/simus/ingresar` eran las únicas puertas de entrada, y el panel institucional
+tenía un botón para saltar al portal externo dentro de la misma página (y viceversa). Nada
+distinguía, por la URL, a qué público se dirigía cada acceso.
+
+### Cambiado
+
+- `/admin` se retira sin redirección. Es la primera ruta que cualquiera prueba al adivinar
+  un panel de administración, y una redirección seguiría confirmando que existe: ahora
+  devuelve el 404 genérico, sin pistas. La reemplaza `/consola-interna`.
+- Nueva ruta de primer nivel `/ingreso` para el login externo, junto a `/registro` que ya
+  existía para el registro. Las dos cargan `ExternalAccessPageComponent` con la pestaña
+  correspondiente activa por defecto. `/simus/ingresar` queda como redirección a `/ingreso`.
+- Se retiran los botones que alternaban entre modo institucional y externo dentro de la
+  misma página. Cada URL es ahora de un solo público; el cruce entre ambas se hace con
+  enlaces reales a la ruta del otro público, no con estado interno del componente.
+
+Verificado en el navegador: `/admin` da 404 genérico, `/consola-interna` y `/colaboradores`
+inician sesión de verdad (webmaster y externo respectivamente), y los enlaces cruzados
+entre ambas páginas navegan correctamente. 49/49 pruebas de API, compilación correcta.
+
+### Documentación
+
+Corregida una inexactitud real, no introducida hoy: `docs/gobernanza/manual-de-roles.md`
+indicaba que los tres roles de aliado iniciaban sesión en `/colaboradores`; verificado por
+API que en realidad lo hacen por la consola institucional (hoy `/consola-interna`) — el
+login externo rechaza cualquier rol que no sea `externo`. Actualizadas también las demás
+menciones de `/admin` en la documentación vigente (`docs/archivo/` no se toca: es historial
+congelado).
+
 ## Sin versión — verificación del arranque desde cero, 2026-08-20
 
 La línea base se había dado por buena sin probar nunca un clon completamente nuevo, con la

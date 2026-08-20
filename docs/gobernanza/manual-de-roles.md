@@ -10,11 +10,11 @@ Para evitar discrepancias entre los modelos lógicos de base de datos y la nomen
 
 | Rol Técnico (DB) | Rol Funcional (UI) | Consola de Acceso | Foco Operativo |
 | --- | --- | --- | --- |
-| `webmaster` | Webmaster | `/admin` | Administración total, CMS global, logs y base de datos |
-| `gestor_interno` | Gestor Interno | `/admin` | Curaduría del Ministerio, control de duplicados y moderación |
-| `aliado_admin` | Aliado Administrador (Líder) | `/colaboradores` | Coordinación de entidades asociadas por convenios |
-| `aliado_editor` | Aliado Editor | `/colaboradores` | Operador regional de carga y edición institucional |
-| `aliado_lector` | Aliado Lector | `/colaboradores` | Auditor de solo lectura de la red aliada |
+| `webmaster` | Webmaster | `/consola-interna` | Administración total, CMS global, logs y base de datos |
+| `gestor_interno` | Gestor Interno | `/consola-interna` | Curaduría del Ministerio, control de duplicados y moderación |
+| `aliado_admin` | Aliado Administrador (Líder) | `/consola-interna` | Coordinación de entidades asociadas por convenios |
+| `aliado_editor` | Aliado Editor | `/consola-interna` | Operador regional de carga y edición institucional |
+| `aliado_lector` | Aliado Lector | `/consola-interna` | Auditor de solo lectura de la red aliada |
 | `externo` | Colaborador (Gestor UI) | `/colaboradores` | Gestores autónomos y ciudadanos de base territorial |
 | *No registrado* | Público / Ciudadano | Portal Público | Consulta interactiva y auto-registro básico |
 

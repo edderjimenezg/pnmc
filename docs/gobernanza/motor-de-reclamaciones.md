@@ -53,7 +53,7 @@ Para evitar que los nuevos usuarios creen fichas duplicadas desde cero (lo que s
 3. Una vez actualizado, el colaborador presiona **"Enviar a Revisión"**, cambiando su estado editorial a `en_revision`.
 
 ### 2.6 Fase 6: Moderación y Publicación Definitiva
-1. El **Gestor Interno** recibe el registro y la solicitud en su consola `/admin`.
+1. El **Gestor Interno** recibe el registro y la solicitud en su consola `/consola-interna`.
 2. Inspecciona los cambios y aprueba la solicitud.
 3. El estado de vinculación pasa formalmente a `vinculacion_aprobada` (propiedad permanente asignada al gestor comunitario) y el estado editorial pasa a `publicado` (visible de forma definitiva en el geovisor público).
 

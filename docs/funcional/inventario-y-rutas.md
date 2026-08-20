@@ -40,11 +40,12 @@ El frontend procesa carga masiva y mapea encabezados, campos importables y clave
 | `/simus`, `/simus/escuelas`, `/simus/escuelas/:schoolId` | SIMUS y escuelas | Público | Ninguna | Catálogo SIMUS. |
 | `/simus/:section` | Próximamente | Público | Ninguna | Captura secciones SIMUS no implementadas. |
 | `/estrategia/circulacion`, `/estrategia/investigacion` | Estrategia | Público | Ninguna | Contenido temático. |
-| `/admin` | `AdminShellPageComponent` | Administración | Ninguna en router | Consola completa, login incluido. |
-| `/colaboradores` | `AdminShellPageComponent` | Colaboradores | Ninguna en router | Mismo shell y componente que administración. |
+| `/consola-interna` | `AdminShellPageComponent` | Administración | Ninguna en router | Consola institucional completa, login incluido. Reemplaza a `/admin`, retirada a propósito para no ser la ruta obvia de un panel administrativo. |
+| `/colaboradores` | `AdminShellPageComponent` | Colaboradores | Ninguna en router | Mismo shell y componente que administración, en modo externo. |
+| `/ingreso`, `/registro` | `ExternalAccessPageComponent` | Público (externo) | Ninguna en router | Login y registro externo, con la pestaña correspondiente activa por defecto. `/simus/ingresar` redirige a `/ingreso`. |
 | `/ecosistema/*`, `/home`, `/mapa/participa` | Redirecciones | Público | Ninguna | Compatibilidad de enlaces. |
-| `/**` | No encontrado | Público | Ninguna | Error 404. |
+| `/**` | No encontrado | Público | Ninguna | Error 404. También lo que responde `/admin`: se retiró sin redirección. |
 
 ### Ambigüedades y mezcla
 
-No hay rutas frontend para `/login`, `/registro`, `/organizacion` ni un área de organización separada. `authGuard` existe, pero no está conectado a ninguna ruta y permite navegar cuando la sesión es nula. `/admin` y `/colaboradores` cargan el mismo componente. El parámetro comodín `/simus/:section` puede ocultar rutas futuras si se añade un segmento sin definir explícitamente.
+`authGuard` existe, pero no está conectado a ninguna ruta y permite navegar cuando la sesión es nula. `/consola-interna` y `/colaboradores` cargan el mismo componente, distinguido solo por una bandera interna (`isExternalPortal`) que decide según la URL, no por `canActivate`. El parámetro comodín `/simus/:section` puede ocultar rutas futuras si se añade un segmento sin definir explícitamente.

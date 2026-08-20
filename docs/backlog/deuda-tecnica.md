@@ -58,7 +58,7 @@ Este sub-documento detalla los aspectos de arquitectura y código que presentan 
 | Prioridad | Hallazgo | Impacto | Acción recomendada |
 |---|---|---|---|
 | Crítico | Rutas privadas sin guard activo y guard que permite acceso sin sesión. | Navegación y UX engañosas; riesgo si se añade lógica cliente sensible. | Definir layouts privados y guards por rol antes del piloto. Mantener API como autoridad. |
-| Alto | `/admin` y `/colaboradores` usan el mismo shell. | Mezcla de responsabilidades, permisos y experiencia. | Separar layouts y rutas; reutilizar solo componentes de dominio realmente comunes. |
+| Alto | `/consola-interna` y `/colaboradores` usan el mismo componente de shell (aunque ya son rutas separadas, sin cruce en pantalla entre publicos). | Mezcla de responsabilidades, permisos y experiencia dentro del componente. | Separar layouts; reutilizar solo componentes de dominio realmente comunes. |
 | Alto | Dependencia vulnerable `SQLitePCLRaw.lib.e_sqlite3` 2.1.11. | Riesgo de seguridad conocido. | Planificar actualización y ejecutar pruebas de regresión. |
 | Alto | Mocks y fallbacks en flujos privados. | Demostración puede divergir de datos persistidos y permisos reales. | Marcar origen de datos y retirar fallback de producción por slice. |
 | Medio | `AdminShellPageComponent` y paneles concentran muchos estados `any`. | Mantenibilidad y validación de contratos reducidas. | Tipar contratos gradualmente y descomponer por feature. |
