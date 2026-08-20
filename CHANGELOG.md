@@ -2,6 +2,43 @@
 
 Cambios relevantes de SIMUS. Las versiones corresponden a tags del repositorio.
 
+## Sin versión — verificación del arranque desde cero, 2026-08-20
+
+La línea base se había dado por buena sin probar nunca un clon completamente nuevo, con la
+base de datos vacía de verdad. Al hacer esa prueba aparecieron cuatro fallas, las cuatro
+reproducibles al 100% para cualquiera que clonara el repositorio. Corregidas y confirmado
+que ahora arranca limpio de punta a punta, con 49/49 pruebas de API y compilación correcta.
+
+### Corregido
+
+- Un clon nuevo nunca tenía esquema de base de datos: `local-db-up.sh` solo creaba la base
+  vacía y nada llamaba a `seed-local-db.sh`. La API arrancaba siempre en modo degradado.
+  Ahora `local-db-up.sh` detecta si la base tiene esquema y siembra automáticamente si no.
+- `seed-local-db.sh` entregaba cada script `.sql` por `stdin`, y el comentario `/* ... */`
+  inicial de cada archivo se interpretaba mal, dejando la carga a medias con errores de
+  sintaxis falsos. Ahora los archivos se leen con `-i`, sin ambigüedad.
+- El script de esquema de roles y aliados intentaba renombrar una columna mientras su CHECK
+  constraint seguía activo, algo que SQL Server rechaza siempre. Fallaba en el 100% de las
+  bases nuevas, no solo al migrar una base antigua.
+- Un `ALTER TABLE` y el `CREATE INDEX` que dependía de él viajaban en el mismo lote SQL;
+  SQL Server resuelve nombres de columna al compilar el lote completo, así que el índice
+  fallaba con "Invalid column name" aunque la columna ya existiera. Se separaron en dos
+  lotes.
+- Una semilla de datos de moderación perdía el estado del cursor al aplicarse, por faltarle
+  `SET NOCOUNT ON` antes de varios `DELETE` seguidos.
+
+### Conocido, no resuelto
+
+- La semilla `V20260519_07__datos_moderacion_consola.sql` sigue sin poder aplicarse
+  completa: hace referencia a usuarios de prueba que ningún script crea. No bloquea el uso
+  de la aplicación; ver `docs/tecnico/guia-instalacion.md`, sección "Datos de prueba
+  conocidos".
+
+### Añadido
+
+- `scripts/dev-check.sh` ahora reporta el estado real de cada componente (Docker, esquema
+  de base de datos, API, frontend, Git), no solo códigos HTTP crudos.
+
 ## v0.0-base — 2026-08-20
 
 Línea base depurada. Punto de partida para el desarrollo posterior.

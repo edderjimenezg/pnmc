@@ -96,3 +96,25 @@ cp pnmc-api/src/PNMC.Api/appsettings.Local.example.json \
 ```
 
 El arranque y los puertos están en el `README.md` de la raíz.
+
+## Publicar en GitHub
+
+No hay automatización de publicación: cada subida es una acción deliberada, en el momento
+que decidas que el trabajo está listo. El procedimiento es siempre el mismo, manual:
+
+```bash
+# 1. Verificar que compila y pasa las pruebas (ver arriba)
+# 2. Verificar que no hay configuracion local en el commit
+git status --porcelain | grep -iE "appsettings.local|\.env"
+
+# 3. Subir la rama principal
+git checkout main
+git push origin main
+
+# 4. Subir los tags nuevos, si creaste alguno
+git push origin --tags
+```
+
+Si trabajaste en una rama distinta de `main`, intégrala primero (ver "Ramas" arriba) y sube
+`main` ya actualizada. No hay un script que automatice este paso a propósito: forzar una
+pausa antes de publicar es lo que evita subir algo a medio probar o con credenciales sueltas.
