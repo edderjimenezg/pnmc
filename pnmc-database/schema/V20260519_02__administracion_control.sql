@@ -166,7 +166,12 @@ BEGIN
         CONSTRAINT FK_BitacoraAuditoria_Usuarios FOREIGN KEY (IdUsuario) REFERENCES dbo.Usuarios (IdUsuario),
         CONSTRAINT CK_BitacoraAuditoria_Accion CHECK (Accion IN (
             N'crear', N'actualizar', N'eliminar', N'publicar', N'archivar',
-            N'aprobar', N'rechazar', N'iniciar_sesion', N'cerrar_sesion'
+            N'aprobar', N'rechazar', N'iniciar_sesion', N'cerrar_sesion',
+            N'iniciar_sesion_externa', N'cerrar_sesion_externa', N'actualizar_perfil',
+            N'crear_organizacion', N'asignar_administrador_inicial',
+            N'revisar_solicitud_aliado', N'solicitar_ajustes_aliado',
+            N'aprobar_solicitud_aliado', N'rechazar_solicitud_aliado',
+            N'cancelar_solicitud_aliado', N'actualizar_solicitud_aliado'
         )),
         CONSTRAINT CK_BitacoraAuditoria_ValoresAnteriores_JSON CHECK (
             ValoresAnteriores IS NULL OR ISJSON(ValoresAnteriores) = 1
