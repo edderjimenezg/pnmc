@@ -169,11 +169,16 @@ export class AdminLoginComponent {
     this.status.set('loading');
     this.message.set('Validando credenciales en el portal externo...');
 
-    this.sessionService.login({ email: this.externalEmail(), password: this.externalPassword() }).subscribe({
+    // Llama a loginExternal (POST /api/v1/external/auth/login), no a
+    // sessionService.login: ese siempre llama a la API institucional, que
+    // rechaza a proposito el rol 'externo' (no es una cuenta institucional).
+    this.adminService.loginExternal({ email: this.externalEmail(), password: this.externalPassword() }).subscribe({
       next: (res) => {
         this.status.set('idle');
         this.message.set('');
-        this.loginSuccess.emit(res.user);
+        // La respuesta de /external/auth/login trae "userId", no "id" como
+        // el resto de la app espera; se normaliza antes de emitirla.
+        this.loginSuccess.emit({ ...res, id: res.id ?? res.userId });
       },
       error: () => {
         this.status.set('error');
