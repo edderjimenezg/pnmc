@@ -9,6 +9,11 @@ GO
 -- devuelven un mensaje "(N rows affected)" por cada una, y el cliente usado
 -- para aplicar este script en local pierde el estado del cursor al leerlos.
 SET NOCOUNT ON;
+
+-- Entidades tiene un indice unico filtrado (UQ_Entidades_NumeroIdentificacion).
+-- Operar sobre una tabla con un indice filtrado exige QUOTED_IDENTIFIER ON en
+-- la sesion; sin esto, el DELETE/INSERT falla con el error 1934.
+SET QUOTED_IDENTIFIER ON;
 GO
 
 -- Limpiar registros de prueba anteriores para evitar duplicados en ejecuciones repetidas
