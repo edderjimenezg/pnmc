@@ -105,14 +105,22 @@ que ahora arranca limpio de punta a punta, con 49/49 pruebas de API y compilaci�
   endpoint externo, pero nada lo llamaba. Corregido y verificado con un login real: entra
   al panel de colaborador con sus procesos culturales y ficha de caracterización.
 
-### Conocido, no resuelto
+## Sin versión — cookie de sesión bloqueada por mezcla de host, 2026-08-20
 
-- `/api/v1/admin/data/records/*` y `/api/v1/admin/data/monitor` devuelven 401 sin importar
-  el rol, incluido webmaster con control total. No es un problema de permisos: es previo a
-  esta sesión de trabajo, afecta al panel de gestión de datos y monitoreo técnico del
-  dashboard, y probablemente esté en cómo el frontend envía credenciales a esas rutas
-  puntuales. Queda pendiente de investigar; no bloquea el login ni el resto de la
-  aplicación.
+El "conocido, no resuelto" de la entrada anterior (`/admin/data/records/*` y
+`/admin/data/monitor` en 401 con cualquier rol) tenía causa y arreglo simples: `environment.ts`
+apuntaba la API a `http://localhost:8080`, pero el frontend sirve en `127.0.0.1:4200` y la
+API en `127.0.0.1:8080`. Para el navegador, `127.0.0.1` y `localhost` son sitios distintos a
+efectos de la cookie de sesión (`SameSite=Lax`): el login funcionaba porque lee el usuario
+de la respuesta directa del POST, pero cualquier llamada autenticada posterior llegaba sin
+la cookie.
+
+### Corregido
+
+- `apiBaseUrl` en `environment.ts` cambia de `http://localhost:8080` a `http://127.0.0.1:8080`,
+  alineado con el host real donde corre la API en local. Verificado: el dashboard de
+  monitoreo carga datos reales (255 registros, API y base de datos en OK) y el listado de
+  entidades del ecosistema devuelve las 16 entidades sembradas.
 
 ## v0.0-base — 2026-08-20
 
