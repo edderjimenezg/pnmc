@@ -5,6 +5,12 @@
 USE [PNMC_LOCAL];
 GO
 
+-- Sin esto, varias sentencias seguidas en un mismo lote (los DELETE de abajo)
+-- devuelven un mensaje "(N rows affected)" por cada una, y el cliente usado
+-- para aplicar este script en local pierde el estado del cursor al leerlos.
+SET NOCOUNT ON;
+GO
+
 -- Limpiar registros de prueba anteriores para evitar duplicados en ejecuciones repetidas
 DELETE FROM dbo.EntidadesHistorialRevision WHERE IdEntidad >= 100;
 DELETE FROM dbo.UsuariosEntidades WHERE IdEntidad >= 100;
