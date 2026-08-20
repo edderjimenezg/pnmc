@@ -40,3 +40,16 @@ pnpm-debug.log*
 *.log
 backups/
 Trash/
+
+# Configuracion local y secretos
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+
+# Artefactos temporales de generacion
+tmp/
+**/tmp/
+
+# Herramientas de agentes (locales, no del proyecto)
+.agents/
+.claude/
+skills-lock.json

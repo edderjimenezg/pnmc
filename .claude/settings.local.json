@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npx --yes skills add https://github.com/angular/skills)"
-    ]
-  }
-}
