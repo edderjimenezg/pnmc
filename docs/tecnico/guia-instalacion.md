@@ -98,34 +98,33 @@ Para borrar también los datos y empezar de cero:
 docker compose -f docker-compose.local.yml down -v
 ```
 
-## 6. Datos de prueba conocidos
-
-`scripts/seed-local-db.sh` aplica nueve archivos de esquema y siete de datos de prueba. Uno
-de ellos, `pnmc-database/seed/V20260519_07__datos_moderacion_consola.sql` —datos exhaustivos
-pensados para probar la consola de moderación— falla al aplicarse: hace referencia a
-usuarios de prueba (`IdUsuario` 3, 4, 5 y 7) que ningún script anterior crea.
-
-Este fallo **no impide usar la aplicación**: el resto del esquema y de los datos de prueba
-se cargan con normalidad, y `seed-local-db.sh` continúa e informa claramente cuál semilla
-quedó pendiente. Es un problema conocido y documentado, no un síntoma de que algo salió mal
-en tu instalación. Corregirlo implica crear esos usuarios de prueba con los roles correctos,
-algo pendiente de hacer con cuidado para no introducir datos inconsistentes con el resto del
-set de pruebas.
-
-## 7. Pruebas
+## 6. Pruebas
 
 ```bash
 cd pnmc-web && npm test && npm run build
 cd ../pnmc-api && dotnet test PNMC.Api.sln
 ```
 
-## 8. Credenciales sembradas para pruebas locales
+## 7. Cuentas de prueba
 
-Una vez aplicadas las semillas, estas cuentas quedan disponibles:
+`scripts/seed-local-db.sh` crea siete usuarios reales, con contraseñas de verdad (no
+simuladas): el usuario del sistema y seis cuentas de prueba, una por cada rol.
 
 | Rol | Correo | Contraseña | Consola |
 |---|---|---|---|
-| Webmaster (admin central) | `admin@pnmc.local` | `pnmc-master` | `/admin` |
-| Gestor interno | `gestor@pnmc.local` | `pnmc-gestor` | `/admin` |
-| Aliado coordinador | `aliado-admin@pnmc.local` | `pnmc-aliado` | `/colaboradores` |
-| Colaborador externo | `externo@pnmc.local` | `pnmc-externo` | `/colaboradores` |
+| Webmaster (control total) | `admin@pnmc.local` | `admin` | `/admin` |
+| Gestor interno | `gestor@pnmc.local` | `admin` | `/admin` |
+| Aliado administrador | `aliado-admin@pnmc.local` | `admin` | `/admin` |
+| Aliado editor | `aliado-editor@pnmc.local` | `admin` | `/admin` |
+| Aliado lector | `aliado-lector@pnmc.local` | `admin` | `/admin` |
+| Colaborador externo | `externo@pnmc.local` | `admin` | `/admin` (portal externo) |
+
+En `/admin`, el botón **Cuentas de Prueba** (esquina inferior izquierda del login) rellena
+el correo y la contraseña de cualquiera de estas cuentas con un clic, para entrar rápido a
+evaluar cada rol sin escribir credenciales.
+
+Estas mismas cuentas coinciden exactamente con `ROLE_CREDENTIALS` en
+`pnmc-web/src/app/features/admin/admin-login/admin-login.component.ts` y con el hash que
+produce `Microsoft.AspNetCore.Identity.PasswordHasher` para la contraseña `admin` — el mismo
+algoritmo que la API usa para validar el login. No son solo datos de referencia: son cuentas
+reales, con las que se puede iniciar sesión de verdad.
