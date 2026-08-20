@@ -66,22 +66,15 @@ echo "[pnmc] Creando/verificando base $DB_NAME..."
 if [[ "${SQLCMD_MODE:-}" == "host" ]]; then
   sqlcmd -S "127.0.0.1,$DB_PORT" -U sa -P "$DB_PASSWORD" -C \
     -Q "IF DB_ID(N'$DB_NAME') IS NULL CREATE DATABASE [$DB_NAME];"
+elif [[ "${SQLCMD_MODE:-}" == "tools-container" ]]; then
+  docker run --rm --platform linux/amd64 --network "$SQL_NETWORK" "$SQL_TOOLS_IMAGE" \
+    /opt/mssql-tools/bin/sqlcmd \
+    -S sqlserver \
+    -U sa \
+    -P "$DB_PASSWORD" \
+    -C \
+    -Q "IF DB_ID(N'$DB_NAME') IS NULL CREATE DATABASE [$DB_NAME];"
 else
-  if [[ "${SQLCMD_MODE:-}" == "tools-container" ]]; then
-    docker run --rm --platform linux/amd64 --network "$SQL_NETWORK" "$SQL_TOOLS_IMAGE" \
-      /opt/mssql-tools/bin/sqlcmd \
-      -S sqlserver \
-      -U sa \
-      -P "$DB_PASSWORD" \
-      -C \
-      -Q "IF DB_ID(N'$DB_NAME') IS NULL CREATE DATABASE [$DB_NAME];"
-    echo "[pnmc] Base local lista."
-    echo "[pnmc] Host: 127.0.0.1,$DB_PORT"
-    echo "[pnmc] Database: $DB_NAME"
-    echo "[pnmc] User: sa"
-    exit 0
-  fi
-
   docker exec pnmc-sqlserver "$SQLCMD" \
     -S localhost \
     -U sa \
@@ -94,3 +87,33 @@ echo "[pnmc] Base local lista."
 echo "[pnmc] Host: 127.0.0.1,$DB_PORT"
 echo "[pnmc] Database: $DB_NAME"
 echo "[pnmc] User: sa"
+
+# La base recien creada no trae esquema: DatabaseBootstrapper solo agrega
+# tablas de soporte y altera tablas existentes, no crea el esquema base.
+# Si la tabla principal no existe todavia, se siembra automaticamente para
+# que un clon nuevo del repositorio quede utilizable con un solo comando.
+echo "[pnmc] Verificando si la base ya tiene esquema..."
+schema_query() {
+  local q="$1"
+  case "$SQLCMD_MODE" in
+    host)
+      sqlcmd -S "127.0.0.1,$DB_PORT" -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -h -1 -Q "$q" 2>/dev/null
+      ;;
+    tools-container)
+      docker run --rm --platform linux/amd64 --network "$SQL_NETWORK" "$SQL_TOOLS_IMAGE" \
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -h -1 -Q "$q" 2>/dev/null
+      ;;
+    *)
+      docker exec pnmc-sqlserver "$SQLCMD" -S localhost -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -h -1 -Q "$q" 2>/dev/null
+      ;;
+  esac
+}
+
+TABLA_EXISTE="$(schema_query "SET NOCOUNT ON; SELECT OBJECT_ID(N'dbo.Festivales');" | tr -d '[:space:]')"
+if [[ "$TABLA_EXISTE" == "NULL" || -z "$TABLA_EXISTE" ]]; then
+  echo "[pnmc] Base sin esquema. Aplicando esquema y datos de prueba (primera vez)..."
+  "$ROOT_DIR/scripts/seed-local-db.sh"
+else
+  echo "[pnmc] La base ya tiene esquema; no se vuelve a sembrar."
+  echo "[pnmc] Para recargar los datos de prueba desde cero: ./scripts/seed-local-db.sh"
+fi

@@ -34,13 +34,19 @@ fi
 
 echo "[pnmc-db] sqlcmd detectado en: $SQLCMD"
 
+# Los archivos se leen con -i (archivo real), nunca por stdin: sqlcmd no
+# interpreta de forma fiable el comentario /* ... */ inicial de estos
+# scripts cuando el contenido llega por una tuberia en lugar de un archivo,
+# y produce errores de sintaxis falsos ("Incorrect syntax near '*'").
 run_sql_file() {
   local file_path="$1"
   if [[ "$SQLCMD_MODE" == "host" ]]; then
-    (cat "$file_path"; echo ""; echo "GO") | "$SQLCMD" -S "127.0.0.1,$DB_PORT" -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -b
+    "$SQLCMD" -S "127.0.0.1,$DB_PORT" -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -b -i "$file_path"
   elif [[ "$SQLCMD_MODE" == "tools-container" ]]; then
-    (cat "$file_path"; echo ""; echo "GO") | docker run --rm -i --platform linux/amd64 --network "$SQL_NETWORK" "$SQL_TOOLS_IMAGE" \
-      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -b
+    local rel_path="${file_path#"$ROOT_DIR"/pnmc-database/}"
+    docker run --rm --platform linux/amd64 --network "$SQL_NETWORK" \
+      -v "$ROOT_DIR/pnmc-database:/sql:ro" "$SQL_TOOLS_IMAGE" \
+      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -b -i "/sql/$rel_path"
   else
     (cat "$file_path"; echo ""; echo "GO") | docker exec -i pnmc-sqlserver "$SQLCMD" \
       -S localhost -U sa -P "$DB_PASSWORD" -d "$DB_NAME" -C -b
@@ -92,12 +98,23 @@ for schema in "${SCHEMAS[@]}"; do
 done
 
 echo "[pnmc-db] Aplicando archivos de semilla..."
+SEEDS_FALLIDAS=()
 for seed in "${SEEDS[@]}"; do
   echo "  -> Aplicando $seed..."
-  run_sql_file "$ROOT_DIR/pnmc-database/$seed"
+  if ! run_sql_file "$ROOT_DIR/pnmc-database/$seed"; then
+    echo "  [pnmc-db] AVISO: $seed fallo y se omitio. La aplicacion sigue siendo utilizable;"
+    echo "  [pnmc-db] revisa docs/tecnico/guia-instalacion.md, seccion 'Datos de prueba conocidos'."
+    SEEDS_FALLIDAS+=("$seed")
+  fi
 done
 
 echo "[pnmc-db] Actualizando métricas del mapa..."
 run_sql_query "EXEC dbo.sp_ActualizarMetricasMapa;"
 
-echo "[pnmc-db] Base de datos local inicializada y sembrada con éxito."
+if [[ ${#SEEDS_FALLIDAS[@]} -eq 0 ]]; then
+  echo "[pnmc-db] Base de datos local inicializada y sembrada con éxito."
+else
+  echo "[pnmc-db] Base de datos local inicializada. Esquema y datos principales listos."
+  echo "[pnmc-db] Semillas omitidas por error (no bloquean el uso de la aplicacion):"
+  for f in "${SEEDS_FALLIDAS[@]}"; do echo "  - $f"; done
+fi
