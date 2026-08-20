@@ -120,16 +120,15 @@ referencia: son cuentas con las que se puede iniciar sesión de verdad.
 | Aliado administrador | `aliado-admin@pnmc.local` | `admin` | `/admin` — escribir credenciales |
 | Aliado editor | `aliado-editor@pnmc.local` | `admin` | `/admin` — escribir credenciales |
 | Aliado lector | `aliado-lector@pnmc.local` | `admin` | `/admin` — escribir credenciales |
-| Colaborador externo | `externo@pnmc.local` | `admin` | Ninguna consola hoy (ver aviso) |
+| Colaborador externo | `externo@pnmc.local` | `admin` | Portal de Colaboradores Externos |
 
 En `/admin`, el botón **Cuentas de Prueba** (esquina inferior izquierda del login) solo
 ofrece Webmaster: es el único caso de uso real de un login de un clic para evaluar la
-consola completa. Las cinco cuentas restantes existen y funcionan igual de bien —
-verificado contra la API—, solo que se escriben a mano en el formulario.
+consola completa. Las demás cuentas existen y funcionan igual de bien — verificado contra
+la API—, solo que se escriben a mano en el formulario correspondiente.
 
-> **`externo@pnmc.local` no tiene consola funcional hoy.** El login institucional
-> (`/admin`) la rechaza a propósito por diseño (no es una cuenta institucional). El login
-> del portal externo (`POST /api/v1/external/auth/login`) sí la acepta, pero falla con 500
-> al intentar registrar el inicio de sesión en la bitácora de auditoría: la restricción
-> `CK_BitacoraAuditoria_Accion` no incluye el valor `iniciar_sesion_externa` que usa ese
-> endpoint. Es un problema pendiente, no relacionado con la cuenta en sí.
+**`externo@pnmc.local` no inicia sesión en `/admin`.** Ese login institucional la rechaza a
+propósito, por diseño: no es una cuenta institucional. Su acceso real es el botón
+**"Ingresar al Portal de Colaboradores Externos"**, debajo del formulario de `/admin` —
+verificado con un login real en el navegador, con panel propio, procesos culturales y
+ficha de caracterización.

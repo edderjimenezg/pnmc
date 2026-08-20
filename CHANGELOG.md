@@ -62,19 +62,26 @@ que ahora arranca limpio de punta a punta, con 49/49 pruebas de API y compilaci�
   institucional. Las seis cuentas siguen existiendo y funcionando si se escriben las
   credenciales a mano; solo cambió cuáles tienen botón de acceso directo.
 
+- `CK_BitacoraAuditoria_Accion` solo permitía 9 valores, pero el código real escribe 19
+  distintos. Los 10 que faltaban rompían, cada uno con un 500, el login y cierre de sesión
+  externos, la creación de organizaciones externas, la asignación de administrador inicial
+  y las cinco acciones de revisión de solicitudes de aliado. Ampliada a los 19 valores que
+  el código usa, verificado con búsqueda exhaustiva de cada `WriteAuditAsync` del proyecto.
+- El portal de colaboradores externos (botón "Ingresar al Portal de Colaboradores
+  Externos") nunca pudo iniciar sesión: su formulario llamaba a `sessionService.login()`,
+  que solo habla con la API institucional — la misma que rechaza a propósito el rol
+  `externo`. `AdminService.loginExternal()` ya existía, correctamente conectado al
+  endpoint externo, pero nada lo llamaba. Corregido y verificado con un login real: entra
+  al panel de colaborador con sus procesos culturales y ficha de caracterización.
+
 ### Conocido, no resuelto
 
-- Al verificar el login se detectó que `/api/v1/admin/data/records/*` y
-  `/api/v1/admin/data/monitor` devuelven 401 sin importar el rol, incluido webmaster con
-  control total. No es un problema de permisos: es previo a esta sesión de trabajo, afecta
-  al panel de gestión de datos y monitoreo técnico del dashboard, y probablemente esté en
-  cómo el frontend envía credenciales a esas rutas puntuales. Queda pendiente de
-  investigar; no bloquea el login ni el resto de la aplicación.
-- `POST /api/v1/external/auth/login` falla con 500 para cualquier cuenta externa válida:
-  la restricción `CK_BitacoraAuditoria_Accion` no incluye `iniciar_sesion_externa`, el
-  valor que ese endpoint usa al registrar el inicio de sesión en la bitácora de auditoría.
-  No es un problema de la cuenta ni de la contraseña. Afecta a `externo@pnmc.local` y a
-  cualquier otra cuenta con rol `externo`.
+- `/api/v1/admin/data/records/*` y `/api/v1/admin/data/monitor` devuelven 401 sin importar
+  el rol, incluido webmaster con control total. No es un problema de permisos: es previo a
+  esta sesión de trabajo, afecta al panel de gestión de datos y monitoreo técnico del
+  dashboard, y probablemente esté en cómo el frontend envía credenciales a esas rutas
+  puntuales. Queda pendiente de investigar; no bloquea el login ni el resto de la
+  aplicación.
 
 ## v0.0-base — 2026-08-20
 
