@@ -27,17 +27,35 @@ que ahora arranca limpio de punta a punta, con 49/49 pruebas de API y compilaci�
 - Una semilla de datos de moderación perdía el estado del cursor al aplicarse, por faltarle
   `SET NOCOUNT ON` antes de varios `DELETE` seguidos.
 
-### Conocido, no resuelto
-
-- La semilla `V20260519_07__datos_moderacion_consola.sql` sigue sin poder aplicarse
-  completa: hace referencia a usuarios de prueba que ningún script crea. No bloquea el uso
-  de la aplicación; ver `docs/tecnico/guia-instalacion.md`, sección "Datos de prueba
-  conocidos".
-
 ### Añadido
 
 - `scripts/dev-check.sh` ahora reporta el estado real de cada componente (Docker, esquema
   de base de datos, API, frontend, Git), no solo códigos HTTP crudos.
+- Seis cuentas de prueba reales, una por rol, sembradas por SQL con contraseñas que
+  funcionan de verdad (`pnmc-database/seed/V20260820_01__usuarios_prueba_seed.sql`). Son
+  las mismas que autocompleta el botón "Cuentas de Prueba" del login
+  (`admin-login.component.ts`), que hasta ahora dependía de que la API hubiera arrancado
+  al menos una vez con `Database:SeedBootstrapUsers` activo para existir. Verificado con
+  login real en el navegador, con dos roles distintos.
+
+### Corregido (continuación)
+
+- Como efecto directo de sembrar esas seis cuentas, `V20260519_07__datos_moderacion_consola.sql`
+  —que ya las esperaba, por sus mismos `IdUsuario`— ahora se aplica completa. Se le agregó
+  además `SET QUOTED_IDENTIFIER ON`, requerido por el índice filtrado que se añadió en el
+  punto anterior.
+- La tabla de credenciales de prueba en `docs/tecnico/guia-instalacion.md` documentaba
+  contraseñas que no correspondían a ninguna cuenta real y le faltaban dos de los seis
+  roles. Corregida.
+
+### Conocido, no resuelto
+
+- Al verificar el login se detectó que `/api/v1/admin/data/records/*` y
+  `/api/v1/admin/data/monitor` devuelven 401 sin importar el rol, incluido webmaster con
+  control total. No es un problema de permisos: es previo a esta sesión de trabajo, afecta
+  al panel de gestión de datos y monitoreo técnico del dashboard, y probablemente esté en
+  cómo el frontend envía credenciales a esas rutas puntuales. Queda pendiente de
+  investigar; no bloquea el login ni el resto de la aplicación.
 
 ## v0.0-base — 2026-08-20
 
