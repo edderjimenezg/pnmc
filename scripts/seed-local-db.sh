@@ -85,6 +85,7 @@ SEEDS=(
   "seed/V20260519_01__maestras_estaticas_seed.sql"
   "seed/V20260519_02__divipola_seed.sql"
   "seed/V20260519_03__administracion_control_seed.sql"
+  "seed/V20260820_01__usuarios_prueba_seed.sql"
   "seed/V20260519_04__contenidos_modulos_seed.sql"
   "seed/V20260519_05__articulacion_lectura_comun_seed.sql"
   "seed/V20260519_06__datos_prueba_amplios.sql"
@@ -102,8 +103,8 @@ SEEDS_FALLIDAS=()
 for seed in "${SEEDS[@]}"; do
   echo "  -> Aplicando $seed..."
   if ! run_sql_file "$ROOT_DIR/pnmc-database/$seed"; then
-    echo "  [pnmc-db] AVISO: $seed fallo y se omitio. La aplicacion sigue siendo utilizable;"
-    echo "  [pnmc-db] revisa docs/tecnico/guia-instalacion.md, seccion 'Datos de prueba conocidos'."
+    echo "  [pnmc-db] AVISO: $seed fallo y se omitio. La aplicacion sigue siendo utilizable"
+    echo "  [pnmc-db] con el resto de las semillas; revisa el mensaje de error de arriba."
     SEEDS_FALLIDAS+=("$seed")
   fi
 done
