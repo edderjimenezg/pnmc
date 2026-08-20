@@ -86,6 +86,14 @@ BEGIN
     IF COL_LENGTH(N'dbo.EntidadesAliadas', N'Municipio') IS NOT NULL
        AND COL_LENGTH(N'dbo.EntidadesAliadas', N'CodigoMunicipio') IS NULL
         EXEC sp_rename N'dbo.EntidadesAliadas.Municipio', N'CodigoMunicipio', N'COLUMN';
+
+    -- LogoUrl es columna nueva, no un renombre de EntidadesColaboradoras: el
+    -- bloque de arriba nunca la agrega. Al venir de un rename, el CREATE TABLE
+    -- de mas abajo tampoco corre (la tabla ya existe), asi que sin esto la
+    -- columna no aparece nunca y el login de cuentas aliadas falla con
+    -- 'Invalid column name LogoUrl'.
+    IF COL_LENGTH(N'dbo.EntidadesAliadas', N'LogoUrl') IS NULL
+        ALTER TABLE dbo.EntidadesAliadas ADD LogoUrl nvarchar(500) NULL;
 END;
 
 IF OBJECT_ID(N'dbo.UsuariosEntidadesAliadas', N'U') IS NOT NULL
