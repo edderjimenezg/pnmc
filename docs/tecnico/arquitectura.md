@@ -154,7 +154,7 @@ Esto **no materializa aún** dos ámbitos de autenticación: el flujo externo de
 
 ### Datos y gobierno actuales
 
-`PnmcDbContext` concentra maestros, registros sectoriales (`FestivalRow`, `SchoolRow`, `MarketRow`, `OrganizationRow`, `SpaceInfrastructureRow`), contenidos, usuarios/roles, entidades, solicitudes, duplicados, alertas y auditoría. Existen estados y revisión, pero no está comprobada una proyección separada de versión pública y propuesta pendiente. Véanse diagnósticos [20](../diagnostico/20-modelo-de-datos.md), [31](../diagnostico/31-gobierno-del-dato-actual.md) y [35](../diagnostico/35-importacion-y-trazabilidad-actual.md).
+`PnmcDbContext` concentra maestros, registros sectoriales (`FestivalRow`, `SchoolRow`, `MarketRow`, `OrganizationRow`, `SpaceInfrastructureRow`), contenidos, usuarios/roles, entidades, solicitudes, duplicados, alertas y auditoría. Existen estados y revisión, pero no está comprobada una proyección separada de versión pública y propuesta pendiente. Véanse diagnósticos [20](../archivo/diagnostico-2026-08.md#modelo-de-datos-actual), [31](../archivo/diagnostico-2026-08.md#gobierno-del-dato-actual) y [35](../archivo/diagnostico-2026-08.md#importacion-y-trazabilidad-actual).
 
 ### Capacidades aprovechables y cambios estructurales probables
 
@@ -693,7 +693,7 @@ Reversibles: ordenar módulos, crear modelos de lectura, introducir contratos, m
 
 ### Primer paso condicionado
 
-Si se aprueba, el primer trabajo técnico sería el corte descrito en [12](12-primer-corte-vertical-propuesto.md), precedido por inventario de contratos, dependencias, datos y plan de prueba/restauración. Esta documentación no autoriza su implementación.
+Si se aprueba, el primer trabajo técnico sería el corte descrito en [12](#primer-corte-vertical-propuesto), precedido por inventario de contratos, dependencias, datos y plan de prueba/restauración. Esta documentación no autoriza su implementación.
 
 ## Resumen no técnico de arquitectura
 

@@ -288,7 +288,7 @@ Una sesión externa nunca puede consumir acciones administrativas. Aunque sea la
 
 ### 20. Relación con el desarrollo actual
 
-El diagnóstico registra como reutilizables el Angular actual, la API .NET, SQL Server, el mapa Leaflet, DIVIPOLA, los catálogos de prácticas y territorios sonoros, contenidos, funcionalidades administrativas reales y componentes de auditoría y revisión susceptibles de evolución. **VERIFICADO/PARCIAL**: una aplicación Angular, una API .NET con `PnmcDbContext` y SQL Server fuera de pruebas; véanse [02](../arquitectura/02-estado-tecnico-de-partida.md) y diagnósticos 20–25.
+El diagnóstico registra como reutilizables el Angular actual, la API .NET, SQL Server, el mapa Leaflet, DIVIPOLA, los catálogos de prácticas y territorios sonoros, contenidos, funcionalidades administrativas reales y componentes de auditoría y revisión susceptibles de evolución. **VERIFICADO/PARCIAL**: una aplicación Angular, una API .NET con `PnmcDbContext` y SQL Server fuera de pruebas; véanse [02](../tecnico/arquitectura.md#estado-tecnico-de-partida) y diagnósticos 20–25.
 
 Las brechas estructurales son una experiencia externa incompleta, mezcla de administración y colaboradores, un solo ámbito de autenticación actual, ausencia comprobada de publicación versionada/propuesta, permisos por alcance incompletos, gobierno parcial, importación sin lote completo y analítica limitada. El diagnóstico también señala rutas privadas sin guarda Angular efectiva y partes MOCK en experiencias externas. Esto no invalida el desarrollo existente: constituye una base evolutiva que requiere fronteras explícitas para el siguiente alcance.
 
