@@ -915,6 +915,201 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
+    public async Task Historical_Festival_Administration_Request_Is_Governed_And_Approval_Materializes_Only_The_Organization_Link()
+    {
+        const string email = "solicitud.administracion.festival@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, await GetExternalCsrfTokenAsync(_client), new
+        {
+            name = "Fundación Solicitud Festival", contactEmail = "contacto@solicitud-festival.test",
+            coverageLevel = "municipal", departmentCode = "05", municipalityCode = "05001"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+
+        FestivalRow historicalFestival;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            historicalFestival = new FestivalRow
+            {
+                Name = "Festival Histórico Solicitado", OrganizerDisplayName = "Fundacion Solicitud Festival",
+                Description = "Contenido público anterior", CoverageLevel = "municipal", DepartmentCode = "05",
+                MunicipalityCode = "05001", StatusCode = "Publicado", CreatedAt = DateTime.UtcNow
+            };
+            db.FestivalRecords.Add(historicalFestival);
+            await db.SaveChangesAsync();
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/organizaciones/{organization!.Id}/festivales/{historicalFestival.Id}/solicitudes-administracion")
+        {
+            Content = JsonContent.Create(new CrearSolicitudAdministracionFestivalSolicitud { Justificacion = "La fundación organiza este Festival desde su origen." })
+        };
+        request.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        var createResponse = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<SolicitudAdministracionFestivalDto>();
+        Assert.NotNull(created);
+        Assert.Equal("Pendiente", created!.Estado);
+        Assert.NotEmpty(created.EvidenciasAutomaticas);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            var unchanged = await db.FestivalRecords.AsNoTracking().FirstAsync(item => item.Id == historicalFestival.Id);
+            Assert.Null(unchanged.OrganizacionPrincipalId);
+            Assert.Equal("Contenido público anterior", unchanged.Description);
+            Assert.Equal("Publicado", unchanged.StatusCode);
+        }
+
+        var withoutCsrf = await _client.PostAsJsonAsync($"/api/v1/externo/organizaciones/{organization.Id}/festivales/{historicalFestival.Id}/solicitudes-administracion", new { justificacion = "Sin token" });
+        Assert.Equal(HttpStatusCode.BadRequest, withoutCsrf.StatusCode);
+
+        await LoginAsWebmasterAsync();
+        var csrfResponse = await _client.GetAsync("/api/v1/institucional/solicitudes-administracion-festival/csrf");
+        csrfResponse.EnsureSuccessStatusCode();
+        var csrf = await csrfResponse.Content.ReadFromJsonAsync<TokenAntiforgeryRespuesta>();
+        Assert.NotNull(csrf);
+        var decision = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/solicitudes-administracion-festival/{created.Id}/decisiones")
+        {
+            Content = JsonContent.Create(new DecidirSolicitudAdministracionFestivalSolicitud { Decision = "aprobar" })
+        };
+        decision.Headers.Add("X-CSRF-TOKEN", csrf!.RequestToken);
+        var decisionResponse = await _client.SendAsync(decision);
+        decisionResponse.EnsureSuccessStatusCode();
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            var linked = await db.FestivalRecords.AsNoTracking().FirstAsync(item => item.Id == historicalFestival.Id);
+            var persistedRequest = await db.SolicitudesAdministracionFestival.AsNoTracking().FirstAsync(item => item.Id == long.Parse(created.Id));
+            Assert.Equal(int.Parse(organization.Id), linked.OrganizacionPrincipalId);
+            Assert.Equal("Publicado", linked.StatusCode);
+            Assert.Equal("Contenido público anterior", linked.Description);
+            Assert.Equal("Aprobada", persistedRequest.Estado);
+            Assert.False(persistedRequest.Activa);
+        }
+    }
+
+    [Fact]
+    public async Task Historical_Linked_Festival_Uses_Explicit_Normalization_And_Publishes_A_New_Governed_Version()
+    {
+        const string email = "piloto.pv03.festival@example.com";
+        await RegisterAndVerifyExternalPersonAsync(email);
+        await LoginExternalAsync(_client, email);
+        var organizationResponse = await CreateExternalOrganizationAsync(_client, await GetExternalCsrfTokenAsync(_client), new
+        {
+            name = "Fundación Piloto PV03", contactEmail = "contacto@piloto-pv03.test",
+            coverageLevel = "municipal", departmentCode = "05", municipalityCode = "05001"
+        });
+        organizationResponse.EnsureSuccessStatusCode();
+        var organization = await organizationResponse.Content.ReadFromJsonAsync<ExternalOrganizationDto>();
+        Assert.NotNull(organization);
+
+        FestivalRow historicalFestival;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+            historicalFestival = new FestivalRow
+            {
+                Name = "Festival Histórico PV03", OrganizerDisplayName = "Fundacion Piloto PV03",
+                Description = "Descripción pública histórica.", CoverageLevel = "municipal", DepartmentCode = "05",
+                MunicipalityCode = "05001", Periodicidad = "anual", ContactEmail = "historico@piloto-pv03.test",
+                StatusCode = "Publicado", CreatedAt = DateTime.UtcNow
+            };
+            db.FestivalRecords.Add(historicalFestival);
+            await db.SaveChangesAsync();
+            db.FestivalesPracticasMusicales.Add(new FestivalPracticaMusicalRow { FestivalId = historicalFestival.Id, PracticaMusicalId = 1, FechaCreacion = DateTime.UtcNow });
+            db.FestivalesTerritoriosSonoros.Add(new FestivalTerritorioSonoroRow { FestivalId = historicalFestival.Id, TerritorioSonoroId = 1, FechaCreacion = DateTime.UtcNow });
+            await db.SaveChangesAsync();
+        }
+
+        var crearSolicitud = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/organizaciones/{organization!.Id}/festivales/{historicalFestival.Id}/solicitudes-administracion")
+        {
+            Content = JsonContent.Create(new CrearSolicitudAdministracionFestivalSolicitud { Justificacion = "La fundación requiere mantener actualizada la información histórica del Festival." })
+        };
+        crearSolicitud.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        var solicitud = await (await _client.SendAsync(crearSolicitud)).Content.ReadFromJsonAsync<SolicitudAdministracionFestivalDto>();
+        Assert.NotNull(solicitud);
+
+        await LoginAsWebmasterAsync();
+        var aprobarSolicitud = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/solicitudes-administracion-festival/{solicitud!.Id}/decisiones")
+        {
+            Content = JsonContent.Create(new DecidirSolicitudAdministracionFestivalSolicitud { Decision = "aprobar" })
+        };
+        var csrfSolicitud = await _client.GetFromJsonAsync<TokenAntiforgeryRespuesta>("/api/v1/institucional/solicitudes-administracion-festival/csrf");
+        aprobarSolicitud.Headers.Add("X-CSRF-TOKEN", csrfSolicitud!.RequestToken);
+        (await _client.SendAsync(aprobarSolicitud)).EnsureSuccessStatusCode();
+
+        var propuestaSinNormalizar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/festivales/{historicalFestival.Id}/propuestas-cambio") { Content = JsonContent.Create(new { }) };
+        propuestaSinNormalizar.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        var respuestaSinNormalizar = await _client.SendAsync(propuestaSinNormalizar);
+        Assert.Equal(HttpStatusCode.Conflict, respuestaSinNormalizar.StatusCode);
+        Assert.Contains("requiereNormalizacionInstitucional", await respuestaSinNormalizar.Content.ReadAsStringAsync());
+
+        var normalizar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/festivales/{historicalFestival.Id}/normalizar-version-historica") { Content = JsonContent.Create(new { }) };
+        normalizar.Headers.Add("X-CSRF-TOKEN", await GetInstitutionalCsrfTokenAsync(_client));
+        (await _client.SendAsync(normalizar)).EnsureSuccessStatusCode();
+        var normalizarOtraVez = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/festivales/{historicalFestival.Id}/normalizar-version-historica") { Content = JsonContent.Create(new { }) };
+        normalizarOtraVez.Headers.Add("X-CSRF-TOKEN", await GetInstitutionalCsrfTokenAsync(_client));
+        (await _client.SendAsync(normalizarOtraVez)).EnsureSuccessStatusCode();
+
+        var crearPropuesta = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/festivales/{historicalFestival.Id}/propuestas-cambio") { Content = JsonContent.Create(new { }) };
+        crearPropuesta.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        var propuesta = await (await _client.SendAsync(crearPropuesta)).Content.ReadFromJsonAsync<PropuestaCambioFestivalDto>();
+        Assert.NotNull(propuesta);
+        Assert.Equal("Borrador", propuesta!.Estado);
+        Assert.Single(propuesta.PracticasMusicales);
+        Assert.Single(propuesta.TerritoriosSonoros);
+
+        var actualizar = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/externo/festivales/{historicalFestival.Id}/propuesta-cambio")
+        {
+            Content = JsonContent.Create(new
+            {
+                nombre = "Festival Histórico PV03 actualizado", descripcion = "Descripción pública actualizada mediante propuesta.",
+                periodicidad = "bienal", correoContacto = "actualizado@piloto-pv03.test", nivelCobertura = "municipal",
+                codigoDepartamento = "76", codigoMunicipio = "76001", practicasMusicalesIds = Array.Empty<int>(), territoriosSonorosIds = Array.Empty<int>()
+            })
+        };
+        actualizar.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        (await _client.SendAsync(actualizar)).EnsureSuccessStatusCode();
+
+        var fichaAntes = await _client.GetFromJsonAsync<FestivalPublicoDto>($"/api/v1/publico/festivales/{historicalFestival.Id}");
+        Assert.Equal("Festival Histórico PV03", fichaAntes!.Nombre);
+        Assert.Equal("Descripción pública histórica.", fichaAntes.Descripcion);
+
+        var enviar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/festivales/{historicalFestival.Id}/propuesta-cambio/enviar-a-revision") { Content = JsonContent.Create(new { }) };
+        enviar.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        (await _client.SendAsync(enviar)).EnsureSuccessStatusCode();
+
+        var publicar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/propuestas-cambio-festival/{propuesta.Id}/decisiones") { Content = JsonContent.Create(new { accion = "Publicar" }) };
+        publicar.Headers.Add("X-CSRF-TOKEN", await GetInstitutionalProposalCsrfTokenAsync(_client));
+        (await _client.SendAsync(publicar)).EnsureSuccessStatusCode();
+
+        var fichaDespues = await _client.GetFromJsonAsync<FestivalPublicoDto>($"/api/v1/publico/festivales/{historicalFestival.Id}");
+        Assert.Equal("Festival Histórico PV03 actualizado", fichaDespues!.Nombre);
+        Assert.Equal("Descripción pública actualizada mediante propuesta.", fichaDespues.Descripcion);
+        var mapa = await _client.GetFromJsonAsync<DepartmentDrilldownResponseDto>("/api/v1/map/departments/76/drilldown");
+        Assert.Contains(mapa!.Festivals, item => item.Id == historicalFestival.Id.ToString() && item.Name == "Festival Histórico PV03 actualizado");
+        var analitica = await _client.GetFromJsonAsync<ResumenAnaliticoFestivalesDto>("/api/v1/publico/analitica/festivales/resumen");
+        Assert.Contains(analitica!.PorDepartamento, item => item.Nombre == "Valle del Cauca");
+
+        using var verificationScope = _factory.Services.CreateScope();
+        var verificationDb = verificationScope.ServiceProvider.GetRequiredService<PnmcDbContext>();
+        var festivalVerificado = verificationDb.FestivalRecords.Single(item => item.Id == historicalFestival.Id);
+        var versiones = verificationDb.VersionesFestival.Where(item => item.FestivalOrigenId == historicalFestival.Id).OrderBy(item => item.NumeroVersion).ToList();
+        Assert.Equal(int.Parse(organization.Id), festivalVerificado.OrganizacionPrincipalId);
+        Assert.Equal("Descripción pública histórica.", festivalVerificado.Description);
+        Assert.Equal(2, versiones.Count);
+        Assert.False(versiones[0].EsVigente);
+        Assert.True(versiones[1].EsVigente);
+        Assert.Empty(verificationDb.VersionesFestivalPracticasMusicales.Where(item => item.VersionFestivalId == versiones[1].Id));
+        Assert.Equal("Publicada", verificationDb.PropuestasCambioFestival.Single(item => item.Id == int.Parse(propuesta.Id)).Estado);
+    }
+
+    [Fact]
     public async Task External_Administrator_Can_Send_Valid_Festival_Draft_To_Review_Without_Publication()
     {
         const string email = "festival.revision@example.com";
@@ -1238,6 +1433,12 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
 
         var institutionalClient = _factory.CreateClient();
         (await institutionalClient.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest { Email = "test@pnmc.local", Password = "pnmc-master" })).EnsureSuccessStatusCode();
+        var sinNormalizar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/festivales/{festival.Id}/propuestas-cambio") { Content = JsonContent.Create(new { }) };
+        sinNormalizar.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
+        Assert.Equal(HttpStatusCode.Conflict, (await _client.SendAsync(sinNormalizar)).StatusCode);
+        var normalizar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/festivales/{festival.Id}/normalizar-version-historica") { Content = JsonContent.Create(new { }) };
+        normalizar.Headers.Add("X-CSRF-TOKEN", await GetInstitutionalCsrfTokenAsync(institutionalClient));
+        (await institutionalClient.SendAsync(normalizar)).EnsureSuccessStatusCode();
         var institutionalProposal = await institutionalClient.PostAsJsonAsync($"/api/v1/externo/festivales/{festival.Id}/propuestas-cambio", new { });
         Assert.Equal(HttpStatusCode.Unauthorized, institutionalProposal.StatusCode);
 
@@ -1338,6 +1539,12 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
             db.SaveChanges();
         }
 
+        var institutionalClient = _factory.CreateClient();
+        (await institutionalClient.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest { Email = "test@pnmc.local", Password = "pnmc-master" })).EnsureSuccessStatusCode();
+        var normalizar = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/institucional/festivales/{festival!.Id}/normalizar-version-historica") { Content = JsonContent.Create(new { }) };
+        normalizar.Headers.Add("X-CSRF-TOKEN", await GetInstitutionalCsrfTokenAsync(institutionalClient));
+        (await institutionalClient.SendAsync(normalizar)).EnsureSuccessStatusCode();
+
         var crear = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/externo/festivales/{festival!.Id}/propuestas-cambio") { Content = JsonContent.Create(new { }) };
         crear.Headers.Add("X-CSRF-TOKEN", await GetExternalCsrfTokenAsync(_client));
         var propuesta = await (await _client.SendAsync(crear)).Content.ReadFromJsonAsync<PropuestaCambioFestivalDto>();
@@ -1361,8 +1568,6 @@ public sealed class ApiIntegrationTests : IClassFixture<TestWebApplicationFactor
         var publicBefore = await _client.GetFromJsonAsync<FestivalPublicoDto>($"/api/v1/publico/festivales/{festival.Id}");
         Assert.Equal("Festival gobierno de versiones", publicBefore!.Nombre);
 
-        var institutionalClient = _factory.CreateClient();
-        (await institutionalClient.PostAsJsonAsync("/api/v1/admin/auth/login", new AdminLoginRequest { Email = "test@pnmc.local", Password = "pnmc-master" })).EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.Unauthorized, (await institutionalClient.PostAsJsonAsync($"/api/v1/externo/festivales/{festival.Id}/propuesta-cambio/enviar-a-revision", new { })).StatusCode);
         var queue = await institutionalClient.GetFromJsonAsync<List<PropuestaCambioFestivalRevisionDto>>("/api/v1/institucional/propuestas-cambio-festival/en-revision");
         Assert.Contains(queue!, item => item.Id == propuesta!.Id);

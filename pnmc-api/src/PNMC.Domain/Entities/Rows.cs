@@ -671,6 +671,24 @@ public sealed class RecordLinkRequestRow
     public DateTime UpdatedAt { get; set; }
 }
 
+public sealed class SolicitudAdministracionFestivalRow
+{
+    public long Id { get; set; }
+    public int FestivalId { get; set; }
+    public int OrganizacionId { get; set; }
+    public int PersonaSolicitanteId { get; set; }
+    public string Justificacion { get; set; } = string.Empty;
+    public string EvidenciaAutomaticaJson { get; set; } = "[]";
+    public string Estado { get; set; } = "Pendiente";
+    public bool Activa { get; set; } = true;
+    public string? RespuestaSolicitante { get; set; }
+    public int? PersonaDecisoraId { get; set; }
+    public string? ComentarioDecision { get; set; }
+    public DateTime FechaCreacion { get; set; }
+    public DateTime FechaActualizacion { get; set; }
+    public DateTime? FechaDecision { get; set; }
+}
+
 public sealed class RecordDuplicateCandidateRow
 {
     public long Id { get; set; }

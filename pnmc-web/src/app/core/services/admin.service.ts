@@ -16,6 +16,24 @@ export interface CoincidenciaFestivalHistorico {
   evidencias: string[];
 }
 
+export interface SolicitudAdministracionFestival {
+  id: string;
+  festivalId: string;
+  nombreFestival: string;
+  organizacionId: string;
+  nombreOrganizacion: string;
+  personaSolicitanteId: string;
+  nombrePersonaSolicitante: string;
+  justificacion: string;
+  evidenciasAutomaticas: string[];
+  estado: string;
+  respuestaSolicitante: string | null;
+  comentarioDecision: string | null;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  fechaDecision: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -165,6 +183,34 @@ export class AdminService {
     });
   }
 
+  fetchFestivalAdministrationRequests(organizacionId: number): Observable<SolicitudAdministracionFestival[]> {
+    return this.apiClient.get<SolicitudAdministracionFestival[]>(`/api/v1/externo/organizaciones/${organizacionId}/solicitudes-administracion-festival`, {
+      errorFallback: 'No fue posible consultar las solicitudes de administración',
+    });
+  }
+
+  requestFestivalAdministration(organizacionId: number, festivalId: number, justificacion: string): Observable<SolicitudAdministracionFestival> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar la solicitud de administración',
+    }).pipe(
+      switchMap(token => this.apiClient.post<SolicitudAdministracionFestival>(`/api/v1/externo/organizaciones/${organizacionId}/festivales/${festivalId}/solicitudes-administracion`, { justificacion }, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible enviar la solicitud de administración',
+      }))
+    );
+  }
+
+  respondFestivalAdministrationRequest(organizacionId: number, solicitudId: string, respuesta: string): Observable<SolicitudAdministracionFestival> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
+      errorFallback: 'No fue posible preparar la respuesta',
+    }).pipe(
+      switchMap(token => this.apiClient.post<SolicitudAdministracionFestival>(`/api/v1/externo/organizaciones/${organizacionId}/solicitudes-administracion-festival/${solicitudId}/responder-informacion`, { respuesta }, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible enviar la información adicional',
+      }))
+    );
+  }
+
   createDraftFestival(organizacionId: number, payload: any): Observable<any> {
     return this.apiClient.get<{ requestToken: string }>('/api/v1/external/organizations/csrf', {
       errorFallback: 'No fue posible preparar el registro del Festival',
@@ -244,6 +290,34 @@ export class AdminService {
       switchMap(token => this.apiClient.post<any>(`/api/v1/institucional/festivales/${festivalId}/decisiones`, payload, {
         headers: { 'X-CSRF-TOKEN': token.requestToken },
         errorFallback: 'No fue posible registrar la decisión institucional',
+      }))
+    );
+  }
+
+  fetchInstitutionalFestivalAdministrationRequests(): Observable<SolicitudAdministracionFestival[]> {
+    return this.apiClient.get<SolicitudAdministracionFestival[]>('/api/v1/institucional/solicitudes-administracion-festival', {
+      errorFallback: 'No fue posible consultar las solicitudes de administración de Festivales',
+    });
+  }
+
+  decideInstitutionalFestivalAdministrationRequest(solicitudId: string, payload: { decision: string; comentario?: string }): Observable<SolicitudAdministracionFestival> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/institucional/solicitudes-administracion-festival/csrf', {
+      errorFallback: 'No fue posible preparar la decisión institucional',
+    }).pipe(
+      switchMap(token => this.apiClient.post<SolicitudAdministracionFestival>(`/api/v1/institucional/solicitudes-administracion-festival/${solicitudId}/decisiones`, payload, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible registrar la decisión de vinculación',
+      }))
+    );
+  }
+
+  normalizarFestivalHistoricoParaActualizacion(festivalId: string): Observable<{ normalizado: boolean; message: string }> {
+    return this.apiClient.get<{ requestToken: string }>('/api/v1/institucional/festivales/csrf', {
+      errorFallback: 'No fue posible preparar la normalización institucional del Festival',
+    }).pipe(
+      switchMap(token => this.apiClient.post<{ normalizado: boolean; message: string }>(`/api/v1/institucional/festivales/${festivalId}/normalizar-version-historica`, {}, {
+        headers: { 'X-CSRF-TOKEN': token.requestToken },
+        errorFallback: 'No fue posible preparar el Festival histórico para su actualización',
       }))
     );
   }

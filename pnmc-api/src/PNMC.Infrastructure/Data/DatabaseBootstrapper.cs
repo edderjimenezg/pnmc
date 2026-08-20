@@ -115,6 +115,23 @@ public static class DatabaseBootstrapper
                 ADD [Telefono] nvarchar(80) NULL;
             END;
 
+            IF OBJECT_ID(N'[UsuariosCodigosVerificacion]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [UsuariosCodigosVerificacion] (
+                    [IdUsuarioCodigoVerificacion] int IDENTITY(1,1) NOT NULL,
+                    [IdUsuario] int NOT NULL,
+                    [Proposito] nvarchar(80) NOT NULL,
+                    [Codigo] nvarchar(20) NOT NULL,
+                    [FechaExpiracion] datetime2(0) NOT NULL,
+                    [FechaConsumo] datetime2(0) NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_UsuariosCodigosVerificacion_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    CONSTRAINT [PK_UsuariosCodigosVerificacion] PRIMARY KEY ([IdUsuarioCodigoVerificacion]),
+                    CONSTRAINT [FK_UsuariosCodigosVerificacion_Usuarios] FOREIGN KEY ([IdUsuario]) REFERENCES [Usuarios] ([IdUsuario])
+                );
+
+                CREATE INDEX [IX_UsuariosCodigosVerificacion_UsuarioProposito] ON [UsuariosCodigosVerificacion] ([IdUsuario], [Proposito], [FechaExpiracion]);
+            END;
+
             IF OBJECT_ID(N'[BitacoraAuditoria]', N'U') IS NULL
             BEGIN
                 CREATE TABLE [BitacoraAuditoria] (
@@ -272,6 +289,42 @@ public static class DatabaseBootstrapper
                 "gestor_interno",
                 "admin",
                 "3207654321",
+                cancellationToken);
+
+            await EnsureBootstrapUserAsync(
+                db,
+                "Aliado Administrador",
+                "aliado-admin@pnmc.local",
+                "aliado_admin",
+                "admin",
+                "3004445566",
+                cancellationToken);
+
+            await EnsureBootstrapUserAsync(
+                db,
+                "Aliado Editor",
+                "aliado-editor@pnmc.local",
+                "aliado_editor",
+                "admin",
+                "3119998877",
+                cancellationToken);
+
+            await EnsureBootstrapUserAsync(
+                db,
+                "Aliado Lector",
+                "aliado-lector@pnmc.local",
+                "aliado_lector",
+                "admin",
+                "3146665544",
+                cancellationToken);
+
+            await EnsureBootstrapUserAsync(
+                db,
+                "Colaborador Externo",
+                "externo@pnmc.local",
+                "externo",
+                "admin",
+                "3103332211",
                 cancellationToken);
         }
     }
@@ -1062,6 +1115,35 @@ public static class DatabaseBootstrapper
                     CONSTRAINT [UQ_PropuestasCambioFestivalTerritorios] UNIQUE ([PropuestaCambioFestivalId], [TerritorioSonoroId])
                 );
             END;
+
+            IF OBJECT_ID(N'[SolicitudesAdministracionFestival]', N'U') IS NULL
+            BEGIN
+                CREATE TABLE [SolicitudesAdministracionFestival] (
+                    [IdSolicitudAdministracionFestival] bigint IDENTITY(1,1) NOT NULL,
+                    [FestivalId] int NOT NULL,
+                    [OrganizacionId] int NOT NULL,
+                    [PersonaSolicitanteId] int NOT NULL,
+                    [Justificacion] nvarchar(1200) NOT NULL,
+                    [EvidenciaAutomaticaJson] nvarchar(max) NOT NULL CONSTRAINT [DF_SolicitudesAdministracionFestival_Evidencia] DEFAULT (N'[]'),
+                    [Estado] nvarchar(60) NOT NULL CONSTRAINT [DF_SolicitudesAdministracionFestival_Estado] DEFAULT (N'Pendiente'),
+                    [Activa] bit NOT NULL CONSTRAINT [DF_SolicitudesAdministracionFestival_Activa] DEFAULT (1),
+                    [RespuestaSolicitante] nvarchar(1200) NULL,
+                    [PersonaDecisoraId] int NULL,
+                    [ComentarioDecision] nvarchar(1200) NULL,
+                    [FechaCreacion] datetime2(0) NOT NULL CONSTRAINT [DF_SolicitudesAdministracionFestival_FechaCreacion] DEFAULT (SYSUTCDATETIME()),
+                    [FechaActualizacion] datetime2(0) NOT NULL CONSTRAINT [DF_SolicitudesAdministracionFestival_FechaActualizacion] DEFAULT (SYSUTCDATETIME()),
+                    [FechaDecision] datetime2(0) NULL,
+                    CONSTRAINT [PK_SolicitudesAdministracionFestival] PRIMARY KEY ([IdSolicitudAdministracionFestival]),
+                    CONSTRAINT [FK_SolicitudesAdministracionFestival_Festival] FOREIGN KEY ([FestivalId]) REFERENCES [Festivales] ([IdFestival]),
+                    CONSTRAINT [FK_SolicitudesAdministracionFestival_Organizacion] FOREIGN KEY ([OrganizacionId]) REFERENCES [Entidades] ([IdEntidad]),
+                    CONSTRAINT [FK_SolicitudesAdministracionFestival_PersonaSolicitante] FOREIGN KEY ([PersonaSolicitanteId]) REFERENCES [Usuarios] ([IdUsuario]),
+                    CONSTRAINT [FK_SolicitudesAdministracionFestival_PersonaDecisora] FOREIGN KEY ([PersonaDecisoraId]) REFERENCES [Usuarios] ([IdUsuario])
+                );
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_SolicitudesAdministracionFestival_Activa' AND object_id = OBJECT_ID(N'[SolicitudesAdministracionFestival]'))
+                CREATE UNIQUE INDEX [UX_SolicitudesAdministracionFestival_Activa]
+                    ON [SolicitudesAdministracionFestival] ([FestivalId], [OrganizacionId]) WHERE [Activa] = 1;
             """;
 
         await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);

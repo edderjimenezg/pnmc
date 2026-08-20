@@ -53,6 +53,7 @@ public sealed class PnmcDbContext : DbContext
     public DbSet<AllyRequestRow> AllyRequests => Set<AllyRequestRow>();
     public DbSet<NotificationRow> Notifications => Set<NotificationRow>();
     public DbSet<RecordLinkRequestRow> RecordLinkRequests => Set<RecordLinkRequestRow>();
+    public DbSet<SolicitudAdministracionFestivalRow> SolicitudesAdministracionFestival => Set<SolicitudAdministracionFestivalRow>();
     public DbSet<RecordDuplicateCandidateRow> RecordDuplicateCandidates => Set<RecordDuplicateCandidateRow>();
     public DbSet<RecordQualityFlagRow> RecordQualityFlags => Set<RecordQualityFlagRow>();
     public DbSet<EntityProfileRow> EntityProfiles => Set<EntityProfileRow>();
@@ -843,6 +844,27 @@ public sealed class PnmcDbContext : DbContext
             entity.Property(x => x.ReviewComment).HasColumnName("ComentarioRevision");
             entity.Property(x => x.CreatedAt).HasColumnName("FechaCreacion");
             entity.Property(x => x.UpdatedAt).HasColumnName("FechaActualizacion");
+        });
+
+        modelBuilder.Entity<SolicitudAdministracionFestivalRow>(entity =>
+        {
+            entity.ToTable("SolicitudesAdministracionFestival");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("IdSolicitudAdministracionFestival");
+            entity.Property(x => x.FestivalId).HasColumnName("FestivalId");
+            entity.Property(x => x.OrganizacionId).HasColumnName("OrganizacionId");
+            entity.Property(x => x.PersonaSolicitanteId).HasColumnName("PersonaSolicitanteId");
+            entity.Property(x => x.Justificacion).HasColumnName("Justificacion");
+            entity.Property(x => x.EvidenciaAutomaticaJson).HasColumnName("EvidenciaAutomaticaJson");
+            entity.Property(x => x.Estado).HasColumnName("Estado");
+            entity.Property(x => x.Activa).HasColumnName("Activa");
+            entity.Property(x => x.RespuestaSolicitante).HasColumnName("RespuestaSolicitante");
+            entity.Property(x => x.PersonaDecisoraId).HasColumnName("PersonaDecisoraId");
+            entity.Property(x => x.ComentarioDecision).HasColumnName("ComentarioDecision");
+            entity.Property(x => x.FechaCreacion).HasColumnName("FechaCreacion");
+            entity.Property(x => x.FechaActualizacion).HasColumnName("FechaActualizacion");
+            entity.Property(x => x.FechaDecision).HasColumnName("FechaDecision");
+            entity.HasIndex(x => new { x.FestivalId, x.OrganizacionId }).HasDatabaseName("UX_SolicitudesAdministracionFestival_Activa").HasFilter("[Activa] = 1").IsUnique();
         });
 
         modelBuilder.Entity<RecordDuplicateCandidateRow>(entity =>

@@ -5,7 +5,7 @@ import {
   LucideAlertCircle, 
   LucideCheckCircle2 
 } from '@lucide/angular';
-import { AdminService } from '../../../core/services/admin.service';
+import { AdminService, SolicitudAdministracionFestival } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-governance-panel',
@@ -39,38 +39,8 @@ export class AdminGovernancePanelComponent {
   LucideCheckCircle2 = LucideCheckCircle2;
 
   // Lists state
-  requests = signal<any[]>([
-    {
-      id: 'req_1',
-      requester: 'Fundación Vientos del Sur',
-      requesterRole: 'aliado_admin',
-      targetName: 'Escuela de Música Tradicional Paz',
-      targetType: 'Escuela de música',
-      date: '2026-05-25',
-      reason: 'Somos la entidad responsable del acompañamiento pedagógico e institucional de esta escuela.',
-      status: 'pendiente',
-    },
-    {
-      id: 'req_2',
-      requester: 'Asociación Sonidos de mi Tierra',
-      requesterRole: 'aliado_editor',
-      targetName: 'Luthier Diego Rosero',
-      targetType: 'Lutier',
-      date: '2026-05-24',
-      reason: 'El maestro Diego Rosero forma parte de nuestro colectivo de lutería tradicional y solicitamos vincular su perfil.',
-      status: 'pendiente',
-    },
-    {
-      id: 'req_3',
-      requester: 'Colectivo Tambores de San Basilio',
-      requesterRole: 'externo',
-      targetName: 'Festival de Tambores de Palenque',
-      targetType: 'Festival',
-      date: '2026-05-23',
-      reason: 'Reclamación del festival para actualización de programación del año vigente.',
-      status: 'pendiente',
-    }
-  ]);
+  requests = signal<SolicitudAdministracionFestival[]>([]);
+  normalizingRequestId = signal<string | null>(null);
 
   duplicates = signal<any[]>([
     {
@@ -125,13 +95,11 @@ export class AdminGovernancePanelComponent {
   // Load backend data if available, merging or replacing mocks
   loadAllData() {
     // 1. Linking Requests
-    this.adminService.fetchRecordLinkRequests().subscribe({
+    this.adminService.fetchInstitutionalFestivalAdministrationRequests().subscribe({
       next: (res) => {
-        if (res && res.length) {
-          this.requests.set(res);
-        }
+        this.requests.set(res || []);
       },
-      error: () => {} // Keep mocks on error/404
+      error: () => this.requests.set([])
     });
 
     // 2. Duplicates
@@ -156,25 +124,37 @@ export class AdminGovernancePanelComponent {
   }
 
   handleRequestAction(id: string, action: string) {
-    const statusVal = action === 'approve' ? 'aprobado' : 'rechazado';
-    
-    // Call service
-    this.adminService.updateRecordLinkRequestStatus({ id, status: statusVal }).subscribe({
-      next: () => {
-        this.updateLocalRequest(id, statusVal);
+    const decision = action === 'approve' ? 'aprobar' : action === 'request-info' ? 'solicitar_informacion' : 'rechazar';
+    const comentario = decision === 'solicitar_informacion'
+      ? window.prompt('Indica la información adicional que requiere SIMUS:')?.trim()
+      : '';
+    if (decision === 'solicitar_informacion' && !comentario) return;
+    this.adminService.decideInstitutionalFestivalAdministrationRequest(id, { decision, comentario }).subscribe({
+      next: solicitud => {
+        this.requests.update(actual => actual.map(item => item.id === id ? solicitud : item));
+        this.showStatusAlert(decision === 'aprobar' ? 'La organización quedó vinculada como responsable del Festival.' : decision === 'rechazar' ? 'La solicitud fue rechazada.' : 'Se solicitó información adicional a la organización.');
       },
-      error: () => {
-        // Fallback to local simulation
-        this.updateLocalRequest(id, statusVal);
-      }
+      error: () => this.showStatusAlert('No fue posible registrar la decisión. Inténtalo de nuevo.')
     });
   }
 
-  private updateLocalRequest(id: string, statusVal: string) {
-    this.requests.update(prev => 
-      prev.map(r => r.id === id ? { ...r, status: statusVal } : r)
+  prepararFestivalHistoricoParaActualizacion(solicitud: SolicitudAdministracionFestival) {
+    const confirmacion = window.confirm(
+      `Se creará una versión pública inicial para “${solicitud.nombreFestival}” a partir de su información histórica. No cambia su estado ni publica información nueva. ¿Deseas continuar?`
     );
-    this.showStatusAlert(`La solicitud de vinculación ha sido ${statusVal === 'aprobado' ? 'aprobada y vinculada exitosamente' : 'rechazada'}.`);
+    if (!confirmacion) return;
+
+    this.normalizingRequestId.set(solicitud.id);
+    this.adminService.normalizarFestivalHistoricoParaActualizacion(solicitud.festivalId).subscribe({
+      next: resultado => {
+        this.normalizingRequestId.set(null);
+        this.showStatusAlert(resultado.message || 'El Festival histórico quedó preparado para una actualización gobernada.');
+      },
+      error: () => {
+        this.normalizingRequestId.set(null);
+        this.showStatusAlert('No fue posible preparar el Festival histórico. Inténtalo de nuevo.');
+      }
+    });
   }
 
   handleDuplicateAction(id: string, action: string) {
@@ -227,7 +207,7 @@ export class AdminGovernancePanelComponent {
 
   // Count helper functions for badge indicators
   get pendingRequestsCount() {
-    return this.requests().filter(r => r.status === 'pendiente').length;
+    return this.requests().filter(r => r.estado === 'Pendiente').length;
   }
 
   get pendingDuplicatesCount() {

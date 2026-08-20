@@ -644,6 +644,39 @@ public sealed class RecordLinkRequestStatusRequest
     public string Comment { get; set; } = string.Empty;
 }
 
+public sealed class CrearSolicitudAdministracionFestivalSolicitud
+{
+    public string Justificacion { get; set; } = string.Empty;
+}
+
+public sealed class ResponderInformacionSolicitudAdministracionFestivalSolicitud
+{
+    public string Respuesta { get; set; } = string.Empty;
+}
+
+public sealed class DecidirSolicitudAdministracionFestivalSolicitud
+{
+    public string Decision { get; set; } = string.Empty;
+    public string Comentario { get; set; } = string.Empty;
+}
+
+public sealed record SolicitudAdministracionFestivalDto(
+    string Id,
+    string FestivalId,
+    string NombreFestival,
+    string OrganizacionId,
+    string NombreOrganizacion,
+    string PersonaSolicitanteId,
+    string NombrePersonaSolicitante,
+    string Justificacion,
+    IReadOnlyList<string> EvidenciasAutomaticas,
+    string Estado,
+    string? RespuestaSolicitante,
+    string? ComentarioDecision,
+    DateTime FechaCreacion,
+    DateTime FechaActualizacion,
+    DateTime? FechaDecision);
+
 public sealed record RecordDuplicateCandidateDto(
     string Id,
     string ModuleId,

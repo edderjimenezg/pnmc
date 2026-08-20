@@ -60,28 +60,30 @@
               <div class="space-y-2 max-w-2xl">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="rounded-full bg-violet-50 border border-violet-100 px-2 py-0.5 text-[0.58rem] font-bold text-violet-700 uppercase tracking-wide">
-                    {{ req.requesterRole }}
+                    Festival histórico
                   </span>
-                  <span class="text-[0.68rem] text-slate-400 font-medium">{{ req.date }}</span>
-                  @if (req.status !== 'pendiente') {
+                  <span class="text-[0.68rem] text-slate-400 font-medium">{{ req.fechaCreacion | date:'mediumDate' }}</span>
+                  @if (req.estado !== 'Pendiente') {
                     <span class="rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-wide border"
-                          [ngClass]="req.status === 'aprobado' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'">
-                      {{ req.status }}
+                          [ngClass]="req.estado === 'Aprobada' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'">
+                      {{ req.estado }}
                     </span>
                   }
                 </div>
                 <div>
                   <h4 class="text-xs font-black text-slate-800">
-                    {{ req.requester }} <span class="text-slate-400 font-normal">solicita la vinculación de</span> {{ req.targetName }}
+                    {{ req.nombreOrganizacion }} <span class="text-slate-400 font-normal">solicita administrar</span> {{ req.nombreFestival }}
                   </h4>
-                  <p class="text-[0.68rem] text-slate-400 mt-0.5">{{ req.targetType }} en el ecosistema territorial</p>
+                  <p class="text-[0.68rem] text-slate-400 mt-0.5">Solicitud presentada por {{ req.nombrePersonaSolicitante }}</p>
                 </div>
                 <p class="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3 leading-relaxed italic">
-                  "{{ req.reason }}"
+                  "{{ req.justificacion }}"
                 </p>
+                <ul class="text-xs text-slate-500 list-disc pl-5">@for (evidencia of req.evidenciasAutomaticas; track evidencia) { <li>{{ evidencia }}</li> }</ul>
               </div>
-              @if (req.status === 'pendiente') {
+              @if (req.estado === 'Pendiente') {
                 <div class="flex items-center gap-2 shrink-0 self-end md:self-start">
+                  <button type="button" (click)="handleRequestAction(req.id, 'request-info')" class="rounded-xl border border-amber-200 text-xs font-bold text-amber-700 px-3.5 py-2 transition cursor-pointer">Solicitar información</button>
                   <button
                     type="button"
                     (click)="handleRequestAction(req.id, 'reject')"
@@ -95,6 +97,18 @@
                     class="rounded-xl bg-[#00DA5E] hover:bg-[#00c454] text-xs font-black text-slate-950 px-4 py-2 uppercase font-alternate tracking-wide transition shadow-sm cursor-pointer"
                   >
                     Aceptar Vinculación
+                  </button>
+                </div>
+              } @else if (req.estado === 'Aprobada') {
+                <div class="flex flex-col items-end gap-2 shrink-0 self-end md:self-start">
+                  <p class="max-w-48 text-right text-[0.68rem] leading-relaxed text-slate-500">Antes de que la organización proponga cambios, prepara la versión pública histórica del Festival.</p>
+                  <button
+                    type="button"
+                    [disabled]="normalizingRequestId() === req.id"
+                    (click)="prepararFestivalHistoricoParaActualizacion(req)"
+                    class="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-bold text-violet-800 transition hover:border-violet-300 hover:bg-violet-100 disabled:opacity-50 cursor-pointer"
+                  >
+                    {{ normalizingRequestId() === req.id ? 'Preparando…' : 'Preparar para actualización' }}
                   </button>
                 </div>
               }
