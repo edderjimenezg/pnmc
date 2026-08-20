@@ -47,6 +47,20 @@ que ahora arranca limpio de punta a punta, con 49/49 pruebas de API y compilaci�
 - La tabla de credenciales de prueba en `docs/tecnico/guia-instalacion.md` documentaba
   contraseñas que no correspondían a ninguna cuenta real y le faltaban dos de los seis
   roles. Corregida.
+- `EntidadesAliadas` nunca tenía la columna `LogoUrl`, por el mismo tipo de problema: en
+  una base nueva la tabla se crea primero con el nombre viejo (`EntidadesColaboradoras`,
+  sin esa columna) y luego se renombra; el renombrado copia columnas existentes pero no
+  agrega las que son enteramente nuevas. Iniciar sesión con cualquier cuenta de aliado
+  fallaba con 500. Verificado el arreglo con la API respondiendo 200 a ese login.
+
+### Cambiado
+
+- El panel "Cuentas de Prueba" del login pasó de seis atajos a uno solo (webmaster).
+  `gestor_interno` y las tres cuentas de aliado se retiraron porque su consola es una
+  línea de trabajo aparte, no un atajo de evaluación rápida; `externo` se retiró porque
+  nunca pudo funcionar ahí — `AdminAuthEndpoints` rechaza ese rol a propósito en el login
+  institucional. Las seis cuentas siguen existiendo y funcionando si se escriben las
+  credenciales a mano; solo cambió cuáles tienen botón de acceso directo.
 
 ### Conocido, no resuelto
 
@@ -56,6 +70,11 @@ que ahora arranca limpio de punta a punta, con 49/49 pruebas de API y compilaci�
   al panel de gestión de datos y monitoreo técnico del dashboard, y probablemente esté en
   cómo el frontend envía credenciales a esas rutas puntuales. Queda pendiente de
   investigar; no bloquea el login ni el resto de la aplicación.
+- `POST /api/v1/external/auth/login` falla con 500 para cualquier cuenta externa válida:
+  la restricción `CK_BitacoraAuditoria_Accion` no incluye `iniciar_sesion_externa`, el
+  valor que ese endpoint usa al registrar el inicio de sesión en la bitácora de auditoría.
+  No es un problema de la cuenta ni de la contraseña. Afecta a `externo@pnmc.local` y a
+  cualquier otra cuenta con rol `externo`.
 
 ## v0.0-base — 2026-08-20
 

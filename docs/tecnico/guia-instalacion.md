@@ -108,23 +108,28 @@ cd ../pnmc-api && dotnet test PNMC.Api.sln
 ## 7. Cuentas de prueba
 
 `scripts/seed-local-db.sh` crea siete usuarios reales, con contraseñas de verdad (no
-simuladas): el usuario del sistema y seis cuentas de prueba, una por cada rol.
+simuladas): el usuario del sistema y seis cuentas de prueba, una por cada rol. Todas usan
+el hash que produce `Microsoft.AspNetCore.Identity.PasswordHasher` para la contraseña
+`admin` — el mismo algoritmo que la API usa para validar el login. No son datos de
+referencia: son cuentas con las que se puede iniciar sesión de verdad.
 
-| Rol | Correo | Contraseña | Consola |
+| Rol | Correo | Contraseña | Inicia sesión en |
 |---|---|---|---|
-| Webmaster (control total) | `admin@pnmc.local` | `admin` | `/admin` |
-| Gestor interno | `gestor@pnmc.local` | `admin` | `/admin` |
-| Aliado administrador | `aliado-admin@pnmc.local` | `admin` | `/admin` |
-| Aliado editor | `aliado-editor@pnmc.local` | `admin` | `/admin` |
-| Aliado lector | `aliado-lector@pnmc.local` | `admin` | `/admin` |
-| Colaborador externo | `externo@pnmc.local` | `admin` | `/admin` (portal externo) |
+| Webmaster (control total) | `admin@pnmc.local` | `admin` | `/admin` — botón de acceso rápido |
+| Gestor interno | `gestor@pnmc.local` | `admin` | `/admin` — escribir credenciales |
+| Aliado administrador | `aliado-admin@pnmc.local` | `admin` | `/admin` — escribir credenciales |
+| Aliado editor | `aliado-editor@pnmc.local` | `admin` | `/admin` — escribir credenciales |
+| Aliado lector | `aliado-lector@pnmc.local` | `admin` | `/admin` — escribir credenciales |
+| Colaborador externo | `externo@pnmc.local` | `admin` | Ninguna consola hoy (ver aviso) |
 
-En `/admin`, el botón **Cuentas de Prueba** (esquina inferior izquierda del login) rellena
-el correo y la contraseña de cualquiera de estas cuentas con un clic, para entrar rápido a
-evaluar cada rol sin escribir credenciales.
+En `/admin`, el botón **Cuentas de Prueba** (esquina inferior izquierda del login) solo
+ofrece Webmaster: es el único caso de uso real de un login de un clic para evaluar la
+consola completa. Las cinco cuentas restantes existen y funcionan igual de bien —
+verificado contra la API—, solo que se escriben a mano en el formulario.
 
-Estas mismas cuentas coinciden exactamente con `ROLE_CREDENTIALS` en
-`pnmc-web/src/app/features/admin/admin-login/admin-login.component.ts` y con el hash que
-produce `Microsoft.AspNetCore.Identity.PasswordHasher` para la contraseña `admin` — el mismo
-algoritmo que la API usa para validar el login. No son solo datos de referencia: son cuentas
-reales, con las que se puede iniciar sesión de verdad.
+> **`externo@pnmc.local` no tiene consola funcional hoy.** El login institucional
+> (`/admin`) la rechaza a propósito por diseño (no es una cuenta institucional). El login
+> del portal externo (`POST /api/v1/external/auth/login`) sí la acepta, pero falla con 500
+> al intentar registrar el inicio de sesión en la bitácora de auditoría: la restricción
+> `CK_BitacoraAuditoria_Accion` no incluye el valor `iniciar_sesion_externa` que usa ese
+> endpoint. Es un problema pendiente, no relacionado con la cuenta en sí.
