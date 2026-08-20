@@ -8,7 +8,7 @@ from PIL import Image
 import math
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "docs/marca/pdf/Manual_de_Marca_PNMC_2025-2035.pdf"
+OUT = ROOT / "docs/marca/pdf/manual-de-marca-2025-2035.pdf"
 PREV = ROOT / "tmp/pdfs/source-previews"
 ASSETS = ROOT / "docs/marca/assets"
 

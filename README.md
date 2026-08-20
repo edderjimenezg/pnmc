@@ -1,45 +1,47 @@
-# SIMUS — Plataforma PNMC
+# SIMUS
 
-Sistema de Información de la Música en Colombia. Versión integral e independiente de la
-plataforma PNMC.
+Sistema de Información de la Música en Colombia. Plan Nacional de Música para la
+Convivencia, Ministerio de las Culturas, las Artes y los Saberes.
 
-## Estructura
+## Componentes
 
-```
-pnmc-web/        Angular 21, Tailwind CSS, Leaflet y ExcelJS
-pnmc-api/        .NET 10, Entity Framework Core, autenticacion por cookie
-pnmc-database/   SQL Server / Azure SQL, esquema, migraciones y semillas
-scripts/         arranque, carga de base y comprobaciones locales
-docs/            documentacion funcional, tecnica y de marca
-tools/           generadores del manual de marca
-```
+| Directorio | Contenido |
+|---|---|
+| `pnmc-web/` | Frontend Angular 21 con Tailwind CSS, Leaflet y ExcelJS |
+| `pnmc-api/` | API .NET 10 con Entity Framework Core y autenticación por cookie |
+| `pnmc-database/` | Esquema SQL Server, migraciones versionadas y semillas |
+| `scripts/` | Arranque, carga de base de datos y comprobaciones locales |
+| `docs/` | Documentación del proyecto |
+| `tools/` | Generadores del manual de marca |
 
-Toda la comunicación de datos del frontend pasa por `pnmc-api`. La API es la única
-responsable de autorización y persistencia.
+Toda la comunicación de datos del frontend pasa por `pnmc-api`, que es la única responsable
+de autorización y persistencia.
+
+## Requisitos
+
+Docker Desktop, Node con Angular 21 y .NET 10.
 
 ## Arranque local
 
-Requisitos: Docker Desktop, Node con Angular 21 y .NET 10.
-
 ```bash
+cp pnmc-api/src/PNMC.Api/appsettings.Local.example.json \
+   pnmc-api/src/PNMC.Api/appsettings.Local.json
+
+cd pnmc-web && npm install && cd ..
+
 ./scripts/dev-up.sh
 ```
 
-Levanta la base en Docker, la API y el frontend. Para detener sin borrar datos:
-
-```bash
-./scripts/dev-down.sh
-```
+`dev-up.sh` levanta SQL Server en Docker, siembra la base y abre la API y el frontend. Para
+detener sin borrar datos, `./scripts/dev-down.sh`.
 
 Por separado:
 
 ```bash
-./scripts/local-db-up.sh
-./scripts/api-local.sh
-cd pnmc-web && npm install && npm start
+./scripts/local-db-up.sh      # base de datos
+./scripts/api-local.sh        # API
+cd pnmc-web && npm start      # frontend
 ```
-
-Servicios:
 
 | Servicio | URL |
 |---|---|
@@ -48,25 +50,30 @@ Servicios:
 | Salud de la API | http://localhost:8080/health/live |
 | SQL Server | 127.0.0.1:14333 |
 
-## Validación
+## Verificación
 
 ```bash
-cd pnmc-web && npm test && npm run build
-cd ../pnmc-api && dotnet test PNMC.Api.sln
+cd pnmc-api && dotnet test PNMC.Api.sln
+cd ../pnmc-web && npm test && npm run build
 ```
 
 ## Configuración
 
-En desarrollo Angular usa `pnmc-web/src/environments/environment.ts`. La compilación de
+En desarrollo, Angular usa `pnmc-web/src/environments/environment.ts`. La compilación de
 producción lo reemplaza por `environment.production.ts` y usa rutas de API relativas. Para
-orígenes separados, ajusta `apiBaseUrl` en el despliegue y configura `PNMC_CORS_ORIGINS`
-en la API.
+orígenes separados, se ajusta `apiBaseUrl` en el despliegue y se configura
+`PNMC_CORS_ORIGINS` en la API.
 
-La configuración local de la API va en `pnmc-api/src/PNMC.Api/appsettings.Local.json`, que
-se crea a partir de `appsettings.Local.example.json` y **no se versiona**. Nunca publiques
-archivos `.env` ni credenciales reales.
+La configuración local de la API vive en `pnmc-api/src/PNMC.Api/appsettings.Local.json`,
+que no se versiona porque contiene credenciales.
 
-## Ramas y versiones
+## Documentación
 
-`main` es la rama principal. El trabajo se hace en ramas temáticas y se integra en `main`.
-Ver `CONTRIBUIR.md`.
+El índice está en [`docs/README.md`](docs/README.md). Los puntos de entrada habituales son
+la [visión y alcance](docs/producto/vision-y-alcance.md) para entender qué es el sistema, y
+la [arquitectura](docs/tecnico/arquitectura.md) para entender cómo está construido.
+
+## Contribuir
+
+Convenciones de ramas, commits, tags y verificación en [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
