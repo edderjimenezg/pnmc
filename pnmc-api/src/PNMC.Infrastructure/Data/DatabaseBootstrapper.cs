@@ -857,18 +857,6 @@ public static class DatabaseBootstrapper
                 );
             END;
 
-            IF COL_LENGTH(N'[Entidades]', N'NumeroIdentificacion') IS NULL
-            BEGIN
-                ALTER TABLE [Entidades] ADD [NumeroIdentificacion] nvarchar(60) NULL;
-            END;
-
-            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UQ_Entidades_NumeroIdentificacion' AND object_id = OBJECT_ID(N'[Entidades]'))
-            BEGIN
-                CREATE UNIQUE INDEX [UQ_Entidades_NumeroIdentificacion]
-                    ON [Entidades] ([NumeroIdentificacion])
-                    WHERE [NumeroIdentificacion] IS NOT NULL;
-            END;
-
             IF OBJECT_ID(N'[UsuariosEntidades]', N'U') IS NULL
             BEGIN
                 CREATE TABLE [UsuariosEntidades] (
@@ -932,6 +920,29 @@ public static class DatabaseBootstrapper
             """;
 
         await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+
+        // Este bloque va en un lote aparte: SQL Server resuelve nombres de
+        // columna en tiempo de compilacion del lote, y si Entidades se acaba
+        // de crear (o de alterar) en el lote anterior, un CREATE INDEX sobre
+        // NumeroIdentificacion en el mismo lote falla con "Invalid column
+        // name" aunque la columna ya exista.
+        const string sqlNumeroIdentificacion = """
+            IF COL_LENGTH(N'[Entidades]', N'NumeroIdentificacion') IS NULL
+            BEGIN
+                ALTER TABLE [Entidades] ADD [NumeroIdentificacion] nvarchar(60) NULL;
+            END;
+            """;
+        await db.Database.ExecuteSqlRawAsync(sqlNumeroIdentificacion, cancellationToken);
+
+        const string sqlNumeroIdentificacionIndice = """
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UQ_Entidades_NumeroIdentificacion' AND object_id = OBJECT_ID(N'[Entidades]'))
+            BEGIN
+                CREATE UNIQUE INDEX [UQ_Entidades_NumeroIdentificacion]
+                    ON [Entidades] ([NumeroIdentificacion])
+                    WHERE [NumeroIdentificacion] IS NOT NULL;
+            END;
+            """;
+        await db.Database.ExecuteSqlRawAsync(sqlNumeroIdentificacionIndice, cancellationToken);
     }
 
     private static async Task EnsureFestivalExternalTablesAsync(PnmcDbContext db, CancellationToken cancellationToken)
