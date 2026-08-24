@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { LucideArrowRight, LucideBookOpen, LucideBuilding2, LucideCircleHelp, LucideLandmark, LucideLibrary, LucideMap, LucideMapPin, LucideMusic2, LucideUsers2, LucideUsersRound } from '@lucide/angular';
+import { LucideArrowRight, LucideBookOpen, LucideBuilding2, LucideCircleHelp, LucideLandmark, LucideLibrary, LucideMap, LucideMapPin, LucideMusic2, LucideSparkles, LucideUsers2, LucideUsersRound } from '@lucide/angular';
 import { ECOSYSTEM_CATEGORIES, EcosystemCategory } from '../../../../core/services/ecosystem-categories.config';
 import { MapDataService } from '../../../../core/services/map-data.service';
 import { NavigationService } from '../../../../core/services/navigation.service';
@@ -9,7 +9,7 @@ import { PageHeroComponent } from '../../../../shared/components/ui/page-hero/pa
 @Component({
   selector: 'app-simus-home-page',
   standalone: true,
-  imports: [CommonModule, PageHeroComponent, LucideArrowRight, LucideBookOpen, LucideBuilding2, LucideCircleHelp, LucideLandmark, LucideLibrary, LucideMap, LucideMapPin, LucideMusic2, LucideUsers2, LucideUsersRound],
+  imports: [CommonModule, PageHeroComponent, LucideArrowRight, LucideBookOpen, LucideBuilding2, LucideCircleHelp, LucideLandmark, LucideLibrary, LucideMap, LucideMapPin, LucideMusic2, LucideSparkles, LucideUsers2, LucideUsersRound],
   templateUrl: './simus-home-page.component.html',
 })
 export class SimusHomePageComponent implements OnInit {
