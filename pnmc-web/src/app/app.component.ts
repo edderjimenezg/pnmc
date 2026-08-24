@@ -38,16 +38,14 @@ export class AppComponent {
 
   isSolidNavigation = computed(() => {
     const page = this.navigationService.activePage();
-    // Ecosistema Musical conserva un hero fotográfico (como PNMC), así que el nav
-    // debe comportarse igual: transparente sobre la foto y sólido al hacer scroll.
-    // Mapa/Editorial/Galería/Noticias/Agenda ya no tienen hero, así que necesitan
+    // Las rutas con PageHero o CompactHero se integran con la navegación transparente
+    // y pasan a sólida al hacer scroll. Mapa/Editorial/Galería/Noticias/Agenda necesitan
     // el nav sólido desde el inicio (un nav transparente sería ilegible sobre fondo blanco).
     return page === PAGE_IDS.mapa
       || page === PAGE_IDS.editorial
       || page === PAGE_IDS.galeria
       || page === PAGE_IDS.noticias
       || page === PAGE_IDS.agenda
-      || page === PAGE_IDS.ecosistemaMusical
       || page === PAGE_IDS.registro;
   });
 
