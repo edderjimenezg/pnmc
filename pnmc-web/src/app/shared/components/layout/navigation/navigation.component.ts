@@ -9,7 +9,6 @@ import {
   LucideMenu, 
   LucideX, 
   LucideArrowUpRight,
-  LucideCircleUserRound,
   LucideLogIn,
   LucideUserPlus
 } from '@lucide/angular';
@@ -24,7 +23,6 @@ import {
     LucideMenu,
     LucideX,
     LucideArrowUpRight,
-    LucideCircleUserRound,
     LucideLogIn,
     LucideUserPlus
   ],
