@@ -113,14 +113,14 @@ export class NavigationComponent {
   }
 
   ecosystemMenuItems = [
-    { label: 'Escuelas de música', page: 'simus/escuelas', detail: 'Formación musical, cobertura e indicadores.' },
-    { label: 'Agrupaciones', page: 'simus/agrupaciones', detail: 'Procesos colectivos y prácticas musicales.' },
-    { label: 'Agentes', page: 'simus/agentes', detail: 'Personas y organizaciones del sector.' },
-    { label: 'Escenarios', page: 'simus/escenarios', detail: 'Infraestructura para la música.' },
-    { label: 'Festivales', page: 'simus/festivales', detail: 'Circulación y celebración territorial.' },
-    { label: 'Mercados musicales', page: 'simus/mercados-musicales', detail: 'Nodos de intercambio y circulación.' },
-    { label: 'Redes y documentación', page: 'simus/redes-documentacion', detail: 'Memoria, investigación y archivos.' },
-    { label: 'Lutería', page: 'simus/luteria', detail: 'Saberes, oficios e instrumentos.' },
+    { label: 'Escuelas de música', page: 'ecosistema-musical/escuelas', detail: 'Formación musical, cobertura e indicadores.' },
+    { label: 'Agrupaciones', page: 'ecosistema-musical/agrupaciones', detail: 'Procesos colectivos y prácticas musicales.' },
+    { label: 'Agentes', page: 'ecosistema-musical/agentes', detail: 'Personas y organizaciones del sector.' },
+    { label: 'Escenarios', page: 'ecosistema-musical/escenarios', detail: 'Infraestructura para la música.' },
+    { label: 'Festivales', page: 'ecosistema-musical/festivales', detail: 'Circulación y celebración territorial.' },
+    { label: 'Mercados musicales', page: 'ecosistema-musical/mercados-musicales', detail: 'Nodos de intercambio y circulación.' },
+    { label: 'Redes y documentación', page: 'ecosistema-musical/redes-documentacion', detail: 'Memoria, investigación y archivos.' },
+    { label: 'Lutería', page: 'ecosistema-musical/luteria', detail: 'Saberes, oficios e instrumentos.' },
   ];
 
   simusMenuItems = [

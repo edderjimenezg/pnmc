@@ -78,7 +78,7 @@ export class SchoolsPageComponent implements OnInit {
   }
 
   openSchool(schoolId: string): void {
-    this.navigation.routerNavigate(`ecosistema/escuelas/${encodeURIComponent(schoolId)}`);
+    this.navigation.routerNavigate(`ecosistema-musical/escuelas/${encodeURIComponent(schoolId)}`);
   }
 
   clearFilters(): void {

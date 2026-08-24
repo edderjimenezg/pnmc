@@ -33,5 +33,5 @@ export class FestivalPublicoDetallePageComponent implements OnInit {
     return [festival.territorioPrincipal.municipio, festival.territorioPrincipal.departamento].filter(Boolean).join(', ') || 'Territorio por confirmar';
   }
 
-  volverADirectorio(): void { this.router.navigateByUrl('/simus/festivales'); }
+  volverADirectorio(): void { this.router.navigateByUrl('/ecosistema-musical/festivales'); }
 }

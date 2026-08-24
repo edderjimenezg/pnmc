@@ -34,7 +34,7 @@ export class SchoolDetailPageComponent implements OnInit {
     });
   }
 
-  backToDirectory(): void { this.navigation.routerNavigate('simus/escuelas'); }
+  backToDirectory(): void { this.navigation.routerNavigate('ecosistema-musical/escuelas'); }
   openMap(): void { this.navigation.navigateToMapLayer('Escuelas de Música', { targetView: 'map' }); }
 
   private toDetail(record: any) {

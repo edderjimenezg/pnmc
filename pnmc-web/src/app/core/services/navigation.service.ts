@@ -14,6 +14,7 @@ export const PAGE_IDS = {
   agenda: 'agenda',
   mapa: 'mapa',
   simus: 'simus',
+  ecosistemaMusical: 'ecosistema-musical',
   mapaParticipa: 'mapa-participa',
   admin: 'admin',
   colaboradores: 'colaboradores',
@@ -34,6 +35,7 @@ export const PAGE_PATHS: Record<string, string> = {
   [PAGE_IDS.agenda]: '/agenda',
   [PAGE_IDS.mapa]: '/mapa',
   [PAGE_IDS.simus]: '/simus',
+  [PAGE_IDS.ecosistemaMusical]: '/ecosistema-musical',
   [PAGE_IDS.mapaParticipa]: '/mapa/participa',
   [PAGE_IDS.admin]: '/consola-interna',
   [PAGE_IDS.colaboradores]: '/colaboradores',
@@ -61,6 +63,7 @@ export class NavigationService {
     [PAGE_IDS.agenda]: 'Agenda',
     [PAGE_IDS.mapa]: 'Mapa ecosistémico',
     [PAGE_IDS.simus]: 'SIMUS',
+    [PAGE_IDS.ecosistemaMusical]: 'Ecosistema musical',
     [PAGE_IDS.admin]: 'Administración',
     [PAGE_IDS.colaboradores]: 'Colaboradores',
     [PAGE_IDS.registro]: 'Haz parte de SIMUS',
@@ -133,6 +136,9 @@ export class NavigationService {
     }
     if (normalizedPath === '/simus' || normalizedPath.startsWith('/simus/')) {
       return PAGE_IDS.simus;
+    }
+    if (normalizedPath === '/ecosistema-musical' || normalizedPath.startsWith('/ecosistema-musical/')) {
+      return PAGE_IDS.ecosistemaMusical;
     }
     if (normalizedPath === '/noticias' || normalizedPath.startsWith('/noticias/')) {
       return PAGE_IDS.noticias;

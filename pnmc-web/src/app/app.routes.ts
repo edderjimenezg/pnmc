@@ -42,19 +42,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/map/pages/mapa-ecosistemico-page/mapa-ecosistemico-page.component').then(m => m.MapaEcosistemicoPageComponent),
   },
   {
-    path: 'simus/escuelas/:schoolId',
+    path: 'ecosistema-musical/escuelas/:schoolId',
     loadComponent: () => import('./features/ecosystem/pages/school-detail-page/school-detail-page.component').then(m => m.SchoolDetailPageComponent),
   },
   {
-    path: 'simus/escuelas',
+    path: 'ecosistema-musical/escuelas',
     loadComponent: () => import('./features/ecosystem/pages/schools-page/schools-page.component').then(m => m.SchoolsPageComponent),
   },
   {
-    path: 'simus/festivales/:festivalId',
+    path: 'ecosistema-musical/festivales/:festivalId',
     loadComponent: () => import('./features/ecosystem/pages/festival-publico-detalle-page/festival-publico-detalle-page.component').then(m => m.FestivalPublicoDetallePageComponent),
   },
   {
-    path: 'simus/festivales',
+    path: 'ecosistema-musical/festivales',
     loadComponent: () => import('./features/ecosystem/pages/festivales-publicos-page/festivales-publicos-page.component').then(m => m.FestivalesPublicosPageComponent),
   },
   {
@@ -80,19 +80,27 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'simus/:section',
+    path: 'simus/acerca-de',
+    loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
+    data: { seccionSimus: 'acerca-de' },
+  },
+  {
+    path: 'simus/ayuda',
+    loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
+    data: { seccionSimus: 'ayuda' },
+  },
+  {
+    path: 'ecosistema-musical/:section',
+    loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
+  },
+  {
+    path: 'ecosistema-musical',
     loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
   },
   {
     path: 'simus',
     loadComponent: () => import('./features/simus/pages/simus-home-page/simus-home-page.component').then(m => m.SimusHomePageComponent),
   },
-  // Rutas antiguas de "Ecosistema" (ahora integrado dentro de SIMUS): se conservan como redirecciones
-  // para no romper enlaces o marcadores existentes.
-  { path: 'ecosistema/escuelas/:schoolId', redirectTo: 'simus/escuelas/:schoolId' },
-  { path: 'ecosistema/escuelas', redirectTo: 'simus/escuelas', pathMatch: 'full' },
-  { path: 'ecosistema/:module', redirectTo: 'simus/:module' },
-  { path: 'ecosistema', redirectTo: 'simus', pathMatch: 'full' },
   { path: 'mapa/participa', redirectTo: 'colaboradores', pathMatch: 'full' },
   {
     path: 'estrategia/circulacion',

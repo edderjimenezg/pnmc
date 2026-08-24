@@ -32,6 +32,20 @@ export interface RespuestaPaginada<T> {
   total: number;
 }
 
+export interface MunicipioFestivalPublico { departamento: string; municipio: string; }
+export interface FiltrosFestivalesPublicos {
+  departamentos: string[];
+  municipios: MunicipioFestivalPublico[];
+  practicasMusicales: CatalogoFestivalPublico[];
+  territoriosSonoros: CatalogoFestivalPublico[];
+  periodicidades: string[];
+  nivelesCobertura: string[];
+}
+export interface ConsultaFestivalesPublicos {
+  limit?: number; offset?: number; busqueda?: string; departamento?: string; municipio?: string;
+  practicaMusicalId?: number; territorioSonoroId?: number; periodicidad?: string; nivelCobertura?: string;
+}
+
 export interface DistribucionAnaliticaFestival { nombre: string; total: number; }
 export interface ResumenAnaliticoFestivales {
   totalFestivales: number;
@@ -46,10 +60,24 @@ export interface ResumenAnaliticoFestivales {
 export class FestivalesPublicosService {
   private readonly apiClient = inject(ApiClientService);
 
-  consultarFestivales(): Observable<RespuestaPaginada<FestivalPublico>> {
+  consultarFestivales(consulta: ConsultaFestivalesPublicos = {}): Observable<RespuestaPaginada<FestivalPublico>> {
+    const params: Record<string, string | number | boolean> = { limit: consulta.limit ?? 20, offset: consulta.offset ?? 0 };
+    if (consulta.busqueda) params['busqueda'] = consulta.busqueda;
+    if (consulta.departamento) params['departamento'] = consulta.departamento;
+    if (consulta.municipio) params['municipio'] = consulta.municipio;
+    if (consulta.practicaMusicalId) params['practicaMusicalId'] = consulta.practicaMusicalId;
+    if (consulta.territorioSonoroId) params['territorioSonoroId'] = consulta.territorioSonoroId;
+    if (consulta.periodicidad) params['periodicidad'] = consulta.periodicidad;
+    if (consulta.nivelCobertura) params['nivelCobertura'] = consulta.nivelCobertura;
     return this.apiClient.get<RespuestaPaginada<FestivalPublico>>('/api/v1/publico/festivales', {
-      params: { limit: 500, offset: 0 },
+      params,
       errorFallback: 'No fue posible consultar los Festivales públicos.',
+    });
+  }
+
+  consultarFiltros(): Observable<FiltrosFestivalesPublicos> {
+    return this.apiClient.get<FiltrosFestivalesPublicos>('/api/v1/publico/festivales/filtros', {
+      errorFallback: 'No fue posible consultar los filtros de Festivales.',
     });
   }
 

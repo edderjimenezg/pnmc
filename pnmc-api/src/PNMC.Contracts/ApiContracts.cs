@@ -978,6 +978,16 @@ public sealed record FestivalPublicoDto(
     IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
     string? CorreoContacto);
 
+public sealed record MunicipioFestivalPublicoDto(string Departamento, string Municipio);
+
+public sealed record FiltrosFestivalesPublicosDto(
+    IReadOnlyList<string> Departamentos,
+    IReadOnlyList<MunicipioFestivalPublicoDto> Municipios,
+    IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
+    IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
+    IReadOnlyList<string> Periodicidades,
+    IReadOnlyList<string> NivelesCobertura);
+
 public sealed record MusicSchoolDto(
     string Id,
     string Name,
