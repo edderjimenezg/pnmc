@@ -8,7 +8,10 @@ import {
   LucideChevronRight, 
   LucideMenu, 
   LucideX, 
-  LucideArrowUpRight 
+  LucideArrowUpRight,
+  LucideCircleUserRound,
+  LucideLogIn,
+  LucideUserPlus
 } from '@lucide/angular';
 
 @Component({
@@ -20,7 +23,10 @@ import {
     LucideChevronRight,
     LucideMenu,
     LucideX,
-    LucideArrowUpRight
+    LucideArrowUpRight,
+    LucideCircleUserRound,
+    LucideLogIn,
+    LucideUserPlus
   ],
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.css']
@@ -61,6 +67,7 @@ export class NavigationComponent {
 
   // Sección expandida dentro del menú móvil (acordeón de submenús)
   mobileExpandedSection = signal<string | null>(null);
+  accessMenuOpen = signal(false);
 
   toggleMobileSection(linkId: string): void {
     this.mobileExpandedSection.update((current) => (current === linkId ? null : linkId));
@@ -110,6 +117,7 @@ export class NavigationComponent {
     if (this.mobileMenuOpen()) {
       this.navigationService.setMobileMenuOpen(false);
     }
+    this.accessMenuOpen.set(false);
   }
 
   ecosystemMenuItems = [
@@ -253,6 +261,15 @@ export class NavigationComponent {
     this.navigationService.setActiveNavDropdown(null);
     this.navigationService.setMobileMenuOpen(false);
     this.navigationService.routerNavigate(path);
+  }
+
+  toggleAccessMenu(): void {
+    this.accessMenuOpen.update((open) => !open);
+  }
+
+  navigateToExternalAccess(path: string): void {
+    this.accessMenuOpen.set(false);
+    this.onNavigateToPath(path);
   }
 
   onNavigateToPageSection(pageId: string, sectionId: string): void {
