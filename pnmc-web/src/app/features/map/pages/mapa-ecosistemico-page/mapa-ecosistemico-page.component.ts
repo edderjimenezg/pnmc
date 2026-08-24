@@ -38,7 +38,6 @@ import {
   LucideZoomIn, 
   LucideZoomOut 
 } from '@lucide/angular';
-import { FocusTrapDirective } from '../../../../shared/directives/focus-trap.directive';
 import { MapDataService } from '../../../../core/services/map-data.service';
 import { NavigationService, PAGE_IDS } from '../../../../core/services/navigation.service';
 import { WebTextsService } from '../../../../core/services/web-texts.service';
@@ -92,7 +91,6 @@ const PRACTICA_MAPPING: Record<string, { depts: any[]; color: string }> = {
   imports: [
     CommonModule,
     FormsModule,
-    FocusTrapDirective,
     LucideArrowRight,
     LucideBarChart3,
     LucideCircleHelp,

@@ -4,14 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal } from '@lucide/angular';
 import { BackendDataService } from '../../../../core/services/backend-data.service';
 import { NavigationService } from '../../../../core/services/navigation.service';
-import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
+import { PageHeroComponent } from '../../../../shared/components/ui/page-hero/page-hero.component';
 
 type VistaExploracion = 'lista' | 'mosaico';
 type School = { id: string; name: string; department: string; municipality: string; type: string; category: string; coverage: string; practices: string; isActive: boolean; };
 
 @Component({
   selector: 'app-schools-page', standalone: true,
-  imports: [CommonModule, FormsModule, CompactHeroComponent, LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal],
+  imports: [CommonModule, FormsModule, PageHeroComponent, LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal],
   templateUrl: './schools-page.component.html',
 })
 export class SchoolsPageComponent implements OnInit {

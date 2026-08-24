@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideMusic2, LucideSearch, LucideSlidersHorizontal } from '@lucide/angular';
 import { FestivalPublico, FiltrosFestivalesPublicos, FestivalesPublicosService } from '../../../../core/services/festivales-publicos.service';
-import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
+import { PageHeroComponent } from '../../../../shared/components/ui/page-hero/page-hero.component';
 
 type VistaExploracion = 'lista' | 'mosaico';
 
 @Component({
   selector: 'app-festivales-publicos-page', standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CompactHeroComponent, LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideMusic2, LucideSearch, LucideSlidersHorizontal],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeroComponent, LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideMusic2, LucideSearch, LucideSlidersHorizontal],
   templateUrl: './festivales-publicos-page.component.html',
 })
 export class FestivalesPublicosPageComponent implements OnInit {

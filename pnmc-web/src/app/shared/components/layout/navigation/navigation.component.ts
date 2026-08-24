@@ -1,5 +1,6 @@
 import { Component, Input, inject, computed, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { NavigationService, PAGE_IDS } from '../../../../core/services/navigation.service';
 import { WebTextsService } from '../../../../core/services/web-texts.service';
 import { ejesDataGlobal } from '../../../../core/services/ejes-data.config';
@@ -18,6 +19,7 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     LucideChevronDown,
     LucideChevronRight,
     LucideMenu,

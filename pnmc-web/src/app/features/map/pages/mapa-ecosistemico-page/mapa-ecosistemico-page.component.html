@@ -514,13 +514,11 @@
       @if (isTutorialOpen()) {
         <div
           [class]="tutorialStep() === 0
-            ? 'fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/40 backdrop-blur-[1.5px] animate-in fade-in duration-300 pointer-events-auto'
-            : 'fixed inset-x-0 bottom-10 z-[9999] flex items-center justify-center pointer-events-none animate-in slide-in-from-bottom-5 duration-300'"
+            ? 'fixed inset-x-0 bottom-0 top-20 z-[2500] flex items-center justify-center bg-slate-950/40 backdrop-blur-[1.5px] animate-in fade-in duration-300 pointer-events-auto'
+            : 'fixed inset-x-0 bottom-10 z-[2500] flex items-center justify-center pointer-events-none animate-in slide-in-from-bottom-5 duration-300'"
         >
           <div
-            appFocusTrap
             role="dialog"
-            aria-modal="true"
             aria-label="Tutorial del geovisor ecosistémico"
             [class]="tutorialStep() === 0
               ? 'relative w-[380px] rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-300 pointer-events-auto'

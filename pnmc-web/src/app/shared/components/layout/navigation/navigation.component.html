@@ -121,17 +121,16 @@
           @if (link.id === 'simus' && activeNavDropdown() === link.id) {
             <div class="absolute right-0 top-full w-[min(48rem,calc(100vw-4rem))] pt-5 animate-in fade-in slide-in-from-top-2 duration-200" (mouseleave)="clearSimusCategoryHover()">
               <div class="max-h-[calc(100vh-6rem)] overflow-y-auto overflow-x-hidden rounded-[2rem] border border-slate-200/80 bg-white/95 p-5 shadow-2xl backdrop-blur-xl">
-                <div class="mb-3 flex items-end justify-between gap-6">
-                  <button
-                    type="button"
-                    (click)="onNavigateToPath('ecosistema-musical')"
-                    class="group border-0 bg-transparent p-0 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00DA5E] focus-visible:ring-offset-2"
+                <div class="mb-4">
+                  <a
+                    routerLink="/ecosistema-musical"
+                    (click)="setActiveNavDropdown(null)"
+                    class="group block rounded-sm text-left no-underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00DA5E] focus-visible:ring-offset-2"
                     aria-label="Ir a Ecosistema Musical de Colombia"
                   >
                     <p class="font-alternate text-[0.62rem] font-bold uppercase tracking-[0.24em] text-[#00A849]">Sistema de Información de la Música</p>
                     <p class="mt-1 font-alternate text-xl font-bold uppercase tracking-tight text-[#291242] group-hover:text-[#00A849]">Ecosistema Musical de Colombia</p>
-                  </button>
-                  <button type="button" (click)="onNavigateToPath('ecosistema-musical')" class="border-0 bg-transparent font-alternate text-[0.65rem] font-bold uppercase tracking-widest text-slate-500 hover:text-[#00A849] cursor-pointer">Explorar el ecosistema →</button>
+                  </a>
                 </div>
 
                 <div class="grid grid-cols-[minmax(0,1fr)_18rem] gap-5">
