@@ -2,17 +2,19 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles } from '@lucide/angular';
+import { LucideArrowLeft, LucideArrowRight, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles } from '@lucide/angular';
 import { FestivalPublico, FiltrosFestivalesPublicos, FestivalesPublicosService } from '../../../../core/services/festivales-publicos.service';
 import { NavigationService } from '../../../../core/services/navigation.service';
 import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
-import { EcosystemMetric, EcosystemMetricsStripComponent } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
+import { EcosystemMetric } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
+import { EcosystemExplorationToolbarComponent } from '../../../../shared/components/ui/ecosystem-exploration-toolbar/ecosystem-exploration-toolbar.component';
+import { EcosystemMapAccessComponent } from '../../../../shared/components/ui/ecosystem-map-access/ecosystem-map-access.component';
 
 type VistaExploracion = 'lista' | 'mosaico';
 
 @Component({
   selector: 'app-festivales-publicos-page', standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CompactHeroComponent, EcosystemMetricsStripComponent, LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles],
+  imports: [CommonModule, FormsModule, RouterLink, CompactHeroComponent, EcosystemExplorationToolbarComponent, EcosystemMapAccessComponent, LucideArrowLeft, LucideArrowRight, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles],
   templateUrl: './festivales-publicos-page.component.html',
 })
 export class FestivalesPublicosPageComponent implements OnInit {

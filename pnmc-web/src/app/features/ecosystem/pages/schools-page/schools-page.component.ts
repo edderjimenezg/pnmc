@@ -1,18 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal } from '@lucide/angular';
+import { LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideMapPin, LucideSearch, LucideSlidersHorizontal } from '@lucide/angular';
 import { BackendDataService } from '../../../../core/services/backend-data.service';
 import { NavigationService } from '../../../../core/services/navigation.service';
 import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
-import { EcosystemMetric, EcosystemMetricsStripComponent } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
+import { EcosystemMetric } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
+import { EcosystemExplorationToolbarComponent } from '../../../../shared/components/ui/ecosystem-exploration-toolbar/ecosystem-exploration-toolbar.component';
+import { EcosystemMapAccessComponent } from '../../../../shared/components/ui/ecosystem-map-access/ecosystem-map-access.component';
 
 type VistaExploracion = 'lista' | 'mosaico';
 type School = { id: string; name: string; department: string; municipality: string; type: string; category: string; coverage: string; practices: string; sonorousTerritories: string; isActive: boolean; };
 
 @Component({
   selector: 'app-schools-page', standalone: true,
-  imports: [CommonModule, FormsModule, CompactHeroComponent, EcosystemMetricsStripComponent, LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal],
+  imports: [CommonModule, FormsModule, CompactHeroComponent, EcosystemExplorationToolbarComponent, EcosystemMapAccessComponent, LucideArrowLeft, LucideArrowRight, LucideBuilding2, LucideMapPin, LucideSearch, LucideSlidersHorizontal],
   templateUrl: './schools-page.component.html',
 })
 export class SchoolsPageComponent implements OnInit {

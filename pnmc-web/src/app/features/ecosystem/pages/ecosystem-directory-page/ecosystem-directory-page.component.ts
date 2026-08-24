@@ -2,11 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { LucideArrowLeft, LucideArrowRight, LucideBookOpen, LucideHammer, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideStore } from '@lucide/angular';
+import { LucideArrowLeft, LucideArrowRight, LucideBookOpen, LucideHammer, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideStore } from '@lucide/angular';
 import { BackendDataService } from '../../../../core/services/backend-data.service';
 import { NavigationService } from '../../../../core/services/navigation.service';
 import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
-import { EcosystemMetric, EcosystemMetricsStripComponent } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
+import { EcosystemMetric } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
+import { EcosystemExplorationToolbarComponent } from '../../../../shared/components/ui/ecosystem-exploration-toolbar/ecosystem-exploration-toolbar.component';
+import { EcosystemMapAccessComponent } from '../../../../shared/components/ui/ecosystem-map-access/ecosystem-map-access.component';
 
 type VistaExploracion = 'lista' | 'mosaico';
 type TipoDirectorio = 'mercados-musicales' | 'redes-documentacion' | 'luteria';
@@ -16,6 +18,7 @@ type ConfiguracionDirectorio = {
   subtitulo: string;
   tabla: 'Mercados' | 'Redes' | 'Lutieres';
   capaMapa: 'Mercados Musicales' | 'Redes de Documentación' | 'Lutieres';
+  etiquetaMapa: string;
   marcador: string;
   placeholder: string;
   etiquetaTipo: string;
@@ -36,15 +39,15 @@ type RegistroDirectorio = {
 };
 
 const CONFIGURACIONES: Record<TipoDirectorio, ConfiguracionDirectorio> = {
-  'mercados-musicales': { titulo: 'Mercados musicales', subtitulo: 'Consulta nodos de intercambio, circulación y fortalecimiento profesional registrados en el Ecosistema Musical de Colombia.', tabla: 'Mercados', capaMapa: 'Mercados Musicales', marcador: 'Mercados musicales', placeholder: 'Mercado, organización o lugar', etiquetaTipo: 'Modalidad', icono: 'mercado' },
-  'redes-documentacion': { titulo: 'Redes y documentación', subtitulo: 'Consulta redes, archivos y procesos de documentación musical disponibles en el Ecosistema Musical de Colombia.', tabla: 'Redes', capaMapa: 'Redes de Documentación', marcador: 'Redes y documentación', placeholder: 'Red, organización o lugar', etiquetaTipo: 'Tipo de red', icono: 'red' },
-  luteria: { titulo: 'Lutería', subtitulo: 'Consulta saberes, talleres y servicios de construcción y reparación de instrumentos registrados en el Ecosistema Musical de Colombia.', tabla: 'Lutieres', capaMapa: 'Lutieres', marcador: 'Lutería', placeholder: 'Lutier, taller o lugar', etiquetaTipo: 'Oficio principal', icono: 'luteria' },
+  'mercados-musicales': { titulo: 'Mercados musicales', subtitulo: 'Consulta nodos de intercambio, circulación y fortalecimiento profesional registrados en el Ecosistema Musical de Colombia.', tabla: 'Mercados', capaMapa: 'Mercados Musicales', etiquetaMapa: 'Ver mercados en el mapa', marcador: 'Mercados musicales', placeholder: 'Mercado, organización o lugar', etiquetaTipo: 'Modalidad', icono: 'mercado' },
+  'redes-documentacion': { titulo: 'Redes y documentación', subtitulo: 'Consulta redes, archivos y procesos de documentación musical disponibles en el Ecosistema Musical de Colombia.', tabla: 'Redes', capaMapa: 'Redes de Documentación', etiquetaMapa: 'Ver redes en el mapa', marcador: 'Redes y documentación', placeholder: 'Red, organización o lugar', etiquetaTipo: 'Tipo de red', icono: 'red' },
+  luteria: { titulo: 'Lutería', subtitulo: 'Consulta saberes, talleres y servicios de construcción y reparación de instrumentos registrados en el Ecosistema Musical de Colombia.', tabla: 'Lutieres', capaMapa: 'Lutieres', etiquetaMapa: 'Ver lutería en el mapa', marcador: 'Lutería', placeholder: 'Lutier, taller o lugar', etiquetaTipo: 'Oficio principal', icono: 'luteria' },
 };
 
 @Component({
   selector: 'app-ecosystem-directory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CompactHeroComponent, EcosystemMetricsStripComponent, LucideArrowLeft, LucideArrowRight, LucideBookOpen, LucideHammer, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideStore],
+  imports: [CommonModule, FormsModule, CompactHeroComponent, EcosystemExplorationToolbarComponent, EcosystemMapAccessComponent, LucideArrowLeft, LucideArrowRight, LucideBookOpen, LucideHammer, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideStore],
   templateUrl: './ecosystem-directory-page.component.html',
 })
 export class EcosystemDirectoryPageComponent implements OnInit {

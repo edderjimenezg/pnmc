@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { 
   LucideArrowRight, 
   LucideBarChart3, 
@@ -119,6 +120,7 @@ const PRACTICA_MAPPING: Record<string, { depts: any[]; color: string }> = {
 export class MapaEcosistemicoPageComponent implements OnInit, OnDestroy, AfterViewInit {
   private mapDataService = inject(MapDataService);
   private navigationService = inject(NavigationService);
+  private route = inject(ActivatedRoute);
   private webTexts = inject(WebTextsService);
   private platformId = inject(PLATFORM_ID);
   protected readonly Boolean = Boolean;
@@ -1506,6 +1508,14 @@ export class MapaEcosistemicoPageComponent implements OnInit, OnDestroy, AfterVi
 
   ngOnInit() {
     this.directoryLimit.set(12);
+    this.route.queryParamMap.subscribe(params => {
+      const capa = params.get('capa') || '';
+      if (ECOSYSTEM_LAYERS.some(layer => layer.key === capa)) {
+        this.activeCategory.set(capa);
+        this.selectedDept.set('Nacional');
+        this.sidebarTab.set('resumen');
+      }
+    });
     
     // Lock body scroll on map load
     if (isPlatformBrowser(this.platformId)) {

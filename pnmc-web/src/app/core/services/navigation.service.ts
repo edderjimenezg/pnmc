@@ -237,7 +237,7 @@ export class NavigationService {
     });
     this._mobileMenuOpen.set(false);
     this._activeNavDropdown.set(null);
-    this.router.navigateByUrl(PAGE_PATHS[PAGE_IDS.mapa]);
+    this.router.navigate([PAGE_PATHS[PAGE_IDS.mapa]], { queryParams: { capa: targetLayer } });
   }
 
   openMapParticipation() {
