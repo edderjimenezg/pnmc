@@ -3,7 +3,7 @@ import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { LucideArrowRight, LucideConstruction, LucideMap } from '@lucide/angular';
 import { NavigationService } from '../../../../core/services/navigation.service';
-import { PageHeroComponent } from '../../../../shared/components/ui/page-hero/page-hero.component';
+import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
 
 const PAGES: Record<string, { eyebrow: string; title: string; description: string }> = {
   '': { eyebrow: 'SIMUS', title: 'Explora el ecosistema musical', description: 'Consulta los registros públicos del ecosistema musical colombiano. Los directorios especializados se incorporarán progresivamente.' },
@@ -20,7 +20,7 @@ const PAGES: Record<string, { eyebrow: string; title: string; description: strin
   participa: { eyebrow: 'SIMUS', title: 'Ser parte del SIMUS', description: 'Estamos preparando el acceso público para registrar tu proceso, organización o infraestructura dentro del Sistema de Información de la Música.' },
 };
 
-@Component({ selector: 'app-ecosystem-coming-soon-page', standalone: true, imports: [CommonModule, PageHeroComponent, LucideArrowRight, LucideConstruction, LucideMap], templateUrl: './ecosystem-coming-soon-page.component.html' })
+@Component({ selector: 'app-ecosystem-coming-soon-page', standalone: true, imports: [CommonModule, CompactHeroComponent, LucideArrowRight, LucideConstruction, LucideMap], templateUrl: './ecosystem-coming-soon-page.component.html' })
 export class EcosystemComingSoonPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);
