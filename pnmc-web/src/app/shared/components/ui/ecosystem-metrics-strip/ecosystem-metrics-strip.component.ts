@@ -13,7 +13,7 @@ export interface EcosystemMetric {
   standalone: true,
   imports: [CommonModule, LucideBarChart3, LucideMap, LucideMapPinned, LucideMusic2],
   template: `
-    <section class="grid w-full grid-cols-2 divide-x divide-y divide-slate-100 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm sm:grid-cols-4 sm:divide-y-0" aria-label="Resumen del directorio">
+    <section class="grid w-full grid-cols-2 divide-x divide-y divide-slate-200/80 sm:grid-cols-4 sm:divide-y-0" aria-label="Resumen del directorio">
       @for (metric of metrics; track metric.label) {
         <div class="min-w-0 px-5 py-5 sm:px-6">
           <p class="flex items-center gap-2 font-alternate text-[0.56rem] font-bold uppercase tracking-widest text-[#00a849]">
