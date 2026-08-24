@@ -3,7 +3,7 @@
 
   <section class="mx-auto max-w-[100rem]">
     <div class="grid grid-cols-1 lg:grid-cols-[22rem_minmax(0,1fr)]">
-      <aside class="border-b border-slate-100 bg-slate-50/50 p-7 lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-10">
+      <aside class="border-b border-slate-100 bg-slate-50/50 p-7 lg:sticky lg:top-20 lg:flex lg:h-[calc(100vh-5rem)] lg:flex-col lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-10">
         <div class="space-y-3">
           <p class="font-alternate text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Buscar</p>
           <label class="flex items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm focus-within:border-[#00DA5E] focus-within:ring-2 focus-within:ring-[#00DA5E]/20">
@@ -27,6 +27,9 @@
             </div>
           }
           <p class="mt-5 text-xs leading-relaxed text-slate-500">Los filtros muestran únicamente territorios con Festivales públicos disponibles en esta consulta.</p>
+        </div>
+        <div class="mt-8 border-t border-slate-200 pt-6 lg:mt-auto">
+          <button type="button" (click)="abrirMapa()" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#00A849]/20 bg-white px-4 py-3 font-alternate text-[0.6rem] font-bold uppercase tracking-widest text-[#087b3e] transition hover:border-[#00A849] hover:bg-[#00DA5E]/10">Ver mapa ecosistémico <svg lucideMapPin [size]="15"></svg></button>
         </div>
       </aside>
 

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles } from '@lucide/angular';
 import { FestivalPublico, FiltrosFestivalesPublicos, FestivalesPublicosService } from '../../../../core/services/festivales-publicos.service';
+import { NavigationService } from '../../../../core/services/navigation.service';
 import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
 import { EcosystemMetric, EcosystemMetricsStripComponent } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
 
@@ -18,6 +19,7 @@ export class FestivalesPublicosPageComponent implements OnInit {
   private readonly festivalesPublicos = inject(FestivalesPublicosService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly navigation = inject(NavigationService);
   private readonly limitePagina = 20;
 
   readonly festivales = signal<FestivalPublico[]>([]);
@@ -66,6 +68,7 @@ export class FestivalesPublicosPageComponent implements OnInit {
   cambiarPagina(pagina: number): void { if (pagina >= 1 && pagina <= this.totalPaginas()) this.navegar({ pagina }); }
   limpiarFiltros(): void { this.practicaMusicalId.set(null); this.territorioSonoroId.set(null); this.router.navigate([], { relativeTo: this.route, queryParams: { vista: this.vista() === 'mosaico' ? 'mosaico' : null }, replaceUrl: true }); }
   volverAEcosistema(): void { this.router.navigateByUrl('/ecosistema-musical'); }
+  abrirMapa(): void { this.navigation.navigateToMapLayer('Festivales', { targetView: 'map' }); }
   territorio(festival: FestivalPublico): string { return [festival.territorioPrincipal.departamento, festival.territorioPrincipal.municipio].filter(Boolean).join(' · ') || 'Territorio por confirmar'; }
   descripcion(festival: FestivalPublico): string { return festival.descripcion?.trim() || 'Sin descripción pública disponible.'; }
 
