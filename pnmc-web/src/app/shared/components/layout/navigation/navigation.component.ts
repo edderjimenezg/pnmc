@@ -6,7 +6,6 @@ import { WebTextsService } from '../../../../core/services/web-texts.service';
 import { ejesDataGlobal } from '../../../../core/services/ejes-data.config';
 import { 
   LucideChevronDown, 
-  LucideChevronRight, 
   LucideMenu, 
   LucideX, 
   LucideArrowUpRight,
@@ -21,7 +20,6 @@ import {
     CommonModule,
     RouterLink,
     LucideChevronDown,
-    LucideChevronRight,
     LucideMenu,
     LucideX,
     LucideArrowUpRight,
@@ -83,7 +81,7 @@ export class NavigationComponent {
       }));
     }
     if (linkId === PAGE_IDS.simus) {
-      return [...this.ecosystemMenuItems, ...this.simusMenuItems].map((item) => ({
+      return this.ecosystemMenuItems.map((item) => ({
         label: item.label,
         action: () => this.onNavigateToPath(item.page),
       }));
@@ -140,43 +138,6 @@ export class NavigationComponent {
     { label: 'Redes y documentación', page: 'ecosistema-musical/redes-documentacion', detail: 'Memoria, investigación y archivos.' },
     { label: 'Lutería', page: 'ecosistema-musical/luteria', detail: 'Saberes, oficios e instrumentos.' },
   ];
-
-  simusMenuItems = [
-    { label: 'Acerca de SIMUS', page: 'ecosistema-musical/acerca-de', detail: 'Propósito y funcionamiento del sistema.' },
-    { label: 'Ayuda y tutoriales', page: 'ecosistema-musical/ayuda', detail: 'Orientación para consultar y participar.' },
-    { label: 'Ingresar', page: 'ingreso', detail: 'Acceso a los espacios de gestión de información.' },
-    { label: 'Ser parte del SIMUS', page: 'registro', detail: 'Registra o actualiza tu proceso, organización o infraestructura.' },
-  ];
-
-  // Categorías del menú de SIMUS, mismo patrón de columna fija + panel que el menú de Ejes
-  simusCategories = [
-    { id: 'ecosistema', name: 'Ecosistema Musical de Colombia', items: this.ecosystemMenuItems },
-    { id: 'institucional', name: 'Gestión institucional', items: this.simusMenuItems },
-  ];
-
-  private _activeSimusCategoryId = signal<string | null>(null);
-  activeSimusCategoryId = computed(() => this._activeSimusCategoryId());
-
-  hoveredSimusCategory = computed(() => {
-    const hoveredId = this._activeSimusCategoryId();
-    if (!hoveredId) return null;
-    return this.simusCategories.find((c) => c.id === hoveredId) || null;
-  });
-
-  setActiveSimusCategoryId(id: string | null): void {
-    this._activeSimusCategoryId.set(id);
-  }
-
-  clearSimusCategoryHover(): void {
-    this._activeSimusCategoryId.set(null);
-  }
-
-  getSimusCategoryClass(categoryId: string): string {
-    const isHovered = this._activeSimusCategoryId() === categoryId;
-    return isHovered
-      ? 'border-[#00DA5E] bg-slate-50/70'
-      : 'border-transparent hover:bg-slate-50/40';
-  }
 
   // Mapeo dinámico de ejes para la barra de navegación con traducción del CMS
   ejeNavigationGroups = computed(() => {
@@ -282,14 +243,6 @@ export class NavigationComponent {
       this.navigationService.setActiveNavDropdown(null);
       this.navigationService.setMobileMenuOpen(false);
     }
-  }
-
-  onSimusCategoryClick(categoryId: string): void {
-    if (categoryId === 'ecosistema') {
-      this.onNavigateToPath('ecosistema-musical');
-      return;
-    }
-    this.setActiveSimusCategoryId(categoryId);
   }
 
   navigateToExternalAccess(path: string): void {
