@@ -72,7 +72,7 @@ export const routes: Routes = [
   },
   {
     path: 'ecosistema-musical',
-    loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
+    loadComponent: () => import('./features/simus/pages/simus-home-page/simus-home-page.component').then(m => m.SimusHomePageComponent),
   },
   { path: 'mapa/participa', redirectTo: 'colaboradores', pathMatch: 'full' },
   {

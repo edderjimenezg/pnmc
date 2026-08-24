@@ -47,6 +47,7 @@ export class AppComponent {
       || page === PAGE_IDS.galeria
       || page === PAGE_IDS.noticias
       || page === PAGE_IDS.agenda
+      || page === PAGE_IDS.ecosistemaMusical
       || page === PAGE_IDS.registro;
   });
 
