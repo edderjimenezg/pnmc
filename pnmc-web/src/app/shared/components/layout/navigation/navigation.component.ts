@@ -124,15 +124,15 @@ export class NavigationComponent {
   ];
 
   simusMenuItems = [
-    { label: 'Acerca de SIMUS', page: 'simus/acerca-de', detail: 'Propósito y funcionamiento del sistema.' },
-    { label: 'Ayuda y tutoriales', page: 'simus/ayuda', detail: 'Orientación para consultar y participar.' },
-    { label: 'Ingresar', page: 'simus/ingresar', detail: 'Acceso a los espacios de gestión de información.' },
-    { label: 'Ser parte del SIMUS', page: 'simus/participa', detail: 'Registra o actualiza tu proceso, organización o infraestructura.' },
+    { label: 'Acerca de SIMUS', page: 'ecosistema-musical/acerca-de', detail: 'Propósito y funcionamiento del sistema.' },
+    { label: 'Ayuda y tutoriales', page: 'ecosistema-musical/ayuda', detail: 'Orientación para consultar y participar.' },
+    { label: 'Ingresar', page: 'ingreso', detail: 'Acceso a los espacios de gestión de información.' },
+    { label: 'Ser parte del SIMUS', page: 'registro', detail: 'Registra o actualiza tu proceso, organización o infraestructura.' },
   ];
 
   // Categorías del menú de SIMUS, mismo patrón de columna fija + panel que el menú de Ejes
   simusCategories = [
-    { id: 'ecosistema', name: 'Ecosistema musical', items: this.ecosystemMenuItems },
+    { id: 'ecosistema', name: 'Ecosistema Musical de Colombia', items: this.ecosystemMenuItems },
     { id: 'institucional', name: 'Gestión institucional', items: this.simusMenuItems },
   ];
 
@@ -196,6 +196,9 @@ export class NavigationComponent {
   isActiveLink(linkId: string): boolean {
     if (linkId === 'ejes') {
       return this.isEjesRelatedPage();
+    }
+    if (linkId === PAGE_IDS.simus) {
+      return this.activePage() === PAGE_IDS.ecosistemaMusical;
     }
     return this.activePage() === linkId;
   }

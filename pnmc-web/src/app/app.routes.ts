@@ -62,32 +62,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
   },
   {
-    path: 'simus/participa',
-    redirectTo: 'registro',
-    pathMatch: 'full',
-  },
-  {
     path: 'ingreso',
     loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
     data: { modoAcceso: 'ingresar' },
-  },
-  // 'simus/ingresar' era la ruta anterior de login externo: se conserva como
-  // redireccion para no romper enlaces existentes. 'ingreso' es la ruta
-  // clara y de primer nivel para colaboradores externos.
-  {
-    path: 'simus/ingresar',
-    redirectTo: 'ingreso',
-    pathMatch: 'full',
-  },
-  {
-    path: 'simus/acerca-de',
-    loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
-    data: { seccionSimus: 'acerca-de' },
-  },
-  {
-    path: 'simus/ayuda',
-    loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
-    data: { seccionSimus: 'ayuda' },
   },
   {
     path: 'ecosistema-musical/:section',
@@ -96,10 +73,6 @@ export const routes: Routes = [
   {
     path: 'ecosistema-musical',
     loadComponent: () => import('./features/ecosystem/pages/ecosystem-coming-soon-page/ecosystem-coming-soon-page.component').then(m => m.EcosystemComingSoonPageComponent),
-  },
-  {
-    path: 'simus',
-    loadComponent: () => import('./features/simus/pages/simus-home-page/simus-home-page.component').then(m => m.SimusHomePageComponent),
   },
   { path: 'mapa/participa', redirectTo: 'colaboradores', pathMatch: 'full' },
   {

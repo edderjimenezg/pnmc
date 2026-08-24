@@ -22,8 +22,8 @@ export class SimusHomePageComponent implements OnInit {
     { title: 'Mantente al día', description: 'Conoce noticias y agenda de la actividad musical del país.', icon: 'news', action: () => this.navigation.navigate('noticias') },
   ];
   readonly simusPaths = [
-    { title: 'Acerca de SIMUS', description: 'Conoce el propósito, alcance y principios de este sistema de información.', icon: 'about', path: 'simus/acerca-de' },
-    { title: 'Ayuda y tutoriales', description: 'Encuentra orientación para navegar, consultar y participar en SIMUS.', icon: 'help', path: 'simus/ayuda' },
+    { title: 'Acerca de SIMUS', description: 'Conoce el propósito, alcance y principios de este sistema de información.', icon: 'about', path: 'ecosistema-musical/acerca-de' },
+    { title: 'Ayuda y tutoriales', description: 'Encuentra orientación para navegar, consultar y participar en SIMUS.', icon: 'help', path: 'ecosistema-musical/ayuda' },
     { title: 'Ingresar', description: 'Accede a los espacios de gestión y actualización de información.', icon: 'login', path: 'registro?modo=ingresar' },
     { title: 'Ser parte del SIMUS', description: 'Crea tu cuenta o registra una organización para participar en SIMUS.', icon: 'participate', path: 'registro?modo=registro' },
   ];

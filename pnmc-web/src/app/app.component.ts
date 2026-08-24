@@ -38,7 +38,7 @@ export class AppComponent {
 
   isSolidNavigation = computed(() => {
     const page = this.navigationService.activePage();
-    // Ecosistema y SIMUS conservan un hero fotográfico (como PNMC), así que el nav
+    // Ecosistema Musical conserva un hero fotográfico (como PNMC), así que el nav
     // debe comportarse igual: transparente sobre la foto y sólido al hacer scroll.
     // Mapa/Editorial/Galería/Noticias/Agenda ya no tienen hero, así que necesitan
     // el nav sólido desde el inicio (un nav transparente sería ilegible sobre fondo blanco).

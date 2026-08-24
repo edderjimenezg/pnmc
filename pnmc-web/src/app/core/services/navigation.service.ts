@@ -34,7 +34,9 @@ export const PAGE_PATHS: Record<string, string> = {
   [PAGE_IDS.noticias]: '/noticias',
   [PAGE_IDS.agenda]: '/agenda',
   [PAGE_IDS.mapa]: '/mapa',
-  [PAGE_IDS.simus]: '/simus',
+  // SIMUS conserva su identidad institucional, pero la puerta pública de
+  // consulta es Ecosistema Musical; no existe una sección /simus.
+  [PAGE_IDS.simus]: '/ecosistema-musical',
   [PAGE_IDS.ecosistemaMusical]: '/ecosistema-musical',
   [PAGE_IDS.mapaParticipa]: '/mapa/participa',
   [PAGE_IDS.admin]: '/consola-interna',
@@ -62,8 +64,8 @@ export class NavigationService {
     [PAGE_IDS.noticias]: 'Noticias',
     [PAGE_IDS.agenda]: 'Agenda',
     [PAGE_IDS.mapa]: 'Mapa ecosistémico',
-    [PAGE_IDS.simus]: 'SIMUS',
-    [PAGE_IDS.ecosistemaMusical]: 'Ecosistema musical',
+    [PAGE_IDS.simus]: 'Ecosistema Musical de Colombia',
+    [PAGE_IDS.ecosistemaMusical]: 'Ecosistema Musical de Colombia',
     [PAGE_IDS.admin]: 'Administración',
     [PAGE_IDS.colaboradores]: 'Colaboradores',
     [PAGE_IDS.registro]: 'Haz parte de SIMUS',
@@ -131,11 +133,8 @@ export class NavigationService {
     const normalizedPath = this.normalizePathname(path);
 
     const pathSegments = normalizedPath.split('/').filter(Boolean);
-    if (normalizedPath === '/registro' || normalizedPath === '/ingreso' || normalizedPath === '/simus/ingresar') {
+    if (normalizedPath === '/registro' || normalizedPath === '/ingreso') {
       return PAGE_IDS.registro;
-    }
-    if (normalizedPath === '/simus' || normalizedPath.startsWith('/simus/')) {
-      return PAGE_IDS.simus;
     }
     if (normalizedPath === '/ecosistema-musical' || normalizedPath.startsWith('/ecosistema-musical/')) {
       return PAGE_IDS.ecosistemaMusical;

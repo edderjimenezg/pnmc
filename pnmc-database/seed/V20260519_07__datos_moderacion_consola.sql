@@ -153,7 +153,7 @@ VALUES
 (100, N'Festival de Cuerdas de Barichara (Borrador)', N'Festival musical en desarrollo.', N'Taller Cuerdas', N'cuerdas@pnmc.local', N'municipal', '05', '05001', 1, N'borrador', SYSUTCDATETIME()),
 (101, N'Encuentro Andino en la Neblina (En Revisión)', N'Festival de música andina tradicional.', N'Neblina Colectivo', N'neblina@pnmc.local', N'municipal', '05', '05001', 1, N'en_revision', SYSUTCDATETIME()),
 (102, N'Festival del Pasillo y Vientos (Ajustes)', N'Festival musical con ajustes pendientes.', N'Comité Pasillo', N'pasillo@pnmc.local', N'municipal', '05', '05001', 1, N'ajustes_solicitados', SYSUTCDATETIME()),
-(103, N'Festival Nacional del Bambuco Metropolitano (Publicado)', N'El festival de bambuco más grande de la región.', N'Corpbambuco', N'bambuco@pnmc.local', N'municipal', '05', '05001', 1, N'publicado', SYSUTCDATETIME()),
+(103, N'Festival Nacional del Bambuco Metropolitano', N'El festival de bambuco más grande de la región.', N'Corpbambuco', N'bambuco@pnmc.local', N'municipal', '05', '05001', 1, N'publicado', SYSUTCDATETIME()),
 (104, N'Festival Fallido de Rock Local (Rechazado)', N'Propuesta de festival sin viabilidad.', N'NoName', N'noname@pnmc.local', N'municipal', '05', '05001', 1, N'rechazado', SYSUTCDATETIME());
 
 SET IDENTITY_INSERT dbo.Festivales OFF;
