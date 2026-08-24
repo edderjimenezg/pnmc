@@ -58,6 +58,21 @@ export const routes: Routes = [
     loadComponent: () => import('./features/ecosystem/pages/festivales-publicos-page/festivales-publicos-page.component').then(m => m.FestivalesPublicosPageComponent),
   },
   {
+    path: 'ecosistema-musical/mercados-musicales',
+    loadComponent: () => import('./features/ecosystem/pages/ecosystem-directory-page/ecosystem-directory-page.component').then(m => m.EcosystemDirectoryPageComponent),
+    data: { directorioEcosistema: 'mercados-musicales' },
+  },
+  {
+    path: 'ecosistema-musical/redes-documentacion',
+    loadComponent: () => import('./features/ecosystem/pages/ecosystem-directory-page/ecosystem-directory-page.component').then(m => m.EcosystemDirectoryPageComponent),
+    data: { directorioEcosistema: 'redes-documentacion' },
+  },
+  {
+    path: 'ecosistema-musical/luteria',
+    loadComponent: () => import('./features/ecosystem/pages/ecosystem-directory-page/ecosystem-directory-page.component').then(m => m.EcosystemDirectoryPageComponent),
+    data: { directorioEcosistema: 'luteria' },
+  },
+  {
     path: 'registro',
     loadComponent: () => import('./features/external-access/external-access-page.component').then(m => m.ExternalAccessPageComponent),
   },

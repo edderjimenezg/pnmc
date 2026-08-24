@@ -5,12 +5,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles } from '@lucide/angular';
 import { FestivalPublico, FiltrosFestivalesPublicos, FestivalesPublicosService } from '../../../../core/services/festivales-publicos.service';
 import { CompactHeroComponent } from '../../../../shared/components/ui/compact-hero/compact-hero.component';
+import { EcosystemMetric, EcosystemMetricsStripComponent } from '../../../../shared/components/ui/ecosystem-metrics-strip/ecosystem-metrics-strip.component';
 
 type VistaExploracion = 'lista' | 'mosaico';
 
 @Component({
   selector: 'app-festivales-publicos-page', standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CompactHeroComponent, LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles],
+  imports: [CommonModule, FormsModule, RouterLink, CompactHeroComponent, EcosystemMetricsStripComponent, LucideArrowLeft, LucideArrowRight, LucideLayoutGrid, LucideList, LucideMapPin, LucideSearch, LucideSlidersHorizontal, LucideSparkles],
   templateUrl: './festivales-publicos-page.component.html',
 })
 export class FestivalesPublicosPageComponent implements OnInit {
@@ -26,12 +27,23 @@ export class FestivalesPublicosPageComponent implements OnInit {
   readonly busqueda = signal('');
   readonly departamento = signal('');
   readonly municipio = signal('');
+  readonly practicaMusicalId = signal<number | null>(null);
+  readonly territorioSonoroId = signal<number | null>(null);
   readonly vista = signal<VistaExploracion>('lista');
   readonly pagina = signal(1);
   readonly total = signal(0);
   readonly municipiosDisponibles = computed(() => this.filtrosDisponibles()?.municipios.filter(item => !this.departamento() || item.departamento === this.departamento()) ?? []);
   readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.total() / this.limitePagina)));
-  readonly hayFiltrosActivos = computed(() => Boolean(this.busqueda() || this.departamento() || this.municipio()));
+  readonly hayFiltrosActivos = computed(() => Boolean(this.busqueda() || this.departamento() || this.municipio() || this.practicaMusicalId() || this.territorioSonoroId()));
+  readonly metricas = computed<EcosystemMetric[]>(() => {
+    const filtros = this.filtrosDisponibles();
+    return [
+      { label: 'Resultados', value: this.total(), detail: this.hayFiltrosActivos() ? 'según los filtros activos' : 'Festivales públicos' },
+      { label: 'Departamentos', value: filtros?.departamentos.length ?? 0, detail: 'con registros disponibles' },
+      { label: 'Municipios', value: filtros?.municipios.length ?? 0, detail: 'con registros disponibles' },
+      { label: 'Prácticas', value: filtros?.practicasMusicales.length ?? 0, detail: 'vinculadas al directorio' },
+    ];
+  });
 
   ngOnInit(): void {
     this.festivalesPublicos.consultarFiltros().subscribe({ next: filtros => this.filtrosDisponibles.set(filtros) });
@@ -49,15 +61,17 @@ export class FestivalesPublicosPageComponent implements OnInit {
   cambiarVista(vista: VistaExploracion): void { this.navegar({ vista }); }
   cambiarDepartamento(departamento: string): void { this.navegar({ departamento, municipio: '', pagina: 1 }); }
   cambiarMunicipio(municipio: string): void { this.navegar({ municipio, pagina: 1 }); }
+  cambiarPracticaMusical(valor: string): void { this.practicaMusicalId.set(valor ? Number(valor) : null); this.navegar({ pagina: 1 }); }
+  cambiarTerritorioSonoro(valor: string): void { this.territorioSonoroId.set(valor ? Number(valor) : null); this.navegar({ pagina: 1 }); }
   cambiarPagina(pagina: number): void { if (pagina >= 1 && pagina <= this.totalPaginas()) this.navegar({ pagina }); }
-  limpiarFiltros(): void { this.router.navigate([], { relativeTo: this.route, queryParams: { vista: this.vista() === 'mosaico' ? 'mosaico' : null }, replaceUrl: true }); }
+  limpiarFiltros(): void { this.practicaMusicalId.set(null); this.territorioSonoroId.set(null); this.router.navigate([], { relativeTo: this.route, queryParams: { vista: this.vista() === 'mosaico' ? 'mosaico' : null }, replaceUrl: true }); }
   volverAEcosistema(): void { this.router.navigateByUrl('/ecosistema-musical'); }
   territorio(festival: FestivalPublico): string { return [festival.territorioPrincipal.departamento, festival.territorioPrincipal.municipio].filter(Boolean).join(' · ') || 'Territorio por confirmar'; }
   descripcion(festival: FestivalPublico): string { return festival.descripcion?.trim() || 'Sin descripción pública disponible.'; }
 
   private cargarFestivales(): void {
     this.cargando.set(true); this.error.set('');
-    this.festivalesPublicos.consultarFestivales({ limit: this.limitePagina, offset: (this.pagina() - 1) * this.limitePagina, busqueda: this.busqueda(), departamento: this.departamento(), municipio: this.municipio() }).subscribe({
+    this.festivalesPublicos.consultarFestivales({ limit: this.limitePagina, offset: (this.pagina() - 1) * this.limitePagina, busqueda: this.busqueda(), departamento: this.departamento(), municipio: this.municipio(), practicaMusicalId: this.practicaMusicalId() ?? undefined, territorioSonoroId: this.territorioSonoroId() ?? undefined }).subscribe({
       next: respuesta => { this.festivales.set(respuesta.items); this.total.set(respuesta.total); this.cargando.set(false); },
       error: error => { this.error.set(error?.message || 'No fue posible consultar los Festivales públicos.'); this.cargando.set(false); },
     });
