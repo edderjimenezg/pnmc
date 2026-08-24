@@ -1,4 +1,4 @@
-import { Component, Input, inject, computed, signal, HostListener } from '@angular/core';
+import { Component, ElementRef, Input, inject, computed, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NavigationService, PAGE_IDS } from '../../../../core/services/navigation.service';
@@ -34,6 +34,7 @@ import {
 export class NavigationComponent {
   public navigationService = inject(NavigationService);
   private webTexts = inject(WebTextsService);
+  private readonly hostElement = inject(ElementRef<HTMLElement>);
 
   @Input() scrolled = false;
   @Input() forceSolid = false;
@@ -118,6 +119,15 @@ export class NavigationComponent {
       this.navigationService.setMobileMenuOpen(false);
     }
     this.accessMenuOpen.set(false);
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: PointerEvent): void {
+    if (!this.accessMenuOpen()) return;
+    const target = event.target as Node | null;
+    if (!target || !this.hostElement.nativeElement.contains(target)) {
+      this.accessMenuOpen.set(false);
+    }
   }
 
   ecosystemMenuItems = [
@@ -254,17 +264,32 @@ export class NavigationComponent {
   }
 
   onPageChange(pageId: string): void {
+    this.accessMenuOpen.set(false);
     this.navigationService.navigate(pageId);
   }
 
   onNavigateToPath(path: string): void {
+    this.accessMenuOpen.set(false);
     this.navigationService.setActiveNavDropdown(null);
     this.navigationService.setMobileMenuOpen(false);
     this.navigationService.routerNavigate(path);
   }
 
   toggleAccessMenu(): void {
-    this.accessMenuOpen.update((open) => !open);
+    const willOpen = !this.accessMenuOpen();
+    this.accessMenuOpen.set(willOpen);
+    if (willOpen) {
+      this.navigationService.setActiveNavDropdown(null);
+      this.navigationService.setMobileMenuOpen(false);
+    }
+  }
+
+  onSimusCategoryClick(categoryId: string): void {
+    if (categoryId === 'ecosistema') {
+      this.onNavigateToPath('ecosistema-musical');
+      return;
+    }
+    this.setActiveSimusCategoryId(categoryId);
   }
 
   navigateToExternalAccess(path: string): void {
@@ -300,6 +325,9 @@ export class NavigationComponent {
   }
 
   setActiveNavDropdown(dropdown: string | null): void {
+    if (dropdown) {
+      this.accessMenuOpen.set(false);
+    }
     this.navigationService.setActiveNavDropdown(dropdown);
   }
 
