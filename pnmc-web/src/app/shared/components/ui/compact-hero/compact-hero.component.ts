@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="bg-[#291242] pb-12 pt-32 text-white">
+    <section [class]="showHeading ? 'bg-[#291242] pb-12 pt-32 text-white' : 'bg-[#291242] pb-7 pt-28 text-white'">
       <div [class]="'mx-auto px-6 ' + maxWidthClass">
         <nav aria-label="Ruta de navegación" class="mb-6">
           <ol class="flex items-center gap-2 font-alternate text-[0.66rem] font-bold uppercase tracking-widest">
@@ -28,9 +28,11 @@ import { CommonModule } from '@angular/common';
             }
           </ol>
         </nav>
-        <h1 class="font-alternate text-4xl font-black uppercase leading-tight md:text-5xl">{{ title }}</h1>
-        @if (subtitle) {
-          <p class="mt-1.5 text-[0.7rem] font-bold uppercase tracking-[0.22em] text-white/40">{{ subtitle }}</p>
+        @if (showHeading) {
+          <h1 class="font-alternate text-4xl font-black uppercase leading-tight md:text-5xl">{{ title }}</h1>
+          @if (subtitle) {
+            <p class="mt-1.5 text-[0.7rem] font-bold uppercase tracking-[0.22em] text-white/40">{{ subtitle }}</p>
+          }
         }
       </div>
     </section>
@@ -41,6 +43,7 @@ export class CompactHeroComponent {
   @Input() current = '';
   @Input() title = '';
   @Input() subtitle = '';
+  @Input() showHeading = true;
   @Input() maxWidthClass = 'max-w-7xl';
 
   @Output() onBack = new EventEmitter<void>();
