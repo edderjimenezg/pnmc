@@ -34,9 +34,34 @@ Instala la extension **MSSQL** y crea una conexion con:
 
 El script fuerza la cadena de conexion local sin modificar `pnmc-api/.env`, que puede seguir apuntando a Azure.
 
-## Cargar datos de prueba amplios
+## Cargar la muestra piloto demostrativa
 
-Despues de crear las tablas base, puedes cargar una muestra conectada con:
+La muestra piloto actual es aditiva, reproducible y reversible. Incluye procesos
+relacionados de Festival, Escuela, Mercado, Agenda, Noticias y Editorial; no modifica
+los catálogos de Prácticas Musicales ni Territorios Sonoros.
+
+```bash
+./scripts/sembrar-demo-ecosistema.sh
+```
+
+Para retirarla sin tocar datos previos:
+
+```bash
+./scripts/revertir-demo-ecosistema.sh
+```
+
+La fuente de referencias, alcance demostrativo y resultados de validación están en
+[`../seed/DER_Plan_siembra_ecosistema_demo_v01_FIN_2026_08_24.md`](../seed/DER_Plan_siembra_ecosistema_demo_v01_FIN_2026_08_24.md).
+
+## Semilla amplia histórica
+
+`V20260519_06__datos_prueba_amplios.sql` permanece como insumo histórico. Es
+destructiva: elimina y recrea contenido de prueba, y sus Festivales no representan el
+modelo público versionado vigente. No debe utilizarse para validar el circuito actual
+de Festival.
+
+Después de crear las tablas base, puede cargarse únicamente para revisar el modelo
+histórico de datos sintéticos:
 
 ```bash
 docker exec -i pnmc-sqlserver /opt/mssql-tools18/bin/sqlcmd \

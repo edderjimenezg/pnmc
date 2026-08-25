@@ -65,7 +65,7 @@ public static class CatalogModuleEndpoints
             var relations = await LoadRelationsAsync(dbContext, cancellationToken);
 
             var mapped = rows.Select(row => {
-                relations.TryGetValue((2, row.Id), out var rel);
+                relations.TryGetValue(("escuela_musica", row.Id), out var rel);
                 var practices = !string.IsNullOrWhiteSpace(rel.Practicas) ? rel.Practicas : (row.MusicalPractices ?? string.Empty);
                 return new MusicSchoolDto(
                     row.Id.ToString(),
@@ -112,7 +112,7 @@ public static class CatalogModuleEndpoints
             var relations = await LoadRelationsAsync(dbContext, cancellationToken);
 
             var mapped = rows.Select(row => {
-                relations.TryGetValue((3, row.Id), out var rel);
+                relations.TryGetValue(("mercado_musical", row.Id), out var rel);
                 return new MusicMarketDto(
                     row.Id.ToString(),
                     row.Name,
@@ -161,7 +161,7 @@ public static class CatalogModuleEndpoints
             var relations = await LoadRelationsAsync(dbContext, cancellationToken);
 
             var mapped = rows.Select(row => {
-                relations.TryGetValue((4, row.Id), out var rel);
+                relations.TryGetValue(("organizacion", row.Id), out var rel);
                 return new OrganizationDto(
                     row.Id.ToString(),
                     row.Name,
@@ -200,7 +200,7 @@ public static class CatalogModuleEndpoints
             var relations = await LoadRelationsAsync(dbContext, cancellationToken);
 
             var mapped = rows.Select(row => {
-                relations.TryGetValue((5, row.Id), out var rel);
+                relations.TryGetValue(("escenario", row.Id), out var rel);
                 return new SpaceInfrastructureDto(
                     row.Id.ToString(),
                     row.Name,
@@ -226,37 +226,38 @@ public static class CatalogModuleEndpoints
         return group;
     }
 
-    private static async Task<Dictionary<(int TypeId, int OrigenId), (string Territorios, string Practicas)>> LoadRelationsAsync(
+    private static async Task<Dictionary<(string TypeCode, int OrigenId), (string Territorios, string Practicas)>> LoadRelationsAsync(
         PnmcDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var result = new Dictionary<(int TypeId, int OrigenId), (string Territorios, string Practicas)>();
+        var result = new Dictionary<(string TypeCode, int OrigenId), (string Territorios, string Practicas)>();
         
         try
         {
             using var command = dbContext.Database.GetDbConnection().CreateCommand();
             command.CommandText = @"
                 SELECT 
-                    r.IdTipoRegistroEcosistema,
+                    t.CodigoTipoRegistro,
                     r.IdRegistroOrigen,
                     STRING_AGG(ts.NombreTerritorioSonoro, ', ') AS TerritoriosSonoros,
                     STRING_AGG(pm.NombrePracticaMusical, ', ') AS PracticasMusicales
                 FROM dbo.RegistrosEcosistema r
+                INNER JOIN dbo.TiposRegistroEcosistema t ON t.IdTipoRegistroEcosistema = r.IdTipoRegistroEcosistema
                 LEFT JOIN dbo.RegistrosEcosistemaTerritoriosSonoros rts ON rts.IdRegistroEcosistema = r.IdRegistroEcosistema
                 LEFT JOIN dbo.TerritoriosSonoros ts ON ts.IdTerritorioSonoro = rts.IdTerritorioSonoro
                 LEFT JOIN dbo.RegistrosEcosistemaPracticasMusicales rpm ON rpm.IdRegistroEcosistema = r.IdRegistroEcosistema
                 LEFT JOIN dbo.PracticasMusicales pm ON pm.IdPracticaMusical = rpm.IdPracticaMusical
-                GROUP BY r.IdTipoRegistroEcosistema, r.IdRegistroOrigen";
+                GROUP BY t.CodigoTipoRegistro, r.IdRegistroOrigen";
                 
             await dbContext.Database.OpenConnectionAsync(cancellationToken);
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
-                int typeId = reader.GetInt32(0);
+                string typeCode = reader.GetString(0);
                 int origenId = reader.GetInt32(1);
                 string territorios = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
                 string practicas = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
-                result[(typeId, origenId)] = (territorios, practicas);
+                result[(typeCode, origenId)] = (territorios, practicas);
             }
         }
         catch (Exception ex)
