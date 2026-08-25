@@ -2,10 +2,9 @@
   <app-page-hero tag="Ecosistema Musical de Colombia" title="Ecosistema Musical" titleAccent="conecta el territorio" description="Un espacio público para conocer, consultar y fortalecer la información sobre las músicas, sus procesos y quienes las hacen posibles en Colombia." bgImage="https://images.unsplash.com/photo-1774558396253-be05d7a37d82?q=80&w=1470&auto=format&fit=crop" (onBack)="go('home')"></app-page-hero>
 
   <section class="mx-auto max-w-7xl px-6 pt-16 lg:px-8">
-    <div class="max-w-3xl">
-      <p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Consulta pública</p>
-      <h2 class="mt-3 font-gregor text-4xl uppercase leading-[0.95] text-[#291242] md:text-5xl">Una puerta de entrada al ecosistema musical.</h2>
-      <div class="mt-8 max-w-2xl space-y-5 text-[1.02rem] leading-relaxed text-slate-600">
+    <div class="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+      <div><p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Consulta pública</p><h2 class="mt-3 font-gregor text-4xl uppercase leading-[0.95] text-[#291242] md:text-5xl">Una puerta de entrada al ecosistema musical.</h2></div>
+      <div class="max-w-2xl space-y-5 text-[1.02rem] leading-relaxed text-slate-600">
         <p>SIMUS, el Sistema de Información de la Música, registra, organiza, relaciona y actualiza información estructurada sobre el ecosistema musical colombiano. Reúne agentes, organizaciones, procesos, prácticas, territorios e infraestructuras para hacer visible la riqueza musical del país.</p>
         <p>Escuelas, festivales, mercados, escenarios, documentación, agenda y contenidos editoriales se conectan aquí para facilitar la consulta pública y aportar lecturas útiles a comunidades, organizaciones, entidades y ciudadanía.</p>
         <p>El Mapa Ecosistémico ofrece una mirada territorial integral; los directorios especializados permiten profundizar en cada registro, sus relaciones y su presencia en el país.</p>
@@ -18,7 +17,7 @@
       <div><p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Directorios públicos</p><h2 class="mt-2 font-gregor text-4xl uppercase text-[#291242] md:text-5xl">Explora los registros</h2></div>
       <p class="max-w-md text-sm leading-relaxed text-slate-500">Busca, filtra por territorio y consulta fichas individuales de los procesos disponibles.</p>
     </div>
-    <div class="mt-9 grid gap-x-6 divide-y divide-slate-200 border-y border-slate-200 md:grid-cols-2 md:divide-y-0 xl:grid-cols-5 xl:divide-x xl:divide-y-0">
+    <div class="mt-9 grid gap-x-6 divide-y divide-slate-200 md:grid-cols-2 md:divide-y-0 xl:grid-cols-5 xl:divide-x xl:divide-y-0">
       @for (category of primaryCategories(); track category.route) {
         <button type="button" (click)="openCategory(category)" class="group min-h-44 cursor-pointer px-1 py-6 text-left first:pl-0 xl:px-6 xl:first:pl-0 xl:last:pr-0">
           <span class="flex h-10 w-10 items-center justify-center text-[#00A849]">@if (category.icon === 'school') { <svg lucideBuilding2 [size]="22"></svg> } @else if (category.icon === 'festivals') { <svg lucideMusic2 [size]="22"></svg> } @else if (category.icon === 'markets') { <svg lucideMapPin [size]="22"></svg> } @else if (category.icon === 'networks') { <svg lucideLibrary [size]="22"></svg> } @else { <svg lucideBookOpen [size]="22"></svg> }</span>
@@ -32,7 +31,7 @@
     <button type="button" (click)="openMapLayer()" class="mt-7 inline-flex cursor-pointer items-center gap-2 border-0 bg-[#291242] px-5 py-3 font-alternate text-[0.58rem] font-bold uppercase tracking-widest text-white transition hover:bg-[#3d1b61]">Ver en el mapa ecosistémico <svg lucideMap [size]="15"></svg></button>
   </section>
 
-  <section class="mx-auto max-w-7xl px-6 pt-20 lg:px-8">
+  <section class="mx-auto max-w-7xl px-6 pt-28 lg:px-8">
     <div class="max-w-2xl"><p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Guía de exploración</p><h2 class="mt-2 font-gregor text-4xl uppercase leading-[0.95] text-[#291242] md:text-5xl">Cómo explorar SIMUS</h2></div>
     <div class="mt-10 grid gap-8 md:grid-cols-3 md:gap-0 md:divide-x md:divide-slate-200">
       <article class="md:pr-8"><span class="font-gregor text-4xl text-[#291242]">01</span><h3 class="mt-4 font-alternate text-base font-bold uppercase text-[#00A849]">Directorios</h3><p class="mt-3 text-sm leading-relaxed text-slate-600">Consulta registros específicos mediante búsqueda, filtros territoriales, prácticas musicales, lista, mosaico y fichas individuales.</p></article>
@@ -41,14 +40,14 @@
     </div>
   </section>
 
-  <section class="mx-auto max-w-7xl px-6 pt-20 lg:px-8">
+  <section class="mx-auto max-w-7xl px-6 pt-28 lg:px-8">
     <div class="grid gap-x-12 gap-y-8 border-y border-slate-200 py-10 lg:grid-cols-[0.8fr_1.2fr]">
       <div><p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Actualidad y conocimiento</p><h2 class="mt-2 font-gregor text-4xl uppercase leading-[0.95] text-[#291242]">Sigue las músicas en movimiento</h2></div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">@for (item of accessPaths; track item.title) { <button type="button" (click)="item.action()" class="group cursor-pointer border-0 bg-transparent p-0 text-left"><h3 class="font-alternate text-sm font-bold uppercase text-[#291242] group-hover:text-[#00A849]">{{ item.title }}</h3><p class="mt-2 text-sm leading-relaxed text-slate-500">{{ item.description }}</p><span class="mt-4 inline-flex items-center gap-2 font-alternate text-[0.52rem] font-bold uppercase tracking-widest text-[#00A849]">Explorar <svg lucideArrowRight [size]="13"></svg></span></button> }</div>
     </div>
   </section>
 
-  <section class="mx-auto max-w-7xl px-6 pt-20 lg:px-8">
-    <div class="flex flex-wrap items-end justify-between gap-8 border-b border-slate-200 pb-10"><div><p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Ayuda y tutoriales</p><h2 class="mt-2 font-gregor text-4xl uppercase leading-[0.95] text-[#291242]">Acompañamiento para navegar</h2><p class="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600">Este espacio reunirá guías para registrarse, actualizar información, consultar el mapa y utilizar los filtros. Mientras se amplía, puedes acceder al registro o revisar las preguntas frecuentes.</p></div><div class="flex flex-wrap gap-3"><button type="button" (click)="go('registro')" class="cursor-pointer border-0 bg-[#291242] px-5 py-3 font-alternate text-[0.56rem] font-bold uppercase tracking-widest text-white transition hover:bg-[#3d1b61]">Crear cuenta o registrar organización</button><button type="button" (click)="go('ecosistema-musical/ayuda')" class="cursor-pointer border border-[#291242]/20 bg-transparent px-5 py-3 font-alternate text-[0.56rem] font-bold uppercase tracking-widest text-[#291242] transition hover:border-[#00A849] hover:text-[#00A849]">Ver ayuda</button></div></div>
+  <section class="mx-auto max-w-7xl px-6 pt-28 lg:px-8">
+    <div class="flex flex-wrap items-end justify-between gap-8 border-t border-slate-200 pt-12"><div><p class="font-alternate text-[0.6rem] font-bold uppercase tracking-[0.26em] text-[#00A849]">Ayuda y tutoriales</p><h2 class="mt-2 font-gregor text-4xl uppercase leading-[0.95] text-[#291242]">Acompañamiento para navegar</h2><p class="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600">Este espacio reunirá guías para registrarse, actualizar información, consultar el mapa y utilizar los filtros. Mientras se amplía, puedes revisar la ayuda o contactar al equipo del PNMC.</p></div><div class="flex flex-wrap gap-3"><button type="button" (click)="go('ecosistema-musical/ayuda')" class="cursor-pointer border-0 bg-[#291242] px-5 py-3 font-alternate text-[0.56rem] font-bold uppercase tracking-widest text-white transition hover:bg-[#3d1b61]">Ver ayuda y tutoriales</button><button type="button" (click)="openContact()" class="cursor-pointer border border-[#291242]/20 bg-transparent px-5 py-3 font-alternate text-[0.56rem] font-bold uppercase tracking-widest text-[#291242] transition hover:border-[#00A849] hover:text-[#00A849]">Contacto</button></div></div>
   </section>
 </div>

@@ -67,7 +67,10 @@ public static class FestivalesPublicosEndpoints
                 ? organizacion : Limpiar(festival.Festival.OrganizerDisplayName),
             new TerritorioPrincipalPublicoDto(
                 ResolverNombre(festival.CodigoDepartamento, departamentos), ResolverNombre(festival.CodigoMunicipio, municipios), festival.NivelCobertura),
-            Limpiar(festival.Periodicidad), festival.PracticasMusicales, festival.TerritoriosSonoros, Limpiar(festival.CorreoContacto));
+            Limpiar(festival.Periodicidad), festival.PracticasMusicales, festival.TerritoriosSonoros, Limpiar(festival.CorreoContacto),
+            Limpiar(festival.Festival.ContactPhone), Limpiar(festival.Festival.WebsiteUrl), Limpiar(festival.Festival.InstagramUrl),
+            Limpiar(festival.Festival.FacebookUrl), Limpiar(festival.Festival.SpecificLocation),
+            festival.Festival.PublishedAt?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         }).ToList();
     }
 

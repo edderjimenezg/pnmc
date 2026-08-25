@@ -49,5 +49,9 @@ export class SimusHomePageComponent implements OnInit {
   count(category: EcosystemCategory): number { return category.countKey ? this.recordsByType()[category.countKey] || 0 : 0; }
   openCategory(category: EcosystemCategory): void { this.navigation.routerNavigate(category.route); }
   openMapLayer(layer = 'General'): void { this.navigation.navigateToMapLayer(layer, { targetView: 'map' }); }
+  openContact(): void {
+    this.navigation.routerNavigate('pnmc');
+    setTimeout(() => document.getElementById('pnmc-equipo')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180);
+  }
   go(path: string): void { this.navigation.routerNavigate(path); }
 }

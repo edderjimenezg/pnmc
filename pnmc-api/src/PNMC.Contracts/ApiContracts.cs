@@ -976,7 +976,13 @@ public sealed record FestivalPublicoDto(
     string? Periodicidad,
     IReadOnlyList<CatalogoFestivalDto> PracticasMusicales,
     IReadOnlyList<CatalogoFestivalDto> TerritoriosSonoros,
-    string? CorreoContacto);
+    string? CorreoContacto,
+    string? TelefonoContacto,
+    string? SitioWeb,
+    string? Instagram,
+    string? Facebook,
+    string? LugarEspecifico,
+    string? FechaPublicacion);
 
 public sealed record MunicipioFestivalPublicoDto(string Departamento, string Municipio);
 

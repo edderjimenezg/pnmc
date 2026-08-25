@@ -1,6 +1,6 @@
 # Plan de siembra demostrativa del Ecosistema Musical
 
-- **Versión:** v02
+- **Versión:** v03
 - **Estado:** FIN
 - **Fecha:** 2026-08-24
 - **Deriva de:** auditoría del modelo local y solicitud de siembra demostrativa.
@@ -74,12 +74,20 @@ demostrativos originales.
 
 `V20260824_02__muestra_piloto_ecosistema_demo.sql` es aditiva e idempotente. Crea la
 tabla técnica `SemillasDatosDemo` para identificar los registros insertados sin alterar
-el modelo de dominio. Nunca elimina ni actualiza un registro existente.
+el modelo de dominio. En ejecuciones posteriores actualiza exclusivamente los registros
+demostrativos identificados por sus nombres y códigos de esta misma semilla; no modifica
+registros institucionales ni catálogos maestros.
 
 `V20260824_03__reversion_muestra_piloto_ecosistema_demo.sql` elimina únicamente los
 registros rastreados bajo el código de esta siembra, respetando el orden de relaciones.
 Ambos scripts son exclusivamente para ambientes locales o de demostración, nunca para
 producción.
+
+`V20260824_04__limpieza_muestras_heredadas_local.sql` retira de forma acotada los
+registros sintéticos con prefijo `PNMC` originados en la siembra amplia histórica. Tiene
+una guarda explícita para `PNMC_LOCAL`; no es un script de producción ni una migración.
+Los scripts históricos se conservan como antecedente técnico, pero dejan de alimentar
+la muestra pública actual.
 
 ## Validación prevista
 
@@ -139,6 +147,13 @@ primero trabajo de modelo o de interfaz.
    Sistema de Información de la Música: explica el alcance de SIMUS y articula los
    recorridos por directorios, mapa, agenda y contenidos sin duplicar accesos de
    gestión en la apertura.
+7. **Profundidad de la ficha pública:** el contenido descriptivo vigente del Festival
+   continúa en `VersionesFestival`; los enlaces y datos de consulta que ya existen en
+   `Festivales` pueden acompañar la ficha como metadatos, sin convertirse en una segunda
+   fuente del contenido público gobernado.
+8. **Retiro controlado de muestras antiguas:** los registros locales con prefijo `PNMC`
+   quedan fuera de directorios, agenda y noticias. La limpieza requiere respaldo local,
+   inventario previo y la guarda de ambiente; no debe ejecutarse contra datos reales.
 
 ## Registro de versiones
 
@@ -146,3 +161,4 @@ primero trabajo de modelo o de interfaz.
 |---|---|---|---|
 | v01 | FIN | 2026-08-24 | Auditoría, diseño, aplicación y reversión validada de la muestra piloto. |
 | v02 | FIN | 2026-08-24 | Consolidación de navegación pública y decisiones de arquitectura de información asociadas a la muestra. |
+| v03 | FIN | 2026-08-24 | Profundización de fichas, contenidos editoriales y limpieza acotada de muestras heredadas en `PNMC_LOCAL`. |

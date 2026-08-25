@@ -23,6 +23,12 @@ export interface FestivalPublico {
   practicasMusicales: CatalogoFestivalPublico[];
   territoriosSonoros: CatalogoFestivalPublico[];
   correoContacto: string | null;
+  telefonoContacto: string | null;
+  sitioWeb: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  lugarEspecifico: string | null;
+  fechaPublicacion: string | null;
 }
 
 export interface RespuestaPaginada<T> {
