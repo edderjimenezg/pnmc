@@ -10,19 +10,11 @@
         Ver en el mapa
         <svg lucideArrowRight [size]="14"></svg>
       </button>
-      <button
-        type="button"
-        (click)="onOpenParticipation()"
-        class="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border-0 bg-[#291242] px-6 py-3.5 font-alternate text-[0.68rem] font-bold uppercase tracking-widest text-white shadow-md transition-all hover:bg-[#6100D7]"
-      >
-        Ser parte del SIMUS
-        <svg lucideArrowRight [size]="14"></svg>
-      </button>
     </div>
   </div>
 
   <p class="mt-2 mb-6 max-w-3xl text-[0.8rem] leading-relaxed text-slate-500">
-    Escuelas, agrupaciones, agentes, escenarios, festivales, mercados, redes y lutieres: ocho tipos de actores y procesos que conforman el ecosistema musical colombiano, con directorios propios y una lectura territorial compartida en SIMUS.
+    Escuelas, festivales, mercados, redes y lutería: directorios públicos para recorrer el ecosistema musical colombiano desde registros y relaciones territoriales.
   </p>
 
   @if (isLoading || isRefreshing) {
@@ -45,7 +37,7 @@
   }
 
   <div class="overflow-hidden rounded-[1.75rem] border border-slate-100">
-  <div class="grid grid-cols-2 md:grid-cols-4">
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
     @for (category of categories; track category.route) {
       <button
         type="button"
@@ -93,7 +85,7 @@
         (click)="onOpenSimus()"
         class="inline-flex shrink-0 cursor-pointer items-center gap-3 rounded-xl border-0 bg-[#00DA5E] px-8 py-3.5 font-alternate text-[0.7rem] font-bold uppercase tracking-widest text-[#291242] shadow-lg transition-all hover:scale-105 hover:bg-[#8BF784] active:scale-95"
       >
-        Ir a SIMUS
+        Explorar el ecosistema
         <svg lucideArrowRight [size]="14"></svg>
       </button>
     </div>

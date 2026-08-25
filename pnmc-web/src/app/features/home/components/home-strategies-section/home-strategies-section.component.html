@@ -40,9 +40,9 @@
     </div>
   </div>
 
-  <!-- Slider Card Stage: se sale del ancho del texto (max-w-7xl) para ocupar todo el ancho disponible -->
-  <div class="relative left-1/2 w-screen -translate-x-1/2 overflow-x-hidden">
-    <div class="mx-auto max-w-[100rem] px-6 lg:px-8">
+  <!-- Slider Card Stage: conserva el mismo contenedor horizontal del sitio. -->
+  <div class="overflow-x-hidden">
+    <div class="mx-auto max-w-7xl">
       <div
         class="overflow-hidden w-full px-1 py-2"
         (mouseenter)="setPaused(true)"

@@ -1,6 +1,6 @@
 # Plan de siembra demostrativa del Ecosistema Musical
 
-- **Versión:** v01
+- **Versión:** v02
 - **Estado:** FIN
 - **Fecha:** 2026-08-24
 - **Deriva de:** auditoría del modelo local y solicitud de siembra demostrativa.
@@ -64,6 +64,7 @@ demostrativos originales.
 - [Festival de la Leyenda Vallenata — Fundación Festival de la Leyenda Vallenata](https://festivalvallenato.com/que-es/)
 - [Festival Petronio Álvarez — Alcaldía de Santiago de Cali](https://www.cali.gov.co/publicaciones/festival_petronio_lvarez_pub)
 - [Festival de Música Colombiana — Alcaldía de Ibagué](https://ibague.gov.co/portal/noticias/21871-entre-homenajes-y-grandes-conciertos-se-vivio-la-edicion-40-del-festival-de-musi)
+- [Festival Folclórico Colombiano — sitio del Festival](https://www.festivalfolcloricocolombiano.com.co/festival-folclorico-2025/)
 - [Red de Músicas de Medellín — Alcaldía de Medellín](https://www.medellin.gov.co/es/secretaria-cultura-ciudadana/red-de-practicas-artisticas-y-culturales/red-de-musicas-de-medellin/)
 - [BOmm — Bogotá Music Market](https://bogota.gov.co/que-hacer/cultura/bogota-music-market-bomm-de-la-camara-de-comercio-de-bogota)
 - [Circulart](https://circulart.org/2026/que-es-circulart/)
@@ -130,9 +131,18 @@ primero trabajo de modelo o de interfaz.
 4. **Alcance por módulo:** Escenarios, Agrupaciones y Agentes no pasan todavía a una
    siembra amplia porque no cuentan con el mismo directorio público consolidado de
    Festivales, Escuelas y Mercados.
+5. **Arquitectura pública de información:** la navegación principal distingue entre
+   directorios disponibles, rutas próximas y modelos internos. Agrupaciones y Agentes
+   permanecen en el modelo, pero se retiran de la navegación pública principal hasta
+   que cuenten con una experiencia de consulta consolidada.
+6. **Puerta de entrada:** `/ecosistema-musical` se consolida como guía pública del
+   Sistema de Información de la Música: explica el alcance de SIMUS y articula los
+   recorridos por directorios, mapa, agenda y contenidos sin duplicar accesos de
+   gestión en la apertura.
 
 ## Registro de versiones
 
 | Versión | Estado | Fecha | Cambio |
 |---|---|---|---|
 | v01 | FIN | 2026-08-24 | Auditoría, diseño, aplicación y reversión validada de la muestra piloto. |
+| v02 | FIN | 2026-08-24 | Consolidación de navegación pública y decisiones de arquitectura de información asociadas a la muestra. |

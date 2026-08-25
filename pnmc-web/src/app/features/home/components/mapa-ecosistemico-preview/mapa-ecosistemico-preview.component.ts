@@ -33,7 +33,7 @@ export class MapaEcosistemicoPreviewComponent implements OnInit {
   private readonly navigation = inject(NavigationService);
   private readonly mapDataService = inject(MapDataService);
 
-  readonly categories: EcosystemCategoryCard[] = ECOSYSTEM_CATEGORIES.map((category, index) => ({
+  readonly categories: EcosystemCategoryCard[] = ECOSYSTEM_CATEGORIES.filter(category => category.visibleInHome).map((category, index) => ({
     ...category,
     img: RANDOM_GALLERY_IMAGES[6 + index],
   }));
@@ -106,6 +106,6 @@ export class MapaEcosistemicoPreviewComponent implements OnInit {
   }
 
   onOpenSimus(): void {
-    this.navigation.navigate('simus');
+    this.navigation.routerNavigate('ecosistema-musical');
   }
 }

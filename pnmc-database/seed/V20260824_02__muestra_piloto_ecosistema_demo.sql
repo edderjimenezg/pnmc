@@ -49,6 +49,7 @@ DECLARE @Organizaciones TABLE
 INSERT INTO @Organizaciones (Codigo, Nombre, TipoEntidad, CodigoDepartamento, CodigoMunicipio, SitioWeb)
 VALUES
     (N'FMC', N'Fundación Musical de Colombia', N'organizacion', '73', '73001', NULL),
+    (N'CORPFOLCLOR', N'Corporación Festival Folclórico Colombiano', N'organizacion', '73', '73001', N'https://www.festivalfolcloricocolombiano.com.co'),
     (N'ALCALI', N'Alcaldía Distrital de Santiago de Cali', N'organizacion', '76', '76001', N'https://www.cali.gov.co'),
     (N'FUNVALL', N'Fundación Festival de la Leyenda Vallenata', N'organizacion', '20', '20001', N'https://festivalvallenato.com'),
     (N'FUNMUSICA', N'Fundación Pro Música Nacional de Ginebra - FUNMÚSICA', N'organizacion', '76', '76306', N'https://funmusica.org'),
@@ -84,7 +85,7 @@ DECLARE @Festivales TABLE
 INSERT INTO @Festivales (Codigo, Nombre, CodigoOrganizacion, CodigoDepartamento, CodigoMunicipio, Periodicidad, Descripcion)
 VALUES
     (N'MUSICA-IBAGUE', N'Festival Nacional de la Música Colombiana', N'FMC', '73', '73001', N'Anual', N'Registro demostrativo inspirado en el encuentro ibaguereño dedicado a la música colombiana. La descripción es original para pruebas de lectura pública.'),
-    (N'FOLCLOR-IBAGUE', N'Festival Folclórico Colombiano', N'ALCALI', '73', '73001', N'Anual', N'Registro demostrativo de un encuentro de circulación y memoria folclórica en Ibagué. La clasificación SIMUS es de prueba.'),
+    (N'FOLCLOR-IBAGUE', N'Festival Folclórico Colombiano', N'CORPFOLCLOR', '73', '73001', N'Anual', N'Registro demostrativo de un encuentro de circulación y memoria folclórica en Ibagué. La clasificación SIMUS es de prueba.'),
     (N'PETRONIO-CALI', N'Festival de Música del Pacífico Petronio Álvarez', N'ALCALI', '76', '76001', N'Anual', N'Registro demostrativo inspirado en un festival público de Santiago de Cali que visibiliza músicas y tradiciones del Pacífico colombiano.'),
     (N'VALLENATO', N'Festival de la Leyenda Vallenata', N'FUNVALL', '20', '20001', N'Anual', N'Registro demostrativo inspirado en el encuentro vallenato de Valledupar. Los campos SIMUS no son una ficha oficial del festival.'),
     (N'MONO-NUNEZ', N'Festival de Música Andina Colombiana Mono Núñez', N'FUNMUSICA', '76', '76306', N'Anual', N'Registro demostrativo inspirado en el certamen anual de música andina de Ginebra, Valle del Cauca.');

@@ -130,8 +130,6 @@ export class NavigationComponent {
 
   ecosystemMenuItems = [
     { label: 'Escuelas de música', page: 'ecosistema-musical/escuelas', detail: 'Formación musical e indicadores.' },
-    { label: 'Agrupaciones', page: 'ecosistema-musical/agrupaciones', detail: 'Procesos colectivos y prácticas musicales.' },
-    { label: 'Agentes', page: 'ecosistema-musical/agentes', detail: 'Personas y organizaciones del sector.' },
     { label: 'Escenarios', page: 'ecosistema-musical/escenarios', detail: 'Infraestructura para la música.' },
     { label: 'Festivales', page: 'ecosistema-musical/festivales', detail: 'Circulación y celebración territorial.' },
     { label: 'Mercados musicales', page: 'ecosistema-musical/mercados-musicales', detail: 'Nodos de intercambio y circulación.' },
