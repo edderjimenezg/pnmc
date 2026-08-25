@@ -42,7 +42,7 @@
       <button
         type="button"
         (click)="openCategory(category)"
-        class="group relative flex min-h-[11rem] flex-col justify-end overflow-hidden bg-slate-900 text-left cursor-pointer"
+        class="group relative flex min-h-[14rem] flex-col justify-end overflow-hidden bg-slate-900 text-left cursor-pointer md:min-h-[16rem] xl:min-h-[19rem]"
       >
         <img
           [src]="category.img"
@@ -56,7 +56,7 @@
           [ngClass]="category.status === 'Disponible' ? 'bg-[#00DA5E]/20 text-[#8BF784]' : 'bg-white/10 text-white/70'"
         >{{ category.status }}</span>
 
-        <div class="relative z-10 flex items-end justify-between gap-2 p-5">
+        <div class="relative z-10 flex items-end justify-between gap-3 p-6 md:p-7">
           <span class="font-alternate text-[0.66rem] font-bold uppercase leading-snug tracking-wide text-white/80 transition-colors group-hover:text-white">
             {{ category.title }}
           </span>
